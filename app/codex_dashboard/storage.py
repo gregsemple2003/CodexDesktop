@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from .models import TokenEvent
+from .models import SessionContextMarker, TokenEvent
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
@@ -41,6 +41,17 @@ def initialize_db(connection: sqlite3.Connection) -> None:
             weekly_window_minutes INTEGER,
             weekly_resets_at INTEGER,
             raw_json TEXT NOT NULL,
+            UNIQUE(session_path, line_offset)
+        );
+
+        CREATE TABLE IF NOT EXISTS session_context_markers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_path TEXT NOT NULL,
+            line_offset INTEGER NOT NULL,
+            cwd TEXT,
+            project_key TEXT NOT NULL,
+            project_label TEXT NOT NULL,
+            project_source TEXT NOT NULL,
             UNIQUE(session_path, line_offset)
         );
         """
@@ -115,6 +126,33 @@ def insert_event(connection: sqlite3.Connection, event: TokenEvent) -> bool:
     return cursor.rowcount > 0
 
 
+def insert_session_context_marker(
+    connection: sqlite3.Connection,
+    marker: SessionContextMarker,
+) -> bool:
+    cursor = connection.execute(
+        """
+        INSERT OR IGNORE INTO session_context_markers(
+            session_path,
+            line_offset,
+            cwd,
+            project_key,
+            project_label,
+            project_source
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            marker.session_path,
+            marker.line_offset,
+            marker.cwd,
+            marker.project_key,
+            marker.project_label,
+            marker.project_source,
+        ),
+    )
+    return cursor.rowcount > 0
+
+
 def load_events_since(
     connection: sqlite3.Connection,
     since: datetime,
@@ -160,6 +198,52 @@ def load_events_since(
             )
         )
     return events
+
+
+def count_session_context_markers(connection: sqlite3.Connection, session_path: str) -> int:
+    row = connection.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM session_context_markers
+        WHERE session_path = ?
+        """,
+        (session_path,),
+    ).fetchone()
+    return int(row["total"])
+
+
+def load_session_context_markers(
+    connection: sqlite3.Connection,
+    session_paths: list[str],
+) -> dict[str, list[SessionContextMarker]]:
+    if not session_paths:
+        return {}
+
+    markers_by_session: dict[str, list[SessionContextMarker]] = {}
+    batch_size = 500
+    for start in range(0, len(session_paths), batch_size):
+        batch = session_paths[start : start + batch_size]
+        placeholders = ",".join("?" for _ in batch)
+        rows = connection.execute(
+            f"""
+            SELECT session_path, line_offset, cwd, project_key, project_label, project_source
+            FROM session_context_markers
+            WHERE session_path IN ({placeholders})
+            ORDER BY session_path ASC, line_offset ASC
+            """,
+            batch,
+        ).fetchall()
+        for row in rows:
+            marker = SessionContextMarker(
+                session_path=str(row["session_path"]),
+                line_offset=int(row["line_offset"]),
+                cwd=str(row["cwd"]) if row["cwd"] is not None else None,
+                project_key=str(row["project_key"]),
+                project_label=str(row["project_label"]),
+                project_source=str(row["project_source"]),
+            )
+            markers_by_session.setdefault(marker.session_path, []).append(marker)
+    return markers_by_session
 
 
 def count_events(connection: sqlite3.Connection) -> int:

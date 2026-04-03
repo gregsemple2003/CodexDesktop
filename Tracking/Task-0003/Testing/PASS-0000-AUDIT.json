@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0003",
+  "pass_id": "PASS-0000",
+  "transition_target": "pass_closeout",
+  "verdict": "ready_with_caveats",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "summary": "The app-surface artifact was captured only in Total mode.",
+      "why_it_matters": "A dedicated Norm-mode screenshot would provide one more layer of UI evidence for the new toggle.",
+      "file_refs": [
+        "Tracking/Task-0003/Testing/REGRESSION-RUN-0001/desktop-overlay.png",
+        "tests/test_ingest_core.py"
+      ]
+    }
+  ],
+  "missing_evidence": [],
+  "open_questions": [],
+  "evidence_reviewed": [
+    "app/codex_dashboard/aggregation.py",
+    "app/codex_dashboard/ui.py",
+    "tests/test_desktop_support.py",
+    "tests/test_ingest_core.py",
+    "Tracking/Task-0003/Testing/REGRESSION-RUN-0001/desktop-overlay.png",
+    "Tracking/Task-0003/Testing/REGRESSION-RUN-0001/overlay-summary.txt",
+    "Tracking/Task-0003/Testing/REGRESSION-RUN-0001/overlay-chart.ps"
+  ],
+  "suggested_next_step": "Close the pass with handoff, commit, push, and the task-level regression artifact.",
+  "updated_at": "2026-04-03T01:17:59-04:00"
+}

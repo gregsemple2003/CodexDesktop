@@ -1,0 +1,3 @@
+The report is written at [bucket-investigation-20260403-002459-report.md](/c:/Agent/CodexDashboard/Tracking/Investigations/bucket-investigation-20260403-002459-report.md).
+
+Bottom line: the bucket was outcome-productive but cost-anomalous. `Singer` and `Volta` were the top spenders at `57.97M` and `57.72M` tokens, together `83.3%` of the bucket, and their first 30 seconds alone consumed about `95.1M` tokens combined. The direct session evidence points to `fork_context:true` launches from a long-lived Crystallize parent thread as the main cause, with the smaller EHG session being real separate work rather than unexplained waste.

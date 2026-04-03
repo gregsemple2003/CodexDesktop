@@ -5,10 +5,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from .aggregation import INTERVAL_SECONDS, build_buckets, is_over_redline, project_weekly_burn
-from .config import DashboardConfig, load_config
+from .config import DashboardConfig, load_config, maybe_upgrade_weekly_budget, save_config
 from .storage import connect, count_events, initialize_db, load_events_since
 from .scanner import ingest_once
-from .ui import DashboardApp
+from .ui import DashboardApp, ROLLING_PROJECTION_BUCKETS, rolling_average_tokens
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,20 +33,33 @@ def summary_text(connection, config: DashboardConfig, interval_key: str) -> str:
     interval_seconds = INTERVAL_SECONDS[interval_key]
     now = datetime.now(UTC)
     events = load_events_since(connection, now - timedelta(days=7))
+    total_7d = sum(event.total_tokens for event in events)
+    latest_advisory = next(
+        (event for event in reversed(events) if event.weekly_used_percent is not None),
+        None,
+    )
+    maybe_upgrade_weekly_budget(
+        config,
+        total_7d,
+        latest_advisory.weekly_used_percent if latest_advisory else None,
+    )
     buckets = build_buckets(events, interval_key, bucket_count=12, now=now)
     current_bucket_tokens = buckets[-1].total_tokens if buckets else 0
-    projected = project_weekly_burn(current_bucket_tokens, interval_seconds)
+    pace_sample_size = min(ROLLING_PROJECTION_BUCKETS, len(buckets))
+    pace_tokens = rolling_average_tokens(buckets, pace_sample_size)
+    projected = project_weekly_burn(pace_tokens, interval_seconds)
     redline = is_over_redline(
-        current_bucket_tokens,
+        pace_tokens,
         interval_seconds,
         config.weekly_budget_tokens,
     )
-    total_7d = sum(event.total_tokens for event in events)
     lines = [
         f"events={count_events(connection)}",
         f"last_7d_tokens={total_7d}",
         f"interval={interval_key}",
         f"current_bucket_tokens={current_bucket_tokens}",
+        f"projection_window_buckets={pace_sample_size}",
+        f"projection_window_average_tokens={pace_tokens}",
         f"projected_weekly_burn={projected}",
         f"weekly_budget_tokens={config.weekly_budget_tokens}",
         f"over_redline={redline}",
@@ -66,13 +79,15 @@ def main() -> int:
     try:
         if args.scan_once:
             ingest_result = ingest_once(connection, config)
+            summary = summary_text(connection, config, args.interval)
+            save_config(config, args.config_path)
             if args.print_summary:
                 print(
                     f"files_scanned={ingest_result.files_scanned} "
                     f"files_updated={ingest_result.files_updated} "
                     f"events_ingested={ingest_result.events_ingested}"
                 )
-                print(summary_text(connection, config, args.interval))
+                print(summary)
             return 0
         if args.no_ui:
             parser.print_help()

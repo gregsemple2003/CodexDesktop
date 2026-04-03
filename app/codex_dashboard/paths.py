@@ -3,6 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
 def default_codex_root() -> Path:
     return Path.home() / ".codex"
 
@@ -17,3 +21,7 @@ def default_db_path() -> Path:
 
 def default_config_path() -> Path:
     return app_data_root() / "config.json"
+
+
+def default_investigations_path() -> Path:
+    return repo_root() / "Tracking" / "Investigations"

@@ -22,6 +22,16 @@ class TokenEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class SessionContextMarker:
+    session_path: str
+    line_offset: int
+    cwd: str | None
+    project_key: str
+    project_label: str
+    project_source: str
+
+
+@dataclass(frozen=True, slots=True)
 class AggregationBucket:
     start_at: datetime
     end_at: datetime

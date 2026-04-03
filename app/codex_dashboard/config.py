@@ -6,13 +6,17 @@ from pathlib import Path
 
 from .paths import default_codex_root, default_config_path, default_db_path
 
+DEFAULT_WEEKLY_BUDGET_TOKENS = 4_000_000_000
+LEGACY_WEEKLY_BUDGET_TOKENS = 8_000_000
+ADVISORY_BUDGET_ROUNDING_TOKENS = 50_000_000
+
 
 @dataclass(slots=True)
 class DashboardConfig:
     codex_root: str
     db_path: str
     polling_seconds: int = 5
-    weekly_budget_tokens: int = 8_000_000
+    weekly_budget_tokens: int = DEFAULT_WEEKLY_BUDGET_TOKENS
     startup_enabled: bool = False
     hotkey: str = "Ctrl+Alt+Space"
 
@@ -22,6 +26,34 @@ class DashboardConfig:
             codex_root=str(default_codex_root()),
             db_path=str(default_db_path()),
         )
+
+
+def advisory_implied_weekly_budget_tokens(
+    total_7d_tokens: int,
+    weekly_used_percent: float | None,
+) -> int | None:
+    if total_7d_tokens <= 0 or weekly_used_percent is None or weekly_used_percent <= 0:
+        return None
+    implied_budget = int(round(total_7d_tokens / (weekly_used_percent / 100.0)))
+    rounded_budget = int(
+        round(implied_budget / ADVISORY_BUDGET_ROUNDING_TOKENS)
+        * ADVISORY_BUDGET_ROUNDING_TOKENS
+    )
+    return max(ADVISORY_BUDGET_ROUNDING_TOKENS, rounded_budget)
+
+
+def maybe_upgrade_weekly_budget(
+    config: "DashboardConfig",
+    total_7d_tokens: int,
+    weekly_used_percent: float | None,
+) -> bool:
+    if config.weekly_budget_tokens != LEGACY_WEEKLY_BUDGET_TOKENS:
+        return False
+    config.weekly_budget_tokens = (
+        advisory_implied_weekly_budget_tokens(total_7d_tokens, weekly_used_percent)
+        or DEFAULT_WEEKLY_BUDGET_TOKENS
+    )
+    return True
 
 
 def load_config(path: Path | None = None) -> DashboardConfig:

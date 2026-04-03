@@ -4,15 +4,28 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 from app.codex_dashboard.hotkey import MOD_ALT, MOD_CONTROL, GlobalHotkey, parse_hotkey
+from app.codex_dashboard.config import (
+    DashboardConfig,
+    advisory_implied_weekly_budget_tokens,
+    maybe_upgrade_weekly_budget,
+)
 from app.codex_dashboard.startup import startup_command
 from app.codex_dashboard.ui import (
+    format_budget_billions,
     format_chart_title,
+    format_repo_tooltip,
+    format_reset_remaining,
     format_tick_label,
+    format_signed_token_value,
     format_token_value,
+    format_velocity_tooltip,
     interval_redline_tokens,
+    parse_budget_billions,
+    rolling_average_tokens,
 )
 
 
@@ -54,12 +67,89 @@ class DesktopSupportTests(unittest.TestCase):
         self.assertEqual(format_token_value(100_000), "100K")
         self.assertEqual(format_token_value(2_500_000), "2.5M")
 
+    def test_format_signed_token_value_shows_direction(self) -> None:
+        self.assertEqual(format_signed_token_value(250_000), "+250K")
+        self.assertEqual(format_signed_token_value(-2_500_000), "-2.5M")
+        self.assertEqual(format_signed_token_value(0), "0")
+
     def test_format_chart_title_uses_interval_name(self) -> None:
         self.assertEqual(format_chart_title("1h"), "Token Velocity per 1 Hour")
         self.assertEqual(format_chart_title("5m"), "Token Velocity per 5 Minutes")
+        self.assertEqual(format_chart_title("15m", "repo"), "Repo Share per 15 Minutes")
+        self.assertEqual(
+            format_chart_title("15m", "velocity", "norm"),
+            "Normalized Token Velocity per 15 Minutes",
+        )
+        self.assertEqual(
+            format_chart_title("15m", "repo", "norm"),
+            "Normalized Repo Share per 15 Minutes",
+        )
+
+    def test_velocity_tooltip_uses_scalar_human_format(self) -> None:
+        self.assertEqual(format_velocity_tooltip(2_500_000), "2.5M")
+
+    def test_repo_tooltip_lists_nonzero_repo_breakdown(self) -> None:
+        tooltip = format_repo_tooltip(
+            {
+                "repo-a": 2_500_000,
+                "repo-b": 0,
+                "__other__": 1_200_000,
+            },
+            [
+                ("repo-a", "RepoA"),
+                ("repo-b", "RepoB"),
+                ("__other__", "Other"),
+            ],
+        )
+        self.assertEqual(tooltip, "RepoA: 2.5M\nOther: 1.2M")
+
+    def test_budget_billions_helpers_format_and_parse(self) -> None:
+        self.assertEqual(format_budget_billions(3_550_000_000), "3.5")
+        self.assertEqual(parse_budget_billions("3.5"), 3_500_000_000)
+        self.assertEqual(parse_budget_billions("3.5B"), 3_500_000_000)
+        self.assertEqual(parse_budget_billions("3550000000"), 3_550_000_000)
+
+    def test_format_reset_remaining_prefers_days_then_hours(self) -> None:
+        now = datetime(2026, 4, 2, 22, 0)
+        self.assertEqual(
+            format_reset_remaining(int(datetime(2026, 4, 8, 0, 0).timestamp()), now=now),
+            "5.1d",
+        )
+        self.assertEqual(
+            format_reset_remaining(int(datetime(2026, 4, 3, 1, 0).timestamp()), now=now),
+            "3.0h",
+        )
 
     def test_interval_redline_tokens_scales_budget_to_bucket_size(self) -> None:
         self.assertEqual(interval_redline_tokens(8_000_000, 3600), 47_619)
+
+    def test_rolling_average_tokens_uses_last_n_buckets(self) -> None:
+        buckets = [
+            SimpleNamespace(total_tokens=5),
+            SimpleNamespace(total_tokens=10),
+            SimpleNamespace(total_tokens=15),
+            SimpleNamespace(total_tokens=20),
+            SimpleNamespace(total_tokens=30),
+        ]
+        self.assertEqual(rolling_average_tokens(buckets, 4), 19)
+
+    def test_advisory_implied_weekly_budget_rounds_to_nearest_50m(self) -> None:
+        self.assertEqual(
+            advisory_implied_weekly_budget_tokens(1_838_350_974, 52.0),
+            3_550_000_000,
+        )
+
+    def test_maybe_upgrade_weekly_budget_replaces_legacy_default(self) -> None:
+        config = DashboardConfig(
+            codex_root="C:/Users/gregs/.codex",
+            db_path="C:/Users/gregs/AppData/Local/CodexDashboard/dashboard.db",
+            weekly_budget_tokens=8_000_000,
+        )
+
+        updated = maybe_upgrade_weekly_budget(config, 1_838_350_974, 52.0)
+
+        self.assertTrue(updated)
+        self.assertEqual(config.weekly_budget_tokens, 3_550_000_000)
 
 
 if __name__ == "__main__":

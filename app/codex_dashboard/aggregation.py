@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, tzinfo
 
-from .models import AggregationBucket, TokenEvent
+from .attribution import UNKNOWN_PROJECT_KEY, UNKNOWN_PROJECT_LABEL
+from .models import AggregationBucket, SessionContextMarker, TokenEvent
 
 
 INTERVAL_SECONDS = {
@@ -12,6 +13,12 @@ INTERVAL_SECONDS = {
     "1h": 3600,
     "1d": 86400,
 }
+METRIC_MODES = {
+    "total": "Total",
+    "norm": "Norm",
+}
+NORMALIZED_CACHED_INPUT_WEIGHT = 0.1
+NORMALIZED_OUTPUT_WEIGHT = 6.0
 
 
 def _resolve_display_timezone(
@@ -36,15 +43,33 @@ def _align_bucket_start(dt_local: datetime, interval_key: str) -> datetime:
     return dt_local.replace(minute=aligned_minute, second=0, microsecond=0)
 
 
+def event_metric_tokens(event: TokenEvent, metric_mode: str = "total") -> int:
+    if metric_mode == "total":
+        return event.total_tokens
+    if metric_mode == "norm":
+        uncached_input_tokens = max(0, event.input_tokens - event.cached_input_tokens)
+        weighted_output_tokens = event.output_tokens + event.reasoning_output_tokens
+        normalized_total = (
+            uncached_input_tokens
+            + (event.cached_input_tokens * NORMALIZED_CACHED_INPUT_WEIGHT)
+            + (weighted_output_tokens * NORMALIZED_OUTPUT_WEIGHT)
+        )
+        return int(round(normalized_total))
+    raise ValueError(f"Unsupported metric mode: {metric_mode}")
+
+
 def build_buckets(
     events: list[TokenEvent],
     interval_key: str,
     bucket_count: int,
     now: datetime | None = None,
     display_tz: tzinfo | None = None,
+    metric_mode: str = "total",
 ) -> list[AggregationBucket]:
     if interval_key not in INTERVAL_SECONDS:
         raise ValueError(f"Unsupported interval: {interval_key}")
+    if metric_mode not in METRIC_MODES:
+        raise ValueError(f"Unsupported metric mode: {metric_mode}")
     timezone = _resolve_display_timezone(now, display_tz)
     now_local = (now or datetime.now(timezone)).astimezone(timezone)
     interval_seconds = INTERVAL_SECONDS[interval_key]
@@ -53,7 +78,7 @@ def build_buckets(
     totals: dict[datetime, int] = {}
     for event in events:
         bucket_start = _align_bucket_start(event.event_timestamp.astimezone(timezone), interval_key)
-        totals[bucket_start] = totals.get(bucket_start, 0) + event.total_tokens
+        totals[bucket_start] = totals.get(bucket_start, 0) + event_metric_tokens(event, metric_mode)
 
     for offset in range(bucket_count - 1, -1, -1):
         start_at = aligned_end - timedelta(seconds=interval_seconds * offset)
@@ -66,6 +91,87 @@ def build_buckets(
             )
         )
     return buckets
+
+
+def build_project_stacks(
+    events: list[TokenEvent],
+    session_context_markers: dict[str, list[SessionContextMarker]],
+    interval_key: str,
+    bucket_count: int,
+    now: datetime | None = None,
+    display_tz: tzinfo | None = None,
+    top_n: int = 5,
+    metric_mode: str = "total",
+) -> tuple[list[AggregationBucket], list[tuple[str, str]], list[dict[str, int]]]:
+    buckets = build_buckets(
+        events,
+        interval_key,
+        bucket_count,
+        now=now,
+        display_tz=display_tz,
+        metric_mode=metric_mode,
+    )
+    if not buckets:
+        return [], [], []
+
+    timezone = _resolve_display_timezone(now, display_tz)
+    top_keys_by_session: dict[str, list[SessionContextMarker]] = {
+        session_path: sorted(markers, key=lambda marker: marker.line_offset)
+        for session_path, markers in session_context_markers.items()
+    }
+    window_totals: dict[str, int] = {}
+    label_by_key: dict[str, str] = {}
+    bucket_totals: dict[datetime, dict[str, int]] = {bucket.start_at: {} for bucket in buckets}
+    events_by_session: dict[str, list[TokenEvent]] = {}
+    for event in events:
+        events_by_session.setdefault(event.session_path, []).append(event)
+
+    for session_path, session_events in events_by_session.items():
+        markers = top_keys_by_session.get(session_path, [])
+        marker_index = 0
+        current_marker = markers[0] if markers else None
+        sorted_events = sorted(session_events, key=lambda event: event.line_offset)
+        for event in sorted_events:
+            while marker_index + 1 < len(markers) and markers[marker_index + 1].line_offset <= event.line_offset:
+                marker_index += 1
+                current_marker = markers[marker_index]
+            bucket_start = _align_bucket_start(event.event_timestamp.astimezone(timezone), interval_key)
+            if bucket_start not in bucket_totals:
+                continue
+            project_key = current_marker.project_key if current_marker is not None else UNKNOWN_PROJECT_KEY
+            project_label = current_marker.project_label if current_marker is not None else UNKNOWN_PROJECT_LABEL
+            metric_tokens = event_metric_tokens(event, metric_mode)
+            label_by_key[project_key] = project_label
+            bucket_totals[bucket_start][project_key] = bucket_totals[bucket_start].get(project_key, 0) + metric_tokens
+            window_totals[project_key] = window_totals.get(project_key, 0) + metric_tokens
+
+    top_keys = [
+        key
+        for key, _total in sorted(
+            window_totals.items(),
+            key=lambda item: (-item[1], label_by_key.get(item[0], item[0]).lower()),
+        )[:top_n]
+    ]
+    legend_entries = [(key, label_by_key[key]) for key in top_keys]
+    other_total = sum(total for key, total in window_totals.items() if key not in top_keys)
+    if other_total > 0:
+        legend_entries.append(("__other__", "Other"))
+
+    stacked_totals: list[dict[str, int]] = []
+    for bucket in buckets:
+        project_totals = dict(bucket_totals[bucket.start_at])
+        reduced_totals: dict[str, int] = {}
+        other_bucket_total = 0
+        for project_key, total_tokens in project_totals.items():
+            if project_key in top_keys:
+                reduced_totals[project_key] = total_tokens
+            else:
+                other_bucket_total += total_tokens
+        if other_bucket_total > 0:
+            reduced_totals["__other__"] = other_bucket_total
+        stacked_totals.append(reduced_totals)
+
+    return buckets, legend_entries, stacked_totals
 
 
 def project_weekly_burn(tokens_in_interval: int, interval_seconds: int) -> int:

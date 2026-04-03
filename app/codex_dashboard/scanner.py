@@ -4,9 +4,17 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from .attribution import UNKNOWN_PROJECT_KEY, UNKNOWN_PROJECT_LABEL, resolve_project_identity
 from .config import DashboardConfig
-from .models import IngestRunSummary, TokenEvent
-from .storage import initialize_db, insert_event, load_cursor, save_cursor
+from .models import IngestRunSummary, SessionContextMarker, TokenEvent
+from .storage import (
+    count_session_context_markers,
+    initialize_db,
+    insert_event,
+    insert_session_context_marker,
+    load_cursor,
+    save_cursor,
+)
 
 
 def session_jsonl_files(codex_root: Path) -> list[Path]:
@@ -72,6 +80,64 @@ def parse_token_event(
     )
 
 
+def parse_session_context_marker(
+    session_path: str,
+    line_offset: int,
+    raw_line: bytes,
+) -> SessionContextMarker | None:
+    payload = json.loads(raw_line.decode("utf-8"))
+    payload_type = payload.get("type")
+    if payload_type not in {"session_meta", "turn_context"}:
+        return None
+    payload_body = payload.get("payload", {})
+    if not isinstance(payload_body, dict):
+        return None
+    raw_cwd = payload_body.get("cwd")
+    cwd, project_label, project_source = resolve_project_identity(
+        str(raw_cwd) if raw_cwd is not None else None
+    )
+    project_key = cwd or UNKNOWN_PROJECT_KEY
+    return SessionContextMarker(
+        session_path=session_path,
+        line_offset=line_offset,
+        cwd=cwd,
+        project_key=project_key,
+        project_label=project_label,
+        project_source=project_source,
+    )
+
+
+def backfill_session_context_markers(connection, file_path: Path, session_path: str) -> None:
+    if count_session_context_markers(connection, session_path) > 0:
+        return
+    line_offset = 0
+    inserted_any = False
+    with file_path.open("rb") as handle:
+        for raw_line in handle:
+            stripped_line = raw_line.strip()
+            if stripped_line:
+                try:
+                    marker = parse_session_context_marker(session_path, line_offset, stripped_line)
+                except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
+                    marker = None
+                if marker is not None:
+                    insert_session_context_marker(connection, marker)
+                    inserted_any = True
+            line_offset += len(raw_line)
+    if not inserted_any:
+        insert_session_context_marker(
+            connection,
+            SessionContextMarker(
+                session_path=session_path,
+                line_offset=0,
+                cwd=None,
+                project_key=UNKNOWN_PROJECT_KEY,
+                project_label=UNKNOWN_PROJECT_LABEL,
+                project_source="unknown",
+            ),
+        )
+
+
 def ingest_once(connection, config: DashboardConfig) -> IngestRunSummary:
     initialize_db(connection)
     files_scanned = 0
@@ -81,6 +147,7 @@ def ingest_once(connection, config: DashboardConfig) -> IngestRunSummary:
         files_scanned += 1
         session_path = str(file_path)
         stat = file_path.stat()
+        backfill_session_context_markers(connection, file_path, session_path)
         last_offset, last_size = load_cursor(connection, session_path)
         if stat.st_size == last_size and stat.st_size == last_offset:
             continue
@@ -102,6 +169,12 @@ def ingest_once(connection, config: DashboardConfig) -> IngestRunSummary:
             stripped_line = line.strip()
             if not stripped_line:
                 continue
+            try:
+                marker = parse_session_context_marker(session_path, line_offset, stripped_line)
+            except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
+                marker = None
+            if marker is not None:
+                insert_session_context_marker(connection, marker)
             try:
                 event = parse_token_event(session_path, line_offset, stripped_line)
             except (json.JSONDecodeError, UnicodeDecodeError, ValueError):

@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from .paths import repo_root
+
 
 def startup_script_path() -> Path:
     return (
@@ -25,11 +27,6 @@ def startup_python_executable() -> Path:
         if pythonw.exists():
             return pythonw
     return executable
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
 
 def startup_command() -> str:
     python_executable = startup_python_executable()

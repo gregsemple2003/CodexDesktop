@@ -1,0 +1,13 @@
+Last ingest 01:17:36 | files 1/217 | events +2
+interval=15m
+metric_mode=total
+weekly_budget=3550000000
+startup_enabled=False
+7d_total=1.9B
+projected=3.1B
+headroom=+644.9K
+budget_line=5.3M
+status=Operational
+Codex advisory window: 59.0% used | reset in 5.2d
+hotkey_triggered=True
+overlay_fallback=False
