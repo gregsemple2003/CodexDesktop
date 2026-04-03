@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Planning is complete, auto-approved, and `PASS-0000` is now the active implementation pass.
+`PASS-0000` is complete on local proof, and `PASS-0001` is now the active implementation pass.
 
 ## Current Baseline
 
@@ -21,14 +21,23 @@ What is already grounded:
   - `PASS-0000`: repo bootstrap and ingest core
   - `PASS-0001`: overlay UI and desktop integration
   - `PASS-0002`: regression, handoff, and closure
+- `PASS-0000` delivered:
+  - repo-root docs for `AGENTS`, `TESTING`, and `REGRESSION`
+  - the Python package baseline under `app/codex_dashboard/`
+  - SQLite-backed file cursors and token event persistence
+  - interval aggregation and weekly redline math
+  - five focused unit tests
+  - a real-session ingest smoke against the live `.codex` tree
 
 ## Recommended Next Step
 
-Execute `PASS-0000`:
+Execute `PASS-0001`:
 
-- add repo-root docs for this new repo
-- implement the ingest engine, SQLite store, aggregation logic, and weekly redline math
-- add focused unit coverage for event parsing, dedupe, and bucket aggregation
+- add the real overlay window and chart canvas
+- add visible interval switching
+- add a global hotkey toggle
+- add budget presentation and redline UI
+- add startup integration through the Windows Startup folder
 
 ## Watchouts
 
@@ -46,6 +55,9 @@ Execute `PASS-0000`:
 - `Tracking/Task-0001/RESEARCH-ANALYSIS.md`
 - `Tracking/Task-0001/RESEARCH.md`
 - `Tracking/Task-0001/PLAN.md`
+- `Tracking/Task-0001/Testing/PASS-0000-AUDIT.md`
+- `Tracking/Task-0001/Testing/PASS-0000-AUDIT.json`
+- `Tracking/Task-0001/Testing/PASS-0000-CHECKLIST.json`
 - `C:\Users\gregs\.codex\AGENTS.md`
 - `C:\Users\gregs\.codex\Orchestration\ORCHESTRATION.md`
 - sampled session telemetry under `C:\Users\gregs\.codex\sessions\`

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0001",
+  "pass_id": "PASS-0000",
+  "transition_target": "pass_closeout",
+  "verdict": "ready",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "summary": "Upstream push is intentionally deferred",
+      "why_it_matters": "The user asked to keep the repo local until the prototype proves itself, so pass proof is local-only for now.",
+      "file_refs": [
+        "Tracking/Task-0001/HANDOFF.md"
+      ]
+    }
+  ],
+  "missing_evidence": [],
+  "open_questions": [],
+  "evidence_reviewed": [
+    "Tracking/Task-0001/TASK.md",
+    "Tracking/Task-0001/PLAN.md",
+    "Tracking/Task-0001/HANDOFF.md",
+    "AGENTS.md",
+    "TESTING.md",
+    "REGRESSION.md",
+    "README.md",
+    "app/codex_dashboard/config.py",
+    "app/codex_dashboard/storage.py",
+    "app/codex_dashboard/scanner.py",
+    "app/codex_dashboard/aggregation.py",
+    "tests/test_ingest_core.py",
+    "python -m unittest discover -s tests -p \"test_*.py\" -v",
+    "python -m app.codex_dashboard --scan-once --print-summary"
+  ],
+  "suggested_next_step": "Start PASS-0001 and add the real overlay window, hotkey toggle, budget presentation, and startup integration on top of the proven ingest core.",
+  "updated_at": "2026-04-02T20:46:00-04:00"
+}

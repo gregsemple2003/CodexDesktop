@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import tempfile
+import unittest
+from datetime import UTC, datetime
+from pathlib import Path
+
+from app.codex_dashboard.aggregation import (
+    build_buckets,
+    is_over_redline,
+    project_weekly_burn,
+)
+from app.codex_dashboard.config import DashboardConfig
+from app.codex_dashboard.models import TokenEvent
+from app.codex_dashboard.scanner import ingest_once
+from app.codex_dashboard.storage import connect, count_events, initialize_db, load_cursor
+
+
+TOKEN_EVENT_LINE = (
+    b'{"timestamp":"2026-04-03T00:09:11.080Z","type":"event_msg","payload":{"type":"token_count",'
+    b'"info":{"total_token_usage":{"total_tokens":7242153},"last_token_usage":{"input_tokens":100970,'
+    b'"cached_input_tokens":97920,"output_tokens":398,"reasoning_output_tokens":30,"total_tokens":101368}},'
+    b'"rate_limits":{"secondary":{"used_percent":42.0,"window_minutes":10080,"resets_at":1775638824}}}}'
+)
+
+
+class IngestCoreTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        self.codex_root = self.root / ".codex"
+        self.session_dir = self.codex_root / "sessions" / "2026" / "04" / "03"
+        self.session_dir.mkdir(parents=True, exist_ok=True)
+        self.db_path = self.root / "dashboard.db"
+        self.connection = connect(self.db_path)
+        initialize_db(self.connection)
+        self.config = DashboardConfig(
+            codex_root=str(self.codex_root),
+            db_path=str(self.db_path),
+            weekly_budget_tokens=8_000_000,
+        )
+
+    def tearDown(self) -> None:
+        self.connection.close()
+        self.temp_dir.cleanup()
+
+    def test_ingest_skips_incomplete_trailing_line_until_next_scan(self) -> None:
+        session_file = self.session_dir / "rollout-test.jsonl"
+        session_file.write_bytes(TOKEN_EVENT_LINE + b"\n" + TOKEN_EVENT_LINE[:50])
+
+        first_run = ingest_once(self.connection, self.config)
+        self.assertEqual(first_run.events_ingested, 1)
+        self.assertEqual(count_events(self.connection), 1)
+
+        last_offset, _ = load_cursor(self.connection, str(session_file))
+        self.assertLess(last_offset, session_file.stat().st_size)
+
+        with session_file.open("ab") as handle:
+            handle.write(TOKEN_EVENT_LINE[50:] + b"\n")
+
+        second_run = ingest_once(self.connection, self.config)
+        self.assertEqual(second_run.events_ingested, 1)
+        self.assertEqual(count_events(self.connection), 2)
+
+    def test_ingest_dedupes_same_line_offset(self) -> None:
+        session_file = self.session_dir / "rollout-dedupe.jsonl"
+        session_file.write_bytes(TOKEN_EVENT_LINE + b"\n")
+
+        ingest_once(self.connection, self.config)
+        ingest_once(self.connection, self.config)
+
+        self.assertEqual(count_events(self.connection), 1)
+
+    def test_aggregation_builds_expected_buckets(self) -> None:
+        base = datetime(2026, 4, 3, 0, 0, tzinfo=UTC)
+        events = [
+            TokenEvent(
+                session_path="a",
+                line_offset=0,
+                event_timestamp=base,
+                total_tokens=100,
+                input_tokens=0,
+                cached_input_tokens=0,
+                output_tokens=0,
+                reasoning_output_tokens=0,
+                cumulative_total_tokens=100,
+                weekly_used_percent=None,
+                weekly_window_minutes=None,
+                weekly_resets_at=None,
+                raw_json="{}",
+            ),
+            TokenEvent(
+                session_path="a",
+                line_offset=1,
+                event_timestamp=base.replace(minute=4),
+                total_tokens=200,
+                input_tokens=0,
+                cached_input_tokens=0,
+                output_tokens=0,
+                reasoning_output_tokens=0,
+                cumulative_total_tokens=300,
+                weekly_used_percent=None,
+                weekly_window_minutes=None,
+                weekly_resets_at=None,
+                raw_json="{}",
+            ),
+        ]
+        buckets = build_buckets(events, "5m", bucket_count=2, now=base.replace(minute=5))
+        self.assertEqual(len(buckets), 2)
+        self.assertEqual(buckets[0].total_tokens, 300)
+        self.assertEqual(buckets[1].total_tokens, 0)
+
+    def test_redline_projection_uses_interval_rate(self) -> None:
+        projected = project_weekly_burn(10_000, 3600)
+        self.assertGreater(projected, 1_000_000)
+        self.assertTrue(is_over_redline(10_000, 3600, 1_500_000))
+        self.assertFalse(is_over_redline(500, 3600, 8_000_000))
+
+    def test_ingest_ignores_token_event_with_null_info(self) -> None:
+        session_file = self.session_dir / "rollout-null-info.jsonl"
+        session_file.write_text(
+            '{"timestamp":"2026-04-03T00:09:11.080Z","type":"event_msg","payload":{"type":"token_count","info":null}}\n',
+            encoding="utf-8",
+        )
+
+        ingest_result = ingest_once(self.connection, self.config)
+
+        self.assertEqual(ingest_result.events_ingested, 0)
+        self.assertEqual(count_events(self.connection), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
