@@ -18,6 +18,17 @@ from .startup import is_startup_enabled, set_startup_enabled
 from .storage import connect, initialize_db, load_events_since
 
 
+def format_tick_label(start_at: datetime, interval_key: str) -> str:
+    if interval_key == "1d":
+        return start_at.strftime("%m-%d")
+
+    hour = start_at.strftime("%I").lstrip("0") or "12"
+    meridiem = start_at.strftime("%p")
+    if start_at.minute == 0:
+        return f"{hour}{meridiem}"
+    return f"{hour}:{start_at.minute:02d}{meridiem}"
+
+
 class DashboardApp:
     def __init__(
         self,
@@ -389,9 +400,7 @@ class DashboardApp:
             fill = "#ff7a59" if index == len(buckets) - 1 and bar_height > 0 else "#22b8cf"
             self.canvas.create_rectangle(x0, y0, x1, bottom, fill=fill, outline="")
             if index % 3 == 0 or index == len(buckets) - 1:
-                label = bucket.start_at.strftime("%H:%M")
-                if self.selected_interval == "1d":
-                    label = bucket.start_at.strftime("%m-%d")
+                label = format_tick_label(bucket.start_at, self.selected_interval)
                 self.canvas.create_text(
                     (x0 + x1) / 2,
                     bottom + 16,

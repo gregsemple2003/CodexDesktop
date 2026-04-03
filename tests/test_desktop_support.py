@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
 from app.codex_dashboard.hotkey import MOD_ALT, MOD_CONTROL, GlobalHotkey, parse_hotkey
 from app.codex_dashboard.startup import startup_command
+from app.codex_dashboard.ui import format_tick_label
 
 
 class DesktopSupportTests(unittest.TestCase):
@@ -36,6 +38,11 @@ class DesktopSupportTests(unittest.TestCase):
         hotkey.poll()
 
         self.assertEqual(callback.call_count, 2)
+
+    def test_format_tick_label_uses_compact_ampm_hours(self) -> None:
+        self.assertEqual(format_tick_label(datetime(2026, 4, 2, 19, 0), "1h"), "7PM")
+        self.assertEqual(format_tick_label(datetime(2026, 4, 2, 5, 0), "1h"), "5AM")
+        self.assertEqual(format_tick_label(datetime(2026, 4, 2, 17, 15), "15m"), "5:15PM")
 
 
 if __name__ == "__main__":
