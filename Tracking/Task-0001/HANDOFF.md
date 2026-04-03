@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete on local proof, but the task is currently blocked in regression on the final hotkey interaction claim.
+`PASS-0001` remains complete, but the task is now in active debugging during regression because a real manual hotkey run failed.
 
 ## Current Baseline
 
@@ -43,15 +43,20 @@ What is already grounded:
   - clean smoke exit
 - regression run `0001` did not prove:
   - a real keyboard-triggered `Ctrl+Alt+Space` overlay toggle
+- regression run `0002` now proves:
+  - a human launched `python -m app.codex_dashboard`
+  - the process stayed open
+  - pressing `Ctrl+Alt+Space` did nothing
+  - the overlay did not appear
 
 ## Recommended Next Step
 
-Run one human-confirmed regression slice for the hotkey:
+Debug the real hotkey path in the Windows app, then rerun regression:
 
-- launch `python -m app.codex_dashboard`
-- press `Ctrl+Alt+Space` and confirm the overlay appears
-- dismiss it with the hotkey or `Escape`
-- update the regression artifact if the interaction works
+- inspect `RegisterHotKey` success and the live `WM_HOTKEY` polling loop
+- fix the failing message-delivery path
+- rerun unit tests
+- rerun the desktop-app regression lane with a real keyboard confirmation
 
 ## Watchouts
 
@@ -61,6 +66,7 @@ Run one human-confirmed regression slice for the hotkey:
 - do not make the first version depend on a heavyweight foreground app workflow if the hotkey overlay can solve the check-in use case directly
 - do not quietly revert back to Tauri unless the toolchain is actually bootstrapped and that change is reflected durably
 - keep the implementation organized so a future Tauri port remains possible if the prototype succeeds
+- do not treat the hotkey issue as a harness-only limitation anymore; the live app has now failed manual regression
 
 ## Key References
 
@@ -78,6 +84,7 @@ Run one human-confirmed regression slice for the hotkey:
 - `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-chart.ps`
 - `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-summary.txt`
 - `Tracking/Task-0001/Testing/REGRESSION-RUN-0001.md`
+- `Tracking/Task-0001/Testing/REGRESSION-RUN-0002.md`
 - `Tracking/Task-0001/BUG-0001.md`
 - `Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0001/overlay-chart.ps`
 - `Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0001/overlay-summary.txt`

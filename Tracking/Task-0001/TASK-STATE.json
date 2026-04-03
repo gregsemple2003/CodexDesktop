@@ -1,25 +1,25 @@
 {
   "schema_version": 1,
   "task_id": "Task-0001",
-  "status": "blocked",
+  "status": "in_progress",
   "phase": "regression",
   "plan_approved": true,
   "current_pass": "PASS-0002",
   "last_completed_pass": "PASS-0001",
-  "current_gate": "regression",
+  "current_gate": "debugging",
   "latest_audit_verdict": "ready",
   "validation": {
     "build": "not_applicable",
     "unit_tests": "passing",
-    "regression": "blocked"
+    "regression": "failing"
   },
   "blockers": [
-    "Real keyboard confirmation for the global hotkey toggle is still required because the automated smoke fallback showed hotkey_triggered=False."
+    "Manual regression on 2026-04-02 confirmed that pressing Ctrl+Alt+Space does nothing in the live app, so task-level regression and closure are failing until the hotkey path is fixed."
   ],
   "next_expected_artifacts": [
     "BUG-0001.md",
     "HANDOFF.md",
-    "TASK-STATE.json"
+    "Testing/REGRESSION-RUN-0003.md"
   ],
-  "updated_at": "2026-04-02T20:52:00-04:00"
+  "updated_at": "2026-04-02T21:15:00-04:00"
 }
