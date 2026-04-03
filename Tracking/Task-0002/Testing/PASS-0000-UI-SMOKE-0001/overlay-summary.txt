@@ -1,0 +1,11 @@
+Last ingest 22:00:12 | files 0/212 | events +0
+interval=15m
+weekly_budget=8000000
+startup_enabled=False
+7d_total=1.8B
+projected=453.7M
+current_bucket=675.2K
+status=Redline
+Codex advisory window: 50.0% used | reset epoch 1775638824
+hotkey_triggered=True
+overlay_fallback=False

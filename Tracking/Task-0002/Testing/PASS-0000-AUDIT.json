@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0002",
+  "pass_id": "PASS-0000",
+  "transition_target": "pass_closeout",
+  "verdict": "ready_with_caveats",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "summary": "Pass-local UI proof does not yet include a full-window overlay screenshot",
+      "why_it_matters": "The redesign is visually significant, so the current postscript-plus-summary smoke artifact is slightly weaker than a direct full-overlay capture.",
+      "file_refs": [
+        "Tracking/Task-0002/Testing/PASS-0000-UI-SMOKE-0001/overlay-chart.ps",
+        "Tracking/Task-0002/Testing/PASS-0000-UI-SMOKE-0001/overlay-summary.txt"
+      ]
+    },
+    {
+      "summary": "Upstream push remains unavailable",
+      "why_it_matters": "Leader-owned checkpoint pushes cannot succeed until this repo has a configured upstream remote.",
+      "file_refs": [
+        "Tracking/Task-0002/HANDOFF.md"
+      ]
+    }
+  ],
+  "missing_evidence": [],
+  "open_questions": [],
+  "evidence_reviewed": [
+    "Tracking/Task-0002/TASK.md",
+    "Tracking/Task-0002/PLAN.md",
+    "Tracking/Task-0002/HANDOFF.md",
+    "Tracking/Task-0002/RESEARCH-ANALYSIS.md",
+    "Design/GENERAL-DESIGN.md",
+    "Design/Mockups/stitch/code.html",
+    "Design/Mockups/stitch/screen.png",
+    "app/codex_dashboard/ui.py",
+    "tests/test_desktop_support.py",
+    "python -m unittest discover -s tests -p \"test_*.py\" -v",
+    "python -m app.codex_dashboard --scan-once --print-summary",
+    "Tracking/Task-0002/Testing/PASS-0000-UI-SMOKE-0001/overlay-chart.ps",
+    "Tracking/Task-0002/Testing/PASS-0000-UI-SMOKE-0001/overlay-summary.txt"
+  ],
+  "suggested_next_step": "Move the task into the repo-root regression lane and capture a task-owned regression artifact for the redesigned real desktop surface.",
+  "updated_at": "2026-04-02T22:08:00-04:00"
+}

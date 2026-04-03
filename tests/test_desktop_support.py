@@ -8,7 +8,12 @@ from unittest import mock
 
 from app.codex_dashboard.hotkey import MOD_ALT, MOD_CONTROL, GlobalHotkey, parse_hotkey
 from app.codex_dashboard.startup import startup_command
-from app.codex_dashboard.ui import format_chart_title, format_tick_label, format_token_value
+from app.codex_dashboard.ui import (
+    format_chart_title,
+    format_tick_label,
+    format_token_value,
+    interval_redline_tokens,
+)
 
 
 class DesktopSupportTests(unittest.TestCase):
@@ -52,6 +57,9 @@ class DesktopSupportTests(unittest.TestCase):
     def test_format_chart_title_uses_interval_name(self) -> None:
         self.assertEqual(format_chart_title("1h"), "Token Velocity per 1 Hour")
         self.assertEqual(format_chart_title("5m"), "Token Velocity per 5 Minutes")
+
+    def test_interval_redline_tokens_scales_budget_to_bucket_size(self) -> None:
+        self.assertEqual(interval_redline_tokens(8_000_000, 3600), 47_619)
 
 
 if __name__ == "__main__":
