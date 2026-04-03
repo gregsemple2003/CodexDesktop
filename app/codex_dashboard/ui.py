@@ -18,6 +18,15 @@ from .startup import is_startup_enabled, set_startup_enabled
 from .storage import connect, initialize_db, load_events_since
 
 
+INTERVAL_TITLES = {
+    "1m": "1 Minute",
+    "5m": "5 Minutes",
+    "15m": "15 Minutes",
+    "1h": "1 Hour",
+    "1d": "1 Day",
+}
+
+
 def format_tick_label(start_at: datetime, interval_key: str) -> str:
     if interval_key == "1d":
         return start_at.strftime("%m-%d")
@@ -27,6 +36,24 @@ def format_tick_label(start_at: datetime, interval_key: str) -> str:
     if start_at.minute == 0:
         return f"{hour}{meridiem}"
     return f"{hour}:{start_at.minute:02d}{meridiem}"
+
+
+def format_token_value(value: int) -> str:
+    absolute_value = abs(value)
+    for divisor, suffix in (
+        (1_000_000_000, "B"),
+        (1_000_000, "M"),
+        (1_000, "K"),
+    ):
+        if absolute_value >= divisor:
+            scaled = value / divisor
+            text = f"{scaled:.1f}".rstrip("0").rstrip(".")
+            return f"{text}{suffix}"
+    return str(value)
+
+
+def format_chart_title(interval_key: str) -> str:
+    return f"Token Velocity per {INTERVAL_TITLES.get(interval_key, interval_key)}"
 
 
 class DashboardApp:
@@ -360,7 +387,7 @@ class DashboardApp:
         self.canvas.delete("all")
         width = int(self.canvas["width"])
         height = int(self.canvas["height"])
-        left = 28
+        left = 72
         right = width - 20
         top = 20
         bottom = height - 34
@@ -375,9 +402,6 @@ class DashboardApp:
             outline="#203651",
             fill="#132338",
         )
-        for row in range(1, 5):
-            y = top + row * chart_height / 5
-            self.canvas.create_line(left, y, right, y, fill="#1d3148")
 
         if not buckets:
             self.canvas.create_text(
@@ -390,6 +414,20 @@ class DashboardApp:
             return
 
         max_tokens = max(bucket.total_tokens for bucket in buckets) or 1
+        grid_steps = 5
+        for row in range(grid_steps + 1):
+            y = top + row * chart_height / grid_steps
+            self.canvas.create_line(left, y, right, y, fill="#1d3148")
+            label_value = int(round(max_tokens * (grid_steps - row) / grid_steps))
+            self.canvas.create_text(
+                left - 8,
+                y,
+                anchor="e",
+                text=format_token_value(label_value),
+                fill="#8ba6c2",
+                font=("Segoe UI", 8),
+            )
+
         gap = 6
         bar_width = max(10, int((chart_width - gap * (len(buckets) - 1)) / len(buckets)))
         for index, bucket in enumerate(buckets):
@@ -412,7 +450,7 @@ class DashboardApp:
             left,
             top - 8,
             anchor="w",
-            text=f"Interval {self.selected_interval} | {self._timezone_label()}",
+            text=f"{format_chart_title(self.selected_interval)} | {self._timezone_label()}",
             fill="#dce7f3",
             font=("Segoe UI Semibold", 10),
         )
