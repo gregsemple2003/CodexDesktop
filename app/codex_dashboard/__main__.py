@@ -8,6 +8,7 @@ from .aggregation import INTERVAL_SECONDS, build_buckets, is_over_redline, proje
 from .config import DashboardConfig, load_config
 from .storage import connect, count_events, initialize_db, load_events_since
 from .scanner import ingest_once
+from .ui import DashboardApp
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -15,6 +16,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config-path", type=Path, default=None)
     parser.add_argument("--scan-once", action="store_true")
     parser.add_argument("--print-summary", action="store_true")
+    parser.add_argument("--no-ui", action="store_true")
+    parser.add_argument("--smoke-artifact-dir", type=Path, default=None)
     parser.add_argument("--db-path", type=Path, default=None)
     parser.add_argument("--codex-root", type=Path, default=None)
     parser.add_argument(
@@ -71,7 +74,11 @@ def main() -> int:
                 )
                 print(summary_text(connection, config, args.interval))
             return 0
-        parser.print_help()
+        if args.no_ui:
+            parser.print_help()
+            return 0
+        app = DashboardApp(args.config_path, args.smoke_artifact_dir)
+        app.run()
         return 0
     finally:
         connection.close()

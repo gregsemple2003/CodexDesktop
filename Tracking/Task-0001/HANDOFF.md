@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0000` is complete on local proof, and `PASS-0001` is now the active implementation pass.
+`PASS-0001` is complete on local proof, and the task has entered the regression phase.
 
 ## Current Baseline
 
@@ -28,16 +28,17 @@ What is already grounded:
   - interval aggregation and weekly redline math
   - five focused unit tests
   - a real-session ingest smoke against the live `.codex` tree
+- `PASS-0001` delivered:
+  - the repo-root `Design/GENERAL-DESIGN.md` anchor
+  - the real Tk overlay surface
+  - hotkey parsing and registration
+  - startup integration
+  - budget editing and redline presentation
+  - an app-surface smoke artifact bundle under `Testing/UI-SMOKE-0001/`
 
 ## Recommended Next Step
 
-Execute `PASS-0001`:
-
-- add the real overlay window and chart canvas
-- add visible interval switching
-- add a global hotkey toggle
-- add budget presentation and redline UI
-- add startup integration through the Windows Startup folder
+Run the repo-root regression lane and close the task if the app-surface smoke counts honestly for the required regression claim.
 
 ## Watchouts
 
@@ -58,6 +59,12 @@ Execute `PASS-0001`:
 - `Tracking/Task-0001/Testing/PASS-0000-AUDIT.md`
 - `Tracking/Task-0001/Testing/PASS-0000-AUDIT.json`
 - `Tracking/Task-0001/Testing/PASS-0000-CHECKLIST.json`
+- `Tracking/Task-0001/Testing/PASS-0001-AUDIT.md`
+- `Tracking/Task-0001/Testing/PASS-0001-AUDIT.json`
+- `Tracking/Task-0001/Testing/PASS-0001-CHECKLIST.json`
+- `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-chart.ps`
+- `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-summary.txt`
+- `Design/GENERAL-DESIGN.md`
 - `C:\Users\gregs\.codex\AGENTS.md`
 - `C:\Users\gregs\.codex\Orchestration\ORCHESTRATION.md`
 - sampled session telemetry under `C:\Users\gregs\.codex\sessions\`

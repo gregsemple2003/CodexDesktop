@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0001",
+  "pass_id": "PASS-0001",
+  "transition_target": "pass_closeout",
+  "verdict": "ready",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "summary": "Upstream push remains deferred",
+      "why_it_matters": "The user explicitly asked to keep the prototype local first, so the pass closes on local proof only.",
+      "file_refs": [
+        "Tracking/Task-0001/HANDOFF.md"
+      ]
+    }
+  ],
+  "missing_evidence": [],
+  "open_questions": [],
+  "evidence_reviewed": [
+    "Design/GENERAL-DESIGN.md",
+    "Tracking/Task-0001/TASK.md",
+    "Tracking/Task-0001/PLAN.md",
+    "Tracking/Task-0001/HANDOFF.md",
+    "app/codex_dashboard/hotkey.py",
+    "app/codex_dashboard/startup.py",
+    "app/codex_dashboard/ui.py",
+    "tests/test_desktop_support.py",
+    "python -m unittest discover -s tests -p \"test_*.py\" -v",
+    "Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-chart.ps",
+    "Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-summary.txt"
+  ],
+  "suggested_next_step": "Run the repo-root regression lane and close the task if the app-surface smoke counts honestly for the required regression claim.",
+  "updated_at": "2026-04-02T20:49:00-04:00"
+}
