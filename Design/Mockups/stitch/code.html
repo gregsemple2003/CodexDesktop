@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CodexDashboard | Token Velocity Overlay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "on-surface": "#dfe2eb",
+                        "on-tertiary": "#68000c",
+                        "tertiary-fixed": "#ffdad7",
+                        "inverse-primary": "#006875",
+                        "secondary": "#adcbda",
+                        "on-background": "#dfe2eb",
+                        "outline-variant": "#3b494c",
+                        "surface-dim": "#10141a",
+                        "on-surface-variant": "#bac9cc",
+                        "secondary-fixed-dim": "#adcbda",
+                        "primary-fixed-dim": "#00daf3",
+                        "on-tertiary-container": "#b01522",
+                        "surface-container": "#1c2026",
+                        "primary-fixed": "#9cf0ff",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#31353c",
+                        "surface-bright": "#353940",
+                        "on-secondary": "#163440",
+                        "on-primary-container": "#00626e",
+                        "primary-container": "#00e5ff",
+                        "on-tertiary-fixed-variant": "#930015",
+                        "on-secondary-container": "#9fbdcc",
+                        "tertiary-container": "#ffc1bd",
+                        "secondary-fixed": "#c9e7f7",
+                        "on-secondary-fixed-variant": "#2e4b57",
+                        "background": "#10141a",
+                        "primary": "#c3f5ff",
+                        "surface-tint": "#00daf3",
+                        "inverse-on-surface": "#2d3137",
+                        "on-primary-fixed-variant": "#004f58",
+                        "secondary-container": "#304d5a",
+                        "outline": "#849396",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#410004",
+                        "surface-container-highest": "#31353c",
+                        "surface-container-low": "#181c22",
+                        "tertiary-fixed-dim": "#ffb3ae",
+                        "on-primary-fixed": "#001f24",
+                        "on-secondary-fixed": "#001f2a",
+                        "inverse-surface": "#dfe2eb",
+                        "tertiary": "#ffe7e5",
+                        "on-error": "#690005",
+                        "surface": "#10141a",
+                        "surface-container-lowest": "#0a0e14",
+                        "on-primary": "#00363d",
+                        "surface-container-high": "#262a31"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #0a0e14;
+            color: #dfe2eb;
+            font-family: 'Inter', sans-serif;
+        }
+        .monolithic-gradient {
+            background: linear-gradient(180deg, #c3f5ff 0%, #00e5ff 100%);
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="bg-surface-container-lowest min-h-screen flex items-center justify-center p-4">
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-[#0a0e14]/90 backdrop-blur-sm z-0"></div>
+<!-- Central Overlay Dashboard (Compressed) -->
+<div class="relative z-10 w-full max-w-4xl bg-surface-container shadow-2xl border border-outline-variant/10">
+<!-- Header Strip -->
+<header class="flex justify-between items-center px-6 h-12 bg-surface-container-low relative">
+<div class="flex items-center gap-3">
+<span class="text-lg font-bold font-headline text-primary tracking-tighter uppercase">CodexDashboard</span>
+<span class="bg-surface-bright text-secondary text-[9px] font-medium px-1.5 py-0.5 tracking-widest uppercase">Velocity.v2</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-1">
+<button class="bg-surface-container-high text-secondary px-2.5 py-0.5 text-[10px] font-bold font-label hover:bg-surface-bright transition-none">1m</button>
+<button class="bg-surface-container-high text-secondary px-2.5 py-0.5 text-[10px] font-bold font-label hover:bg-surface-bright transition-none">5m</button>
+<button class="bg-primary-container text-on-primary-container px-2.5 py-0.5 text-[10px] font-bold font-label transition-none">15m</button>
+<button class="bg-surface-container-high text-secondary px-2.5 py-0.5 text-[10px] font-bold font-label hover:bg-surface-bright transition-none">1h</button>
+<button class="bg-surface-container-high text-secondary px-2.5 py-0.5 text-[10px] font-bold font-label hover:bg-surface-bright transition-none">1d</button>
+</div>
+<button class="text-secondary hover:text-white transition-none">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="bg-outline-variant/20 h-[1px] w-full absolute bottom-0 left-0"></div>
+</header>
+<main class="p-4">
+<!-- Metrics Row -->
+<div class="grid grid-cols-4 gap-3 mb-4">
+<div class="bg-surface-container-low p-3">
+<p class="text-secondary text-[10px] font-medium font-label uppercase tracking-widest mb-0.5">7d Total Tokens</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold font-headline text-primary tabular-nums">4.82M</span>
+<span class="text-secondary text-[10px] font-label">TKN</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-3">
+<p class="text-secondary text-[10px] font-medium font-label uppercase tracking-widest mb-0.5">Projected Limit</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold font-headline text-primary tabular-nums">2.4B</span>
+<span class="text-secondary text-[10px] font-label">TK</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-3">
+<p class="text-secondary text-[10px] font-medium font-label uppercase tracking-widest mb-0.5">Velocity Index</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold font-headline text-primary tabular-nums">0.84</span>
+<span class="text-secondary text-[10px] font-label">req/s</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-3 border-l-2 border-primary-container">
+<p class="text-secondary text-[10px] font-medium font-label uppercase tracking-widest mb-0.5">Status</p>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<span class="text-primary font-bold font-label text-xs uppercase tracking-tighter">Operational</span>
+</div>
+</div>
+</div>
+<!-- Central Focal Point: Bar Chart (Bars 2x wider: w-6 instead of w-3) -->
+<div class="mb-4 relative">
+<div class="flex justify-between items-end mb-2">
+<h3 class="font-headline font-bold text-xs tracking-tight text-on-surface">Token Velocity (Real-time Stream)</h3>
+<span class="text-[9px] font-label text-secondary uppercase tracking-[0.2em]">US-EAST-1_CLUSTER</span>
+</div>
+<div class="bg-surface-container-lowest h-40 w-full flex items-end justify-between px-4 pb-1 relative group overflow-hidden">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between py-3 pointer-events-none px-3">
+<div class="border-t border-surface-container-highest w-full opacity-20"></div>
+<div class="border-t border-surface-container-highest w-full opacity-20"></div>
+<div class="border-t border-surface-container-highest w-full opacity-20"></div>
+</div>
+<!-- Redline Indicator (Budget Overrun) -->
+<div class="absolute left-0 right-0 top-[30%] h-[1px] bg-[#FF5252] z-10 flex items-center">
+<span class="bg-[#FF5252] text-white text-[8px] font-bold px-1 py-0.5 ml-3 uppercase">Threshold</span>
+</div>
+<!-- Bars (Widened to w-6) -->
+<div class="w-6 bg-primary-container/20 h-[45%]"></div>
+<div class="w-6 bg-primary-container/30 h-[55%]"></div>
+<div class="w-6 bg-primary-container/40 h-[65%]"></div>
+<div class="w-6 bg-primary-container/50 h-[80%]"></div>
+<div class="w-6 bg-[#FF5252] h-[92%] shadow-[0_0_8px_rgba(255,82,82,0.4)]"></div>
+<div class="w-6 bg-primary-container/80 h-[75%]"></div>
+<div class="w-6 bg-primary-container h-[60%]"></div>
+<div class="w-6 bg-primary-container/90 h-[55%]"></div>
+<div class="w-6 bg-primary-container/40 h-[40%]"></div>
+<div class="w-6 bg-primary-container/60 h-[50%]"></div>
+<div class="w-6 bg-primary-container/70 h-[85%]"></div>
+<div class="w-6 bg-[#FF5252] h-[95%] shadow-[0_0_8px_rgba(255,82,82,0.4)]"></div>
+<div class="w-6 bg-primary-container/50 h-[60%]"></div>
+<div class="w-6 bg-primary-container/30 h-[45%]"></div>
+<div class="w-6 bg-primary-container/20 h-[30%]"></div>
+<div class="w-6 bg-primary-container/10 h-[20%]"></div>
+<div class="w-6 bg-primary-container/40 h-[45%]"></div>
+<div class="w-6 bg-primary-container/60 h-[55%]"></div>
+<div class="w-6 bg-primary-container/80 h-[65%]"></div>
+<div class="w-6 bg-primary-container h-[75%]"></div>
+</div>
+</div>
+<!-- Control Sections Removed for compact layout -->
+</main>
+<!-- Footer Actions -->
+<footer class="flex justify-between items-center px-6 h-12 bg-surface-container-high relative">
+<div class="bg-outline-variant/20 h-[1px] w-full absolute top-0 left-0"></div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-1 h-1 bg-primary-container animate-pulse"></span>
+<span class="text-[9px] font-label text-secondary font-bold uppercase tracking-widest">Live Sync: Active</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-bright text-on-surface px-4 py-1.5 text-[10px] font-bold font-label uppercase tracking-widest hover:bg-surface-variant transition-none">Dismiss</button>
+<button class="bg-primary-container text-on-primary-container px-4 py-1.5 text-[10px] font-bold font-label uppercase tracking-widest hover:brightness-110 transition-none">Apply Controls</button>
+</div>
+</footer>
+</div>
+<!-- Background Decorative Texture -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none opacity-[0.03] z-[-1] overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Technical schematic with abstract digital nodes and crystalline geometric lines on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHhs8Pza-dGvBXtcQAasBM7g2tBwprSCROSJTfPuyiK9ZU43fGv9JLHIohGZ56QyX2jm5FPBBJL9Pi4nhXIoSVWOc13uUCZkookP0Ttjplspt90b2N2IxzHQE8KoIoxRHe7Fhbjn8oONIxhjIQpkyPbnIlP3UBVNQ62VpKfF-UfJpz8JpqtNRjbTqbwwR9odZqOkyJUrg7Ui6wmJC5JqtZZ98WJ8yYplUI6Dww0b4YuKEBD0I33IXY3WmGkStWPYpjVKmylyWuHlY"/>
+</div>
+</body></html>
