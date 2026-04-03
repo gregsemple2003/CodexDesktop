@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0002` is created and ready for research and planning. No implementation work has started.
+`Task-0002` research is complete, the plan is approved under the standing auto-approve instruction, and `PASS-0000` is the active implementation checkpoint.
 
 ## Baseline
 
@@ -16,13 +16,12 @@ The new task is not a product rewrite. It is a UI redesign pass that keeps the e
 
 ## Next Step
 
-Ground the redesign in the existing `app/` surface and map the Stitch composition to the current overlay implementation before any code changes.
+Implement `PASS-0000` in `app/codex_dashboard/ui.py`:
 
-That next step should answer:
-
-- which current UI pieces can be retained as-is
-- which pieces need to be restyled or regrouped to match the Stitch structure
-- where `Design/GENERAL-DESIGN.md` intentionally overrides the Stitch mockup
+- compress the header into the Stitch utility strip
+- restyle the metrics row as compact instrument cards
+- restyle the single chart field around the monolithic control-room framing
+- move budget editing, startup, advisory context, and footer actions into a tighter lower operational rail
 
 ## Watchouts
 
@@ -35,6 +34,10 @@ That next step should answer:
 
 - `Tracking/Task-0001/HANDOFF.md`
 - `Tracking/Task-0001/TASK.md`
+- `Tracking/Task-0002/RESEARCH-PLAN.md`
+- `Tracking/Task-0002/RESEARCH-ANALYSIS.md`
+- `Tracking/Task-0002/RESEARCH.md`
+- `Tracking/Task-0002/PLAN.md`
 - `Design/GENERAL-DESIGN.md`
 - `Design/Mockups/stitch/DESIGN.md`
 - `Design/Mockups/stitch/code.html`
