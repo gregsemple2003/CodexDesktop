@@ -5,7 +5,7 @@ import os
 import queue
 import threading
 import tkinter as tk
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from pathlib import Path
 from tkinter import ttk
 
@@ -34,6 +34,7 @@ class DashboardApp:
         self._quitting = False
         self.smoke_hotkey_triggered = False
         self.smoke_overlay_fallback = False
+        self.display_timezone = self._resolve_display_timezone()
 
         self.root = tk.Tk()
         self.root.withdraw()
@@ -300,11 +301,17 @@ class DashboardApp:
     def refresh_data(self) -> None:
         connection = connect(Path(self.config.db_path))
         initialize_db(connection)
-        now = datetime.now(UTC)
-        events = load_events_since(connection, now - timedelta(days=7))
+        now = datetime.now(self.display_timezone)
+        events = load_events_since(connection, now.astimezone(UTC) - timedelta(days=7))
         connection.close()
 
-        buckets = build_buckets(events, self.selected_interval, bucket_count=18, now=now)
+        buckets = build_buckets(
+            events,
+            self.selected_interval,
+            bucket_count=18,
+            now=now,
+            display_tz=self.display_timezone,
+        )
         interval_seconds = INTERVAL_SECONDS[self.selected_interval]
         current_bucket_tokens = buckets[-1].total_tokens if buckets else 0
         projected = project_weekly_burn(current_bucket_tokens, interval_seconds)
@@ -396,7 +403,7 @@ class DashboardApp:
             left,
             top - 8,
             anchor="w",
-            text=f"Interval {self.selected_interval}",
+            text=f"Interval {self.selected_interval} | {self._timezone_label()}",
             fill="#dce7f3",
             font=("Segoe UI Semibold", 10),
         )
@@ -498,3 +505,9 @@ class DashboardApp:
 
     def run(self) -> None:
         self.root.mainloop()
+
+    def _resolve_display_timezone(self) -> tzinfo:
+        return datetime.now().astimezone().tzinfo or UTC
+
+    def _timezone_label(self) -> str:
+        return datetime.now(self.display_timezone).strftime("%Z") or "local"

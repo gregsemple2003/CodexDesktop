@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 from app.codex_dashboard.aggregation import (
@@ -108,6 +108,35 @@ class IngestCoreTests(unittest.TestCase):
         buckets = build_buckets(events, "5m", bucket_count=2, now=base.replace(minute=5))
         self.assertEqual(len(buckets), 2)
         self.assertEqual(buckets[0].total_tokens, 300)
+        self.assertEqual(buckets[1].total_tokens, 0)
+
+    def test_daily_buckets_align_to_local_midnight(self) -> None:
+        est = timezone(timedelta(hours=-5), name="EST")
+        now = datetime(2026, 4, 3, 1, 30, tzinfo=est)
+        event_local = datetime(2026, 4, 2, 23, 45, tzinfo=est)
+        events = [
+            TokenEvent(
+                session_path="a",
+                line_offset=0,
+                event_timestamp=event_local.astimezone(UTC),
+                total_tokens=250,
+                input_tokens=0,
+                cached_input_tokens=0,
+                output_tokens=0,
+                reasoning_output_tokens=0,
+                cumulative_total_tokens=250,
+                weekly_used_percent=None,
+                weekly_window_minutes=None,
+                weekly_resets_at=None,
+                raw_json="{}",
+            )
+        ]
+
+        buckets = build_buckets(events, "1d", bucket_count=2, now=now, display_tz=est)
+
+        self.assertEqual(buckets[0].start_at, datetime(2026, 4, 2, 0, 0, tzinfo=est))
+        self.assertEqual(buckets[1].start_at, datetime(2026, 4, 3, 0, 0, tzinfo=est))
+        self.assertEqual(buckets[0].total_tokens, 250)
         self.assertEqual(buckets[1].total_tokens, 0)
 
     def test_redline_projection_uses_interval_rate(self) -> None:
