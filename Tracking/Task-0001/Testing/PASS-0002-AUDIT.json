@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0001",
+  "pass_id": "PASS-0002",
+  "transition_target": "pass_closeout",
+  "verdict": "ready",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "summary": "Prototype remains local-only by user choice",
+      "why_it_matters": "The user explicitly asked to keep the repo local and not push upstream until the prototype proves itself.",
+      "file_refs": [
+        "Tracking/Task-0001/HANDOFF.md"
+      ]
+    },
+    {
+      "summary": "Passing rerun used a synthetic system key event",
+      "why_it_matters": "Regression run 0003 proves the registered hotkey path on the real app surface, but it does not replace an optional future physical-keyboard spot check.",
+      "file_refs": [
+        "Tracking/Task-0001/Testing/REGRESSION-RUN-0003.md"
+      ]
+    }
+  ],
+  "missing_evidence": [],
+  "open_questions": [],
+  "evidence_reviewed": [
+    "Tracking/Task-0001/BUG-0001.md",
+    "Tracking/Task-0001/HANDOFF.md",
+    "Tracking/Task-0001/TASK-STATE.json",
+    "Tracking/Task-0001/Testing/REGRESSION-RUN-0002.md",
+    "Tracking/Task-0001/Testing/REGRESSION-RUN-0003.md",
+    "Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0002/overlay-chart.ps",
+    "Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0002/overlay-summary.txt",
+    "app/codex_dashboard/hotkey.py",
+    "app/codex_dashboard/ui.py",
+    "tests/test_desktop_support.py",
+    "python -m unittest discover -s tests -p \"test_*.py\" -v"
+  ],
+  "suggested_next_step": "Treat the task as complete locally and only rerun a physical-keyboard spot check if the prototype is prepared for upstream promotion.",
+  "updated_at": "2026-04-02T21:30:00-04:00"
+}

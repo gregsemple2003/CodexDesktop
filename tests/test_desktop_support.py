@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from app.codex_dashboard.hotkey import MOD_ALT, MOD_CONTROL, parse_hotkey
+from app.codex_dashboard.hotkey import MOD_ALT, MOD_CONTROL, GlobalHotkey, parse_hotkey
 from app.codex_dashboard.startup import startup_command
 
 
@@ -26,6 +26,16 @@ class DesktopSupportTests(unittest.TestCase):
                 command = startup_command()
         self.assertIn('cd /d "C:\\Agent\\CodexDashboard"', command)
         self.assertIn('"C:\\Python313\\pythonw.exe" -m app.codex_dashboard', command)
+
+    def test_global_hotkey_poll_drains_pending_callbacks(self) -> None:
+        callback = mock.Mock()
+        hotkey = GlobalHotkey("Ctrl+Alt+Space", callback)
+        hotkey._pending_callbacks.put(None)
+        hotkey._pending_callbacks.put(None)
+
+        hotkey.poll()
+
+        self.assertEqual(callback.call_count, 2)
 
 
 if __name__ == "__main__":

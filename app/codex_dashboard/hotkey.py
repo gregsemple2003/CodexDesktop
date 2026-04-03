@@ -1,17 +1,27 @@
 from __future__ import annotations
 
 import ctypes
+import queue
+import threading
 from ctypes import wintypes
 
-user32 = ctypes.windll.user32
+user32 = ctypes.WinDLL("user32", use_last_error=True)
+kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
 WM_HOTKEY = 0x0312
-PM_REMOVE = 0x0001
+WM_QUIT = 0x0012
 
 MOD_ALT = 0x0001
 MOD_CONTROL = 0x0002
 MOD_SHIFT = 0x0004
 MOD_WIN = 0x0008
+
+
+class POINT(ctypes.Structure):
+    _fields_ = [
+        ("x", wintypes.LONG),
+        ("y", wintypes.LONG),
+    ]
 
 
 class MSG(ctypes.Structure):
@@ -21,8 +31,7 @@ class MSG(ctypes.Structure):
         ("wParam", wintypes.WPARAM),
         ("lParam", wintypes.LPARAM),
         ("time", wintypes.DWORD),
-        ("pt_x", ctypes.c_long),
-        ("pt_y", ctypes.c_long),
+        ("pt", POINT),
     ]
 
 
@@ -67,27 +76,82 @@ class GlobalHotkey:
         self.hotkey_id = hotkey_id
         self.modifiers, self.virtual_key = parse_hotkey(hotkey)
         self._registered = False
+        self._thread: threading.Thread | None = None
+        self._thread_id: int | None = None
+        self._register_event = threading.Event()
+        self._register_error: Exception | None = None
+        self._pending_callbacks: queue.SimpleQueue[None] = queue.SimpleQueue()
 
     def register(self) -> None:
         if self._registered:
             return
-        if not user32.RegisterHotKey(
-            None,
-            self.hotkey_id,
-            self.modifiers,
-            self.virtual_key,
-        ):
-            error = ctypes.get_last_error()
-            raise OSError(error, f"RegisterHotKey failed for {self.hotkey}")
-        self._registered = True
+        self._register_error = None
+        self._register_event.clear()
+        self._thread = threading.Thread(
+            target=self._message_loop,
+            name=f"CodexDashboardHotkey-{self.hotkey_id}",
+            daemon=True,
+        )
+        self._thread.start()
+        if not self._register_event.wait(timeout=2.0):
+            raise TimeoutError(f"Timed out while registering hotkey {self.hotkey}")
+        if self._register_error is not None:
+            error = self._register_error
+            self._register_error = None
+            self._thread = None
+            raise error
+
+    def _message_loop(self) -> None:
+        try:
+            self._thread_id = int(kernel32.GetCurrentThreadId())
+            if not user32.RegisterHotKey(
+                None,
+                self.hotkey_id,
+                self.modifiers,
+                self.virtual_key,
+            ):
+                error = ctypes.get_last_error()
+                self._register_error = OSError(error, f"RegisterHotKey failed for {self.hotkey}")
+                return
+            self._registered = True
+            self._register_event.set()
+
+            message = MSG()
+            while True:
+                result = user32.GetMessageW(ctypes.byref(message), None, 0, 0)
+                if result == -1:
+                    error = ctypes.get_last_error()
+                    self._register_error = OSError(error, f"GetMessageW failed for {self.hotkey}")
+                    break
+                if result == 0:
+                    break
+                if message.message == WM_HOTKEY and int(message.wParam) == self.hotkey_id:
+                    self._pending_callbacks.put(None)
+        except Exception as exc:  # pragma: no cover - defensive threading fallback
+            self._register_error = exc
+        finally:
+            if not self._register_event.is_set():
+                self._register_event.set()
+            if self._registered:
+                user32.UnregisterHotKey(None, self.hotkey_id)
+                self._registered = False
+            self._thread_id = None
 
     def poll(self) -> None:
-        message = MSG()
-        while user32.PeekMessageW(ctypes.byref(message), None, 0, 0, PM_REMOVE):
-            if message.message == WM_HOTKEY and int(message.wParam) == self.hotkey_id:
-                self.callback()
+        while True:
+            try:
+                self._pending_callbacks.get_nowait()
+            except queue.Empty:
+                break
+            self.callback()
 
     def unregister(self) -> None:
-        if self._registered:
-            user32.UnregisterHotKey(None, self.hotkey_id)
-            self._registered = False
+        thread_id = self._thread_id
+        thread = self._thread
+        if thread_id is not None:
+            user32.PostThreadMessageW(thread_id, WM_QUIT, 0, 0)
+        if thread is not None:
+            thread.join(timeout=2.0)
+        self._thread = None
+        self._thread_id = None
+        self._registered = False

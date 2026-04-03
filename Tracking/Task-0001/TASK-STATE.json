@@ -1,25 +1,19 @@
 {
   "schema_version": 1,
   "task_id": "Task-0001",
-  "status": "in_progress",
-  "phase": "regression",
+  "status": "complete",
+  "phase": "closure",
   "plan_approved": true,
-  "current_pass": "PASS-0002",
-  "last_completed_pass": "PASS-0001",
-  "current_gate": "debugging",
+  "current_pass": null,
+  "last_completed_pass": "PASS-0002",
+  "current_gate": "closure",
   "latest_audit_verdict": "ready",
   "validation": {
     "build": "not_applicable",
     "unit_tests": "passing",
-    "regression": "failing"
+    "regression": "passing"
   },
-  "blockers": [
-    "Manual regression on 2026-04-02 confirmed that pressing Ctrl+Alt+Space does nothing in the live app, so task-level regression and closure are failing until the hotkey path is fixed."
-  ],
-  "next_expected_artifacts": [
-    "BUG-0001.md",
-    "HANDOFF.md",
-    "Testing/REGRESSION-RUN-0003.md"
-  ],
-  "updated_at": "2026-04-02T21:15:00-04:00"
+  "blockers": [],
+  "next_expected_artifacts": [],
+  "updated_at": "2026-04-02T21:30:00-04:00"
 }
