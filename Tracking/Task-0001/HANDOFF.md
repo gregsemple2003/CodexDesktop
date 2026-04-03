@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Task research is complete and planning is now the active phase.
+Planning is complete, auto-approved, and `PASS-0000` is now the active implementation pass.
 
 ## Current Baseline
 
@@ -17,14 +17,18 @@ What is already grounded:
 - the local machine does not currently expose the Tauri toolchain on `PATH`
 - the local machine does expose Python 3.13 with standard-library `tkinter`
 - research therefore recommends a Windows-first Python prototype as the first working version
+- the approved pass order is now:
+  - `PASS-0000`: repo bootstrap and ingest core
+  - `PASS-0001`: overlay UI and desktop integration
+  - `PASS-0002`: regression, handoff, and closure
 
 ## Recommended Next Step
 
-Write and auto-approve `PLAN.md` around three passes:
+Execute `PASS-0000`:
 
-- `PASS-0000`: bootstrap the repo, ingest engine, SQLite persistence, and supporting tests
-- `PASS-0001`: add the desktop overlay, hotkey toggle, weekly-budget config, and startup toggle
-- `PASS-0002`: add repo-root docs, regression harness, executed regression artifact, and task closure
+- add repo-root docs for this new repo
+- implement the ingest engine, SQLite store, aggregation logic, and weekly redline math
+- add focused unit coverage for event parsing, dedupe, and bucket aggregation
 
 ## Watchouts
 
@@ -41,6 +45,7 @@ Write and auto-approve `PLAN.md` around three passes:
 - `Tracking/Task-0001/RESEARCH-PLAN.md`
 - `Tracking/Task-0001/RESEARCH-ANALYSIS.md`
 - `Tracking/Task-0001/RESEARCH.md`
+- `Tracking/Task-0001/PLAN.md`
 - `C:\Users\gregs\.codex\AGENTS.md`
 - `C:\Users\gregs\.codex\Orchestration\ORCHESTRATION.md`
 - sampled session telemetry under `C:\Users\gregs\.codex\sessions\`
