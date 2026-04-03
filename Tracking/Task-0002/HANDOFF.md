@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0002` is complete locally through repo-root regression. The only remaining closure blocker is git push because this repo still has no configured `upstream` remote.
+`Task-0002` is complete. The implementation checkpoint and the final closure transition are both pushed to `upstream/master`.
 
 ## Baseline
 
@@ -33,9 +33,14 @@ See:
 - `Tracking/Task-0002/Testing/REGRESSION-RUN-0001/overlay-summary.txt`
 - `Tracking/Task-0002/Testing/REGRESSION-RUN-0001/overlay-chart.ps`
 
-## Next Step
+## Closure
 
-Unblock final closure by configuring the correct remote and pushing the leader checkpoint commit. Product work, unit validation, and repo-root regression are complete.
+Closure is now complete:
+
+- implementation checkpoint pushed: `8f3d0f7`
+- closure-state checkpoint pushed after durable artifact update
+
+Product work, pass-local proof, and repo-root regression are all complete.
 
 ## Watchouts
 
@@ -44,7 +49,6 @@ Unblock final closure by configuring the correct remote and pushing the leader c
 - Treat the Stitch footer labels and metric wording as composition guidance, not as fixed product semantics if they conflict with the repo-root design anchor.
 - Keep ingest, persistence, and background telemetry outside the scope of this task.
 - The smoke-mode hotkey fallback is only for automated UI smoke when the host already has the hotkey chord claimed. Do not broaden that into normal-mode hotkey bypass behavior.
-- The repo still has no configured `upstream` remote, so leader-owned push attempts fail even though the task is otherwise ready to close.
 
 ## References
 
