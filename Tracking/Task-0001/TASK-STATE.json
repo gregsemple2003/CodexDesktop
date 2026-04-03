@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task_id": "Task-0001",
-  "status": "in_progress",
+  "status": "blocked",
   "phase": "regression",
   "plan_approved": true,
   "current_pass": "PASS-0002",
@@ -11,13 +11,15 @@
   "validation": {
     "build": "not_applicable",
     "unit_tests": "passing",
-    "regression": "not_run"
+    "regression": "blocked"
   },
-  "blockers": [],
+  "blockers": [
+    "Real keyboard confirmation for the global hotkey toggle is still required because the automated smoke fallback showed hotkey_triggered=False."
+  ],
   "next_expected_artifacts": [
-    "Testing/REGRESSION-RUN-0001.md",
+    "BUG-0001.md",
     "HANDOFF.md",
     "TASK-STATE.json"
   ],
-  "updated_at": "2026-04-02T20:49:00-04:00"
+  "updated_at": "2026-04-02T20:52:00-04:00"
 }

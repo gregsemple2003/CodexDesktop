@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete on local proof, and the task has entered the regression phase.
+`PASS-0001` is complete on local proof, but the task is currently blocked in regression on the final hotkey interaction claim.
 
 ## Current Baseline
 
@@ -35,10 +35,23 @@ What is already grounded:
   - startup integration
   - budget editing and redline presentation
   - an app-surface smoke artifact bundle under `Testing/UI-SMOKE-0001/`
+- regression run `0001` proved:
+  - real app launch
+  - real live-data ingest
+  - real overlay render
+  - real artifact export
+  - clean smoke exit
+- regression run `0001` did not prove:
+  - a real keyboard-triggered `Ctrl+Alt+Space` overlay toggle
 
 ## Recommended Next Step
 
-Run the repo-root regression lane and close the task if the app-surface smoke counts honestly for the required regression claim.
+Run one human-confirmed regression slice for the hotkey:
+
+- launch `python -m app.codex_dashboard`
+- press `Ctrl+Alt+Space` and confirm the overlay appears
+- dismiss it with the hotkey or `Escape`
+- update the regression artifact if the interaction works
 
 ## Watchouts
 
@@ -64,6 +77,10 @@ Run the repo-root regression lane and close the task if the app-surface smoke co
 - `Tracking/Task-0001/Testing/PASS-0001-CHECKLIST.json`
 - `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-chart.ps`
 - `Tracking/Task-0001/Testing/UI-SMOKE-0001/overlay-summary.txt`
+- `Tracking/Task-0001/Testing/REGRESSION-RUN-0001.md`
+- `Tracking/Task-0001/BUG-0001.md`
+- `Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0001/overlay-chart.ps`
+- `Tracking/Task-0001/Testing/REGRESSION-UI-SMOKE-0001/overlay-summary.txt`
 - `Design/GENERAL-DESIGN.md`
 - `C:\Users\gregs\.codex\AGENTS.md`
 - `C:\Users\gregs\.codex\Orchestration\ORCHESTRATION.md`

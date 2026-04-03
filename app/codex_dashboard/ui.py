@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import os
 import queue
 import threading
@@ -31,6 +32,8 @@ class DashboardApp:
         self.ingest_in_flight = False
         self.smoke_artifact_dir = smoke_artifact_dir
         self._quitting = False
+        self.smoke_hotkey_triggered = False
+        self.smoke_overlay_fallback = False
 
         self.root = tk.Tk()
         self.root.withdraw()
@@ -56,7 +59,8 @@ class DashboardApp:
         self.root.after(100, self.refresh_data)
         self.root.after(250, self.schedule_ingest)
         if self.smoke_artifact_dir is not None:
-            self.root.after(900, self._run_smoke_capture)
+            self.root.after(350, self._trigger_smoke_hotkey)
+            self.root.after(1200, self._run_smoke_capture)
 
     def _configure_style(self) -> None:
         style = ttk.Style()
@@ -427,6 +431,8 @@ class DashboardApp:
         self.status_label.configure(text=f"Startup {state}.")
 
     def toggle_overlay(self) -> None:
+        if self.smoke_artifact_dir is not None:
+            self.smoke_hotkey_triggered = True
         if self.overlay.state() == "withdrawn":
             self.show_overlay()
         else:
@@ -455,7 +461,9 @@ class DashboardApp:
         if artifact_dir is None:
             return
         artifact_dir.mkdir(parents=True, exist_ok=True)
-        self.show_overlay()
+        if self.overlay.state() == "withdrawn":
+            self.smoke_overlay_fallback = True
+            self.show_overlay()
         self.overlay.update_idletasks()
         self.canvas.postscript(
             file=str(artifact_dir / "overlay-chart.ps"),
@@ -467,10 +475,26 @@ class DashboardApp:
                 self.local_total_value.cget("text"),
                 self.redline_value.cget("text"),
                 self.advisory_label.cget("text"),
+                f"hotkey_triggered={self.smoke_hotkey_triggered}",
+                f"overlay_fallback={self.smoke_overlay_fallback}",
             ]
         )
         (artifact_dir / "overlay-summary.txt").write_text(summary, encoding="utf-8")
         os._exit(0)
+
+    def _trigger_smoke_hotkey(self) -> None:
+        user32 = ctypes.windll.user32
+        keybd_event = user32.keybd_event
+        KEYEVENTF_KEYUP = 0x0002
+        VK_CONTROL = 0x11
+        VK_MENU = 0x12
+        VK_SPACE = 0x20
+        keybd_event(VK_CONTROL, 0, 0, 0)
+        keybd_event(VK_MENU, 0, 0, 0)
+        keybd_event(VK_SPACE, 0, 0, 0)
+        keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0)
+        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
 
     def run(self) -> None:
         self.root.mainloop()

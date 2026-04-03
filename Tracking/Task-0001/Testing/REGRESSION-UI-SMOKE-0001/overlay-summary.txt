@@ -1,0 +1,6 @@
+Last ingest 20:48:39 | files 4/209 | events +15
+1,743,649,371
+Projected burn: 8,975,443,344 REDLINE
+Codex advisory window: 44.0% used | reset epoch 1775638824
+hotkey_triggered=False
+overlay_fallback=True
