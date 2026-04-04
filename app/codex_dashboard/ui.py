@@ -29,7 +29,6 @@ from .investigation import (
 )
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
-from .startup import is_startup_enabled, set_startup_enabled
 from .storage import connect, initialize_db, load_events_since, load_session_context_markers
 
 
@@ -189,7 +188,6 @@ class DashboardApp:
     ) -> None:
         self.config_path = config_path or default_config_path()
         self.config = load_config(self.config_path)
-        self.config.startup_enabled = is_startup_enabled()
         self.selected_interval = "15m"
         self.selected_chart_mode = "velocity"
         self.selected_metric_mode = "total"
@@ -367,18 +365,6 @@ class DashboardApp:
             "HeaderAccent.TButton",
             background=[("active", "#2ee8ff")],
         )
-        style.configure(
-            "Overlay.TCheckbutton",
-            background="#1c2026",
-            foreground="#dfe2eb",
-            font=("Inter", 9),
-        )
-        style.map(
-            "Overlay.TCheckbutton",
-            background=[("active", "#1c2026")],
-            foreground=[("active", "#dfe2eb")],
-        )
-
     def _build_overlay(self) -> None:
         self.container = ttk.Frame(self.overlay, style="Overlay.TFrame", padding=28)
         self.container.pack(fill="both", expand=True)
@@ -478,22 +464,12 @@ class DashboardApp:
             style="Accent.TButton",
             command=self.save_budget,
         ).pack(side="left", padx=(0, 10))
-
-        self.startup_var = tk.BooleanVar(value=self.config.startup_enabled)
-        startup_toggle = ttk.Checkbutton(
-            status_controls,
-            text="Start with Windows",
-            variable=self.startup_var,
-            style="Overlay.TCheckbutton",
-            command=self.toggle_startup,
-        )
-        startup_toggle.pack(side="left")
         self.hotkey_label = ttk.Label(
             status_controls,
             text=f"Toggle: {self.config.hotkey}",
             style="Tiny.TLabel",
         )
-        self.hotkey_label.pack(side="left", padx=(16, 0))
+        self.hotkey_label.pack(side="left", padx=(8, 0))
 
         metrics_row = ttk.Frame(body, style="BodyPanel.TFrame")
         metrics_row.pack(fill="x", pady=(0, 14))
@@ -1196,14 +1172,6 @@ class DashboardApp:
         self.status_label.configure(text=f"Saved weekly budget: {format_budget_billions(self.config.weekly_budget_tokens)}B")
         self.refresh_data()
 
-    def toggle_startup(self) -> None:
-        enabled = bool(self.startup_var.get())
-        set_startup_enabled(enabled)
-        self.config.startup_enabled = enabled
-        save_config(self.config, self.config_path)
-        state = "enabled" if enabled else "disabled"
-        self.status_label.configure(text=f"Startup {state}.")
-
     def toggle_overlay(self) -> None:
         if self.smoke_artifact_dir is not None:
             self.smoke_hotkey_triggered = True
@@ -1253,7 +1221,6 @@ class DashboardApp:
                 f"interval={self.selected_interval}",
                 f"metric_mode={self.selected_metric_mode}",
                 f"weekly_budget={self.config.weekly_budget_tokens}",
-                f"startup_enabled={self.startup_var.get()}",
                 f"7d_total={self.local_total_value.cget('text')}",
                 f"projected={self.projected_value.cget('text')}",
                 f"headroom={self.headroom_value.cget('text')}",
