@@ -6,7 +6,7 @@
   "plan_approved": true,
   "current_pass": "PASS-0002",
   "last_completed_pass": "PASS-0002",
-  "current_gate": "regression",
+  "current_gate": "debugging",
   "latest_audit_verdict": "ready_with_caveats",
   "validation": {
     "build": "not_applicable",
@@ -14,11 +14,11 @@
     "regression": "blocked"
   },
   "blockers": [
-    "Final reopened closeout still needs live readback that the `Jobs` tab now reflects the clarified declared-jobs contract: declared jobs from `.codex/Orchestration/Jobs`, declared-job details, and explicit refresh-driven diff."
+    "Live reopened feedback reports that the `Jobs` surface is not scrollable, so declared-job details and the jobs list cannot both be used comfortably on the real overlay."
   ],
   "next_expected_artifacts": [
     "Testing/PASS-0002-AUDIT.md",
     "HANDOFF.md"
   ],
-  "updated_at": "2026-04-04T14:19:00-04:00"
+  "updated_at": "2026-04-04T14:32:00-04:00"
 }
