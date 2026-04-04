@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CODEX_DASHBOARD | Jobs Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#9fbdcc",
+                        "on-secondary-fixed-variant": "#2e4b57",
+                        "surface-container-lowest": "#0a0e14",
+                        "surface": "#10141a",
+                        "on-secondary-fixed": "#001f2a",
+                        "on-surface": "#dfe2eb",
+                        "primary-container": "#00e5ff",
+                        "error": "#ffb4ab",
+                        "inverse-on-surface": "#2d3137",
+                        "surface-variant": "#31353c",
+                        "primary": "#c3f5ff",
+                        "on-primary-fixed": "#001f24",
+                        "on-secondary": "#163440",
+                        "on-error": "#690005",
+                        "inverse-surface": "#dfe2eb",
+                        "secondary-fixed-dim": "#adcbda",
+                        "secondary-fixed": "#c9e7f7",
+                        "on-primary-container": "#00626e",
+                        "surface-tint": "#00daf3",
+                        "on-tertiary": "#68000c",
+                        "surface-bright": "#353940",
+                        "on-tertiary-container": "#b01522",
+                        "secondary": "#adcbda",
+                        "on-tertiary-fixed": "#410004",
+                        "tertiary": "#ffe7e5",
+                        "surface-container-high": "#262a31",
+                        "inverse-primary": "#006875",
+                        "surface-container-highest": "#31353c",
+                        "on-surface-variant": "#bac9cc",
+                        "secondary-container": "#304d5a",
+                        "outline-variant": "#3b494c",
+                        "on-primary-fixed-variant": "#004f58",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb3ae",
+                        "tertiary-container": "#ffc1bd",
+                        "surface-dim": "#10141a",
+                        "surface-container-low": "#181c22",
+                        "background": "#10141a",
+                        "primary-fixed": "#9cf0ff",
+                        "primary-fixed-dim": "#00daf3",
+                        "outline": "#849396",
+                        "on-background": "#dfe2eb",
+                        "on-tertiary-fixed-variant": "#930015",
+                        "tertiary-fixed": "#ffdad7",
+                        "surface-container": "#1c2026",
+                        "on-primary": "#00363d",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .headline { font-family: 'Space Grotesk', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-[#0a0e14] text-on-surface min-h-screen flex items-center justify-center p-4">
+<!-- OVERLAY CONTAINER -->
+<div class="w-full max-w-5xl bg-surface-container shadow-2xl border-none flex flex-col overflow-hidden max-h-[921px]">
+<!-- TOP NAV BAR (Shared Component Context) -->
+<header class="bg-[#0a0e14] flex justify-between items-center w-full px-6 h-14 border-b border-outline-variant/10">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-widest text-[#00E5FF] font-headline uppercase">CODEX_DASHBOARD</span>
+<nav class="flex gap-6 h-full items-center">
+<a class="text-[#adcbda] font-headline tracking-tighter uppercase text-sm hover:bg-[#353940] px-2 py-1 duration-0" href="#">Usage</a>
+<a class="text-[#c3f5ff] border-b-2 border-[#00E5FF] pb-1 font-headline tracking-tighter uppercase text-sm duration-0" href="#">Jobs</a>
+<a class="text-[#adcbda] font-headline tracking-tighter uppercase text-sm hover:bg-[#353940] px-2 py-1 duration-0" href="#">Logs</a>
+<a class="text-[#adcbda] font-headline tracking-tighter uppercase text-sm hover:bg-[#353940] px-2 py-1 duration-0" href="#">Terminal</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-surface-container-high px-3 py-1.5">
+<img alt="Systems Operator Profile" class="w-6 h-6 object-cover grayscale brightness-125" data-alt="Stylish woman in a dark tech jacket with an expressive pose, short dark hair, sharp studio lighting, futuristic aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7-fG2CignkFC5LKZCuFGy2U-aAXMDThLp2HH6OQd_sSWqOaPSgwk_IssQrc7jqGs52yCfEtteO9ZEhCc3MIyjXkHq2U2BvyNJaT5dNTrlPiZAHgHe3QO9EXTUjN-aptcmM1z5lqlC_j0xM0F4tZKyT64GMiqq8RLxA-2NS1jeUtWB7wws7xtYvXiS1tPL7VwWtU8RLbsP0MyLLU-oVqBHSyOmlFXlx27Otp995rS7jQkqHwVr6OubFskoyjkayaKbaTElRP85ZPM"/>
+<span class="text-xs font-headline font-bold text-primary tracking-tight">S. CHEN</span>
+</div>
+<div class="flex gap-2">
+<button class="material-symbols-outlined text-secondary hover:text-primary duration-0">notifications</button>
+<button class="material-symbols-outlined text-secondary hover:text-primary duration-0">settings</button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-3 py-1 font-headline font-bold text-xs tracking-widest uppercase hover:brightness-110 duration-0">RECONCILE</button>
+</div>
+</header>
+<!-- DASHBOARD CONTENT AREA -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- SUMMARY AREA -->
+<section class="p-6 bg-surface-container-low grid grid-cols-4 gap-4">
+<div class="flex flex-col">
+<span class="text-[10px] text-secondary font-headline uppercase tracking-widest">DECLARED_JOBS</span>
+<span class="text-3xl font-headline font-bold text-primary tabular-nums">04</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-secondary font-headline uppercase tracking-widest">IN_SYNC</span>
+<span class="text-3xl font-headline font-bold text-primary-container tabular-nums">02</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-secondary font-headline uppercase tracking-widest">NEEDS_ATTENTION</span>
+<span class="text-3xl font-headline font-bold text-on-tertiary-container tabular-nums">02</span>
+</div>
+<div class="flex flex-col items-end justify-end">
+<span class="text-[10px] text-secondary font-headline uppercase tracking-widest">LAST_RECONCILED</span>
+<span class="text-sm font-headline text-secondary tracking-tighter">2m ago</span>
+</div>
+</section>
+<!-- ACTION BAR -->
+<div class="px-6 py-3 bg-surface-container border-y border-outline-variant/10 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-secondary">filter_list</span>
+<span class="text-[10px] text-secondary font-headline font-bold uppercase tracking-widest">Filter: ALL_TYPES</span>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-high px-3 py-1 text-[10px] font-headline font-bold text-secondary tracking-widest uppercase hover:bg-surface-bright duration-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">refresh</span> REFRESH
+                    </button>
+<button class="bg-primary-container/20 border border-primary-container/30 px-3 py-1 text-[10px] font-headline font-bold text-primary-container tracking-widest uppercase hover:bg-primary-container/40 duration-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">sync</span> FORCE_RECONCILE
+                    </button>
+</div>
+</div>
+<!-- JOBS LIST -->
+<div class="flex-1 overflow-y-auto no-scrollbar bg-surface-container">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-high z-10">
+<tr class="text-[10px] font-headline font-bold text-secondary uppercase tracking-[0.2em] border-b border-outline-variant/20">
+<th class="px-6 py-3 font-medium">Job Definition / Purpose</th>
+<th class="px-4 py-3 font-medium">Execution</th>
+<th class="px-4 py-3 font-medium">State (D/O)</th>
+<th class="px-4 py-3 font-medium">Sync Status</th>
+<th class="px-6 py-3 font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Job 1 -->
+<tr class="hover:bg-surface-bright/50 duration-0 group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-headline font-bold text-primary">CodexDashboard at Sign-In</span>
+<span class="text-[11px] text-secondary/60">Persistent utility initialization</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-1.5 py-0.5 text-[9px] font-headline font-bold tracking-widest text-secondary">WINDOWS_BOOT</span>
+</td>
+<td class="px-4 py-4 tabular-nums text-xs">
+<div class="flex items-center gap-2">
+<span class="text-primary-container">RUNNING</span>
+<span class="text-secondary/30">/</span>
+<span class="text-primary-container">RUNNING</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center gap-1.5 bg-primary-container/10 px-2 py-0.5">
+<div class="w-1 h-1 bg-primary-container"></div>
+<span class="text-[10px] font-headline font-bold text-primary-container uppercase tracking-widest">SYNCED</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[10px] font-headline font-bold text-[#00E5FF] tracking-widest uppercase opacity-0 group-hover:opacity-100 duration-0">DETAILS</button>
+</td>
+</tr>
+<!-- Job 2 -->
+<tr class="hover:bg-surface-bright/50 duration-0 group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-headline font-bold text-primary">Codex Daily Agentic SWE Digest</span>
+<span class="text-[11px] text-on-tertiary-container font-medium">Reason: Process terminated unexpectedly.</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-1.5 py-0.5 text-[9px] font-headline font-bold tracking-widest text-secondary">CRON_DAEMON</span>
+</td>
+<td class="px-4 py-4 tabular-nums text-xs">
+<div class="flex items-center gap-2">
+<span class="text-primary-container">RUNNING</span>
+<span class="text-secondary/30">/</span>
+<span class="text-on-tertiary-container">STOPPED</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center gap-1.5 bg-on-tertiary-container/10 px-2 py-0.5 border border-on-tertiary-container/20 shadow-[0_0_8px_rgba(176,21,34,0.1)]">
+<div class="w-1 h-1 bg-on-tertiary-container"></div>
+<span class="text-[10px] font-headline font-bold text-on-tertiary-container uppercase tracking-widest">DRIFTED</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[10px] font-headline font-bold text-[#00E5FF] tracking-widest uppercase opacity-0 group-hover:opacity-100 duration-0">DETAILS</button>
+</td>
+</tr>
+<!-- Job 3 -->
+<tr class="hover:bg-surface-bright/50 duration-0 group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-headline font-bold text-primary">Codex Daily Physical Agents Digest</span>
+<span class="text-[11px] text-secondary/60">Hardware telemetry report</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-1.5 py-0.5 text-[9px] font-headline font-bold tracking-widest text-secondary">CRON_DAEMON</span>
+</td>
+<td class="px-4 py-4 tabular-nums text-xs">
+<div class="flex items-center gap-2">
+<span class="text-primary-container">RUNNING</span>
+<span class="text-secondary/30">/</span>
+<span class="text-primary-container">RUNNING</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center gap-1.5 bg-primary-container/10 px-2 py-0.5">
+<div class="w-1 h-1 bg-primary-container"></div>
+<span class="text-[10px] font-headline font-bold text-primary-container uppercase tracking-widest">SYNCED</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[10px] font-headline font-bold text-[#00E5FF] tracking-widest uppercase opacity-0 group-hover:opacity-100 duration-0">DETAILS</button>
+</td>
+</tr>
+<!-- Job 4 -->
+<tr class="hover:bg-surface-bright/50 duration-0 group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-headline font-bold text-primary">Codex Daily UE Determinism Digest</span>
+<span class="text-[11px] text-on-tertiary-container font-medium">Reason: Definition not found on local state.</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-1.5 py-0.5 text-[9px] font-headline font-bold tracking-widest text-secondary">CRON_DAEMON</span>
+</td>
+<td class="px-4 py-4 tabular-nums text-xs">
+<div class="flex items-center gap-2">
+<span class="text-on-tertiary-container opacity-50">MISSING</span>
+<span class="text-secondary/30">/</span>
+<span class="text-on-tertiary-container opacity-50">MISSING</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center gap-1.5 bg-error-container/20 px-2 py-0.5 border border-error/30">
+<div class="w-1 h-1 bg-error"></div>
+<span class="text-[10px] font-headline font-bold text-error uppercase tracking-widest">MISSING</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[10px] font-headline font-bold text-[#00E5FF] tracking-widest uppercase opacity-0 group-hover:opacity-100 duration-0">DETAILS</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- FOOTER TELEMETRY -->
+<footer class="bg-[#0a0e14] px-6 py-2 border-t border-outline-variant/10 flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 bg-primary-container animate-pulse"></span>
+<span class="text-[9px] font-headline text-secondary tracking-widest uppercase">System Online</span>
+</div>
+<div class="h-3 w-px bg-outline-variant/20"></div>
+<span class="text-[9px] font-headline text-secondary/60 tracking-widest uppercase">Kernel: 6.2.0-CODEX-ALPHA</span>
+</div>
+<div class="text-[9px] font-headline text-secondary tracking-widest">
+                    SESSION_ID: <span class="text-primary tabular-nums">49AF-77BC-1209</span>
+</div>
+</footer>
+</main>
+</div>
+</body></html>
