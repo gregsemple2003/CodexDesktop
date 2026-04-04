@@ -1,0 +1,13 @@
+active_tab=usage
+Last ingest 14:00:38 | files 0/263 | events +0
+hotkey_triggered=True
+overlay_fallback=False
+interval=15m
+metric_mode=total
+weekly_budget=3550000000
+7d_total=2.5B
+projected=9.2B
+headroom=-8.3M
+budget_line=5.3M
+status=Redline
+Codex advisory window: 96.0% used | reset in 3.6d

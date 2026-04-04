@@ -488,20 +488,6 @@ class DashboardApp:
                 widget.bind("<Button-1>", lambda _event, key=tab_id: self.select_tab(key))
             self.tab_buttons[tab_id] = tab_label
             self.tab_underlines[tab_id] = underline
-        tk.Label(
-            nav_row,
-            text="LOGS",
-            bg=HEADER_BACKGROUND,
-            fg=TAB_INACTIVE_FOREGROUND,
-            font=("Space Grotesk", 10),
-        ).pack(side="left", padx=(0, 20))
-        tk.Label(
-            nav_row,
-            text="TERMINAL",
-            bg=HEADER_BACKGROUND,
-            fg=TAB_INACTIVE_FOREGROUND,
-            font=("Space Grotesk", 10),
-        ).pack(side="left")
 
         ttk.Button(
             header,
@@ -524,6 +510,8 @@ class DashboardApp:
         usage_toolbar.pack(fill="x", pady=(0, 12))
         self.usage_header_controls = ttk.Frame(usage_toolbar, style="BodyPanel.TFrame")
         self.usage_header_controls.pack(side="left")
+        self.usage_budget_controls = ttk.Frame(usage_toolbar, style="BodyPanel.TFrame")
+        self.usage_budget_controls.pack(side="right")
 
         interval_shell = ttk.Frame(self.usage_header_controls, style="Shell.TFrame", padding=(8, 6))
         interval_shell.pack(side="left", padx=(0, 8))
@@ -567,23 +555,17 @@ class DashboardApp:
             button.pack(side="left", padx=(0, 6))
             self.metric_mode_buttons[metric_mode] = button
 
-        status_row = ttk.Frame(body, style="BodyPanel.TFrame")
-        status_row.pack(fill="x", pady=(0, 12))
-        status_row.columnconfigure(0, weight=1)
         self.status_label = ttk.Label(
-            status_row,
+            body,
             text="Waiting for first ingest...",
             style="Status.TLabel",
         )
-        self.status_label.grid(row=0, column=0, sticky="w")
-        status_controls = ttk.Frame(status_row, style="BodyPanel.TFrame")
-        status_controls.grid(row=0, column=1, sticky="e")
-        ttk.Label(status_controls, text="Budget (B)", style="Status.TLabel").pack(side="left")
+        ttk.Label(self.usage_budget_controls, text="Budget (B)", style="Status.TLabel").pack(side="left")
         self.weekly_budget_var = tk.StringVar(
             value=format_budget_billions(self.config.weekly_budget_tokens)
         )
         self.weekly_budget_entry = tk.Entry(
-            status_controls,
+            self.usage_budget_controls,
             textvariable=self.weekly_budget_var,
             width=5,
             bg="#121820",
@@ -597,7 +579,7 @@ class DashboardApp:
         )
         self.weekly_budget_entry.pack(side="left", padx=(10, 8), ipady=4)
         ttk.Button(
-            status_controls,
+            self.usage_budget_controls,
             text="Save",
             style="Accent.TButton",
             command=self.save_budget,
@@ -1274,30 +1256,31 @@ class DashboardApp:
 
         if show_budget_line:
             threshold_y = bottom - ((threshold_tokens / max_tokens) * chart_height)
-            threshold_color = "#ff5a52"
+            threshold_color = "#8ec5ff"
             self.canvas.create_line(
                 left,
                 threshold_y,
                 right,
                 threshold_y,
                 fill=threshold_color,
-                width=1,
+                width=2,
+                dash=(2, 4),
             )
             label_left = left + 12
-            label_right = label_left + 58
+            label_right = label_left + 54
             self.canvas.create_rectangle(
                 label_left,
                 threshold_y - 9,
                 label_right,
                 threshold_y + 5,
-                fill=threshold_color,
+                fill="#10141a",
                 outline="",
             )
             self.canvas.create_text(
                 (label_left + label_right) / 2,
                 threshold_y - 2,
-                text="REDLINE",
-                fill="#ffffff",
+                text="BUDGET",
+                fill=threshold_color,
                 font=("Inter", 7, "bold"),
             )
 

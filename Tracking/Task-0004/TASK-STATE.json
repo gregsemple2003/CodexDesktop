@@ -6,7 +6,7 @@
   "plan_approved": true,
   "current_pass": "PASS-0002",
   "last_completed_pass": "PASS-0002",
-  "current_gate": "debugging",
+  "current_gate": "regression",
   "latest_audit_verdict": "ready_with_caveats",
   "validation": {
     "build": "not_applicable",
@@ -14,11 +14,11 @@
     "regression": "blocked"
   },
   "blockers": [
-    "Live reopened feedback requests another UI pass: move the budget editor onto the interval strip, remove the visible ingest text, restyle the chart budget line as dotted blue `BUDGET`, and remove inactive `Logs` and `Terminal` tabs before rerunning regression."
+    "Final reopened closeout still needs live readback that the latest UI pass is correct: budget editor on the top content strip, no visible ingest line, dotted blue `BUDGET` threshold, and no inactive placeholder tabs."
   ],
   "next_expected_artifacts": [
     "Testing/PASS-0002-AUDIT.md",
     "HANDOFF.md"
   ],
-  "updated_at": "2026-04-04T13:55:00-04:00"
+  "updated_at": "2026-04-04T14:01:00-04:00"
 }

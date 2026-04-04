@@ -15,8 +15,11 @@ The current candidate baseline includes:
 - explicit `Refresh` and `Force Reconcile` actions for jobs-state work
 - hidden child PowerShell windows for explicit jobs actions
 - a separate primary-nav strip with tab-owned controls below it
+- a top `Usage` content strip with the budget editor right-justified on the same row as the interval controls
+- no visible last-ingest line on the `Usage` surface
+- no inactive `Logs` or `Terminal` placeholder tabs
 - stronger tab emphasis and a quieter header closer to the approved Stitch direction
-- a redline label treatment that matches the approved chart language more closely than the old right-edge utility annotation
+- a dotted blue `BUDGET` threshold treatment in the chart
 
 ## Validation Status
 
@@ -24,15 +27,15 @@ Executed successfully:
 
 - `python -m unittest discover -s tests -p "test_*.py" -v`
 - `python -m app.codex_dashboard --scan-once --print-summary`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0004`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005 --smoke-tab jobs`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0005`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006 --smoke-tab jobs`
 
 Current evidence:
 
-- [PASS-0002-REG-001-0004/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/desktop-overlay.png)
-- [PASS-0002-REG-001-0004/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/overlay-summary.txt)
-- [PASS-0002-JOBS-SMOKE-0005/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/desktop-overlay.png)
-- [PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt)
+- [PASS-0002-REG-001-0005/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0005/desktop-overlay.png)
+- [PASS-0002-REG-001-0005/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0005/overlay-summary.txt)
+- [PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png)
+- [PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt)
 
 ## Next Step
 
