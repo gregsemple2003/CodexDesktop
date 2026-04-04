@@ -244,6 +244,19 @@ class DesktopSupportTests(unittest.TestCase):
         self.assertNotIn("command_text", inserted_text)
         jobs_detail_shell.pack.assert_called_once()
 
+    def test_jobs_mousewheel_scrolls_canvas_when_jobs_tab_active(self) -> None:
+        jobs_scroll_canvas = mock.Mock()
+        app = SimpleNamespace(
+            active_tab="jobs",
+            jobs_scroll_canvas=jobs_scroll_canvas,
+        )
+        event = SimpleNamespace(delta=-120)
+
+        result = DashboardApp._on_jobs_mousewheel(app, event)
+
+        jobs_scroll_canvas.yview_scroll.assert_called_once_with(1, "units")
+        self.assertEqual(result, "break")
+
     def test_toggle_overlay_hides_visible_overlay_from_explicit_flag(self) -> None:
         app = SimpleNamespace(
             smoke_artifact_dir=None,

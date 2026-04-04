@@ -14,6 +14,7 @@ The current candidate baseline includes:
 - sibling declared-jobs schema under `C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.schema.json`
 - `Jobs` tab clicks that only switch surfaces
 - `Jobs` tab default content driven from declared jobs instead of an immediate refresh
+- a dedicated scrollable `Jobs` content area so declared-job details and the jobs list can coexist on the real overlay
 - explicit `Refresh` and `Force Reconcile` actions for jobs-state work
 - hidden child PowerShell windows for explicit jobs actions
 - a separate primary-nav strip with tab-owned controls below it
@@ -42,6 +43,8 @@ Current evidence:
 - [PASS-0002-REG-001-0007/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0007/overlay-summary.txt)
 - [PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png)
 - [PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt)
+- [PASS-0002-JOBS-SMOKE-0009/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0009/desktop-overlay.png)
+- [PASS-0002-JOBS-SMOKE-0009/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0009/overlay-summary.txt)
 
 ## Next Step
 

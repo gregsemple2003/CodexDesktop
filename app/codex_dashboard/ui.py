@@ -744,7 +744,32 @@ class DashboardApp:
             command=lambda: self.refresh_jobs_data(apply_changes=True),
         ).pack(side="right")
 
-        self.jobs_detail_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        self.jobs_scroll_shell = ttk.Frame(self.jobs_body, style="BodyPanel.TFrame")
+        self.jobs_scroll_shell.pack(fill="both", expand=True)
+        self.jobs_scroll_canvas = tk.Canvas(
+            self.jobs_scroll_shell,
+            bg="#1c2026",
+            highlightthickness=0,
+            borderwidth=0,
+        )
+        self.jobs_scroll_canvas.pack(side="left", fill="both", expand=True)
+        self.jobs_scrollbar = ttk.Scrollbar(
+            self.jobs_scroll_shell,
+            orient="vertical",
+            command=self.jobs_scroll_canvas.yview,
+        )
+        self.jobs_scrollbar.pack(side="right", fill="y")
+        self.jobs_scroll_canvas.configure(yscrollcommand=self.jobs_scrollbar.set)
+        self.jobs_scroll_content = ttk.Frame(self.jobs_scroll_canvas, style="BodyPanel.TFrame")
+        self.jobs_scroll_window = self.jobs_scroll_canvas.create_window(
+            (0, 0),
+            window=self.jobs_scroll_content,
+            anchor="nw",
+        )
+        self.jobs_scroll_content.bind("<Configure>", self._refresh_jobs_scroll_region)
+        self.jobs_scroll_canvas.bind("<Configure>", self._resize_jobs_scroll_content)
+
+        self.jobs_detail_shell = ttk.Frame(self.jobs_scroll_content, style="Shell.TFrame", padding=(10, 10))
         self.jobs_detail_title = ttk.Label(self.jobs_detail_shell, text="", style="ChartTitle.TLabel")
         self.jobs_detail_title.pack(anchor="w", pady=(0, 6))
         self.jobs_detail_text = tk.Text(
@@ -759,9 +784,17 @@ class DashboardApp:
         )
         self.jobs_detail_text.pack(fill="x")
         self.jobs_detail_text.configure(state="disabled")
+        for widget in (
+            self.jobs_scroll_canvas,
+            self.jobs_scroll_content,
+            self.jobs_detail_shell,
+            self.jobs_detail_text,
+        ):
+            widget.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
-        self.jobs_rows_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        self.jobs_rows_shell = ttk.Frame(self.jobs_scroll_content, style="Shell.TFrame", padding=(10, 10))
         self.jobs_rows_shell.pack(fill="both", expand=True)
+        self.jobs_rows_shell.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
         header_row = ttk.Frame(self.jobs_rows_shell, style="Shell.TFrame")
         header_row.pack(fill="x", pady=(0, 8))
@@ -772,10 +805,13 @@ class DashboardApp:
             ("Drift status", 18),
             ("Actions", 10),
         ):
-            ttk.Label(header_row, text=text, style="Tiny.TLabel", width=width).pack(side="left")
+            label = ttk.Label(header_row, text=text, style="Tiny.TLabel", width=width)
+            label.pack(side="left")
+            label.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
         self.jobs_rows_container = ttk.Frame(self.jobs_rows_shell, style="Shell.TFrame")
         self.jobs_rows_container.pack(fill="both", expand=True)
+        self.jobs_rows_container.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
     def _build_jobs_summary_card(
         self,
@@ -943,34 +979,43 @@ class DashboardApp:
     def _build_jobs_row(self, job: dict[str, object]) -> None:
         row = ttk.Frame(self.jobs_rows_container, style="Card.TFrame", padding=(12, 10))
         row.pack(fill="x", pady=(0, 8))
+        row.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
         title_column = ttk.Frame(row, style="Card.TFrame")
         title_column.pack(side="left", fill="x", expand=True)
-        ttk.Label(
+        title_label = ttk.Label(
             title_column,
             text=str(job["label"]),
             style="ChartTitle.TLabel",
-        ).pack(anchor="w")
-        ttk.Label(
+        )
+        title_label.pack(anchor="w")
+        title_label.bind("<MouseWheel>", self._on_jobs_mousewheel)
+        reason_label = ttk.Label(
             title_column,
             text=str(job["reason"]),
             style="Status.TLabel",
             wraplength=320,
             justify="left",
-        ).pack(anchor="w", pady=(4, 0))
+        )
+        reason_label.pack(anchor="w", pady=(4, 0))
+        reason_label.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
-        ttk.Label(
+        mechanism_label = ttk.Label(
             row,
             text=str(job.get("mechanism_label", job.get("kind", ""))),
             style="Status.TLabel",
             width=16,
-        ).pack(side="left", padx=(10, 0))
-        ttk.Label(
+        )
+        mechanism_label.pack(side="left", padx=(10, 0))
+        mechanism_label.bind("<MouseWheel>", self._on_jobs_mousewheel)
+        state_label = ttk.Label(
             row,
             text=f"{job.get('desired_label', 'Unknown')} / {job.get('observed_label', 'Unknown')}",
             style="Status.TLabel",
             width=20,
-        ).pack(side="left", padx=(10, 0))
+        )
+        state_label.pack(side="left", padx=(10, 0))
+        state_label.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
         status = str(job["status"])
         status_chip = tk.Label(
@@ -983,14 +1028,17 @@ class DashboardApp:
             font=("Space Grotesk", 8, "bold"),
         )
         status_chip.pack(side="left", padx=(10, 0))
+        status_chip.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
-        ttk.Button(
+        details_button = ttk.Button(
             row,
             text="Details",
             style="Quiet.TButton",
             command=lambda payload=job: self.toggle_job_details(payload),
             width=8,
-        ).pack(side="right")
+        )
+        details_button.pack(side="right")
+        details_button.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
     def toggle_job_details(self, job: dict[str, object]) -> None:
         if self.jobs_detail_job_id == job["job_id"]:
@@ -1015,6 +1063,24 @@ class DashboardApp:
         self.jobs_detail_text.configure(state="disabled")
         if not self.jobs_detail_shell.winfo_manager():
             self.jobs_detail_shell.pack(fill="x", pady=(0, 12), before=self.jobs_rows_shell)
+        jobs_scroll_canvas = getattr(self, "jobs_scroll_canvas", None)
+        if jobs_scroll_canvas is not None:
+            jobs_scroll_canvas.yview_moveto(0)
+
+    def _refresh_jobs_scroll_region(self, _event=None) -> None:
+        self.jobs_scroll_canvas.configure(scrollregion=self.jobs_scroll_canvas.bbox("all"))
+
+    def _resize_jobs_scroll_content(self, event) -> None:
+        self.jobs_scroll_canvas.itemconfigure(self.jobs_scroll_window, width=event.width)
+
+    def _on_jobs_mousewheel(self, event) -> str:
+        if self.active_tab != "jobs":
+            return "break"
+        delta = event.delta
+        if delta == 0:
+            return "break"
+        self.jobs_scroll_canvas.yview_scroll(int(-delta / 120), "units")
+        return "break"
 
     def _poll_hotkey(self) -> None:
         if self.hotkey_registered:
