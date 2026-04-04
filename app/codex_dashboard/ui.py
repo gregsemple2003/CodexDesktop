@@ -259,6 +259,7 @@ class DashboardApp:
 
         self.overlay = tk.Toplevel(self.root)
         self.overlay.withdraw()
+        self.overlay_visible = False
         self.overlay.overrideredirect(True)
         self.overlay.attributes("-topmost", True)
         self.overlay.geometry(self._overlay_geometry())
@@ -1476,14 +1477,15 @@ class DashboardApp:
     def toggle_overlay(self) -> None:
         if self.smoke_artifact_dir is not None:
             self.smoke_hotkey_triggered = True
-        if self.overlay.state() == "withdrawn":
-            self.show_overlay()
-        else:
+        if self.overlay_visible:
             self.hide_overlay()
+        else:
+            self.show_overlay()
 
     def show_overlay(self) -> None:
         self.refresh_data()
         self.overlay.deiconify()
+        self.overlay_visible = True
         self.overlay.lift()
         self.overlay.focus_force()
 
@@ -1491,6 +1493,7 @@ class DashboardApp:
         self.chart_context_region = None
         self._hide_chart_tooltip()
         self.overlay.withdraw()
+        self.overlay_visible = False
 
     def quit(self) -> None:
         if self._quitting:
@@ -1510,35 +1513,50 @@ class DashboardApp:
         artifact_dir.mkdir(parents=True, exist_ok=True)
         if self.smoke_tab in {"usage", "jobs"}:
             self.select_tab(self.smoke_tab)
-        if self.overlay.state() == "withdrawn":
+        if not self.overlay_visible:
             self.smoke_overlay_fallback = True
             self.show_overlay()
         self.overlay.update_idletasks()
-        self.canvas.postscript(
-            file=str(artifact_dir / "overlay-chart.ps"),
-            colormode="color",
-        )
-        summary = "\n".join(
-            [
-                self.status_label.cget("text"),
-                f"interval={self.selected_interval}",
-                f"metric_mode={self.selected_metric_mode}",
-                f"active_tab={self.active_tab}",
-                f"weekly_budget={self.config.weekly_budget_tokens}",
-                f"7d_total={self.local_total_value.cget('text')}",
-                f"projected={self.projected_value.cget('text')}",
-                f"headroom={self.headroom_value.cget('text')}",
-                (
-                    f"budget_line={format_token_value(interval_redline_tokens(self.config.weekly_budget_tokens, INTERVAL_SECONDS[self.selected_interval]))}"
-                    if self.selected_metric_mode == "total"
-                    else "budget_line=hidden_in_norm_mode"
-                ),
-                f"status={self.status_metric_value.cget('text')}",
-                self.advisory_label.cget("text"),
-                f"hotkey_triggered={self.smoke_hotkey_triggered}",
-                f"overlay_fallback={self.smoke_overlay_fallback}",
-            ]
-        )
+        if self.active_tab == "usage":
+            self.canvas.postscript(
+                file=str(artifact_dir / "overlay-chart.ps"),
+                colormode="color",
+            )
+        summary_lines = [
+            f"active_tab={self.active_tab}",
+            self.status_label.cget("text"),
+            f"hotkey_triggered={self.smoke_hotkey_triggered}",
+            f"overlay_fallback={self.smoke_overlay_fallback}",
+        ]
+        if self.active_tab == "usage":
+            summary_lines.extend(
+                [
+                    f"interval={self.selected_interval}",
+                    f"metric_mode={self.selected_metric_mode}",
+                    f"weekly_budget={self.config.weekly_budget_tokens}",
+                    f"7d_total={self.local_total_value.cget('text')}",
+                    f"projected={self.projected_value.cget('text')}",
+                    f"headroom={self.headroom_value.cget('text')}",
+                    (
+                        f"budget_line={format_token_value(interval_redline_tokens(self.config.weekly_budget_tokens, INTERVAL_SECONDS[self.selected_interval]))}"
+                        if self.selected_metric_mode == "total"
+                        else "budget_line=hidden_in_norm_mode"
+                    ),
+                    f"status={self.status_metric_value.cget('text')}",
+                    self.advisory_label.cget("text"),
+                ]
+            )
+        else:
+            summary_lines.extend(
+                [
+                    f"jobs_registry={self.jobs_registry_path}",
+                    f"jobs_declared={self.jobs_declared_value.cget('text')}",
+                    f"jobs_in_sync={self.jobs_synced_value.cget('text')}",
+                    f"jobs_needs_attention={self.jobs_attention_value.cget('text')}",
+                    f"jobs_last_reconciled={self.jobs_last_reconciled_value.cget('text')}",
+                ]
+            )
+        summary = "\n".join(summary_lines)
         (artifact_dir / "overlay-summary.txt").write_text(summary, encoding="utf-8")
         os._exit(0)
 

@@ -15,6 +15,7 @@ from app.codex_dashboard.config import (
 )
 from app.codex_dashboard.startup import startup_command
 from app.codex_dashboard.ui import (
+    DashboardApp,
     format_budget_billions,
     format_chart_title,
     format_jobs_timestamp,
@@ -171,6 +172,45 @@ class DesktopSupportTests(unittest.TestCase):
             format_jobs_timestamp("2026-04-04T12:01:55-04:00"),
             "12:01 PM",
         )
+
+    def test_toggle_overlay_hides_visible_overlay_from_explicit_flag(self) -> None:
+        app = SimpleNamespace(
+            smoke_artifact_dir=None,
+            smoke_hotkey_triggered=False,
+            overlay_visible=True,
+            show_overlay=mock.Mock(),
+            hide_overlay=mock.Mock(),
+        )
+
+        DashboardApp.toggle_overlay(app)
+
+        app.hide_overlay.assert_called_once_with()
+        app.show_overlay.assert_not_called()
+
+    def test_show_and_hide_overlay_update_visible_flag(self) -> None:
+        overlay = mock.Mock()
+        app = SimpleNamespace(
+            overlay=overlay,
+            overlay_visible=False,
+            refresh_data=mock.Mock(),
+            chart_context_region="selected",
+            _hide_chart_tooltip=mock.Mock(),
+        )
+
+        DashboardApp.show_overlay(app)
+
+        self.assertTrue(app.overlay_visible)
+        app.refresh_data.assert_called_once_with()
+        overlay.deiconify.assert_called_once_with()
+        overlay.lift.assert_called_once_with()
+        overlay.focus_force.assert_called_once_with()
+
+        DashboardApp.hide_overlay(app)
+
+        self.assertFalse(app.overlay_visible)
+        self.assertIsNone(app.chart_context_region)
+        app._hide_chart_tooltip.assert_called_once_with()
+        overlay.withdraw.assert_called_once_with()
 
 
 if __name__ == "__main__":
