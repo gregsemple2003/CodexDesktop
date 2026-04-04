@@ -73,6 +73,10 @@ JOBS_STATUS_COLORS = {
     "missing": "#ff8a52",
     "blocked": "#ff5a52",
 }
+TAB_ACTIVE_FOREGROUND = "#c3f5ff"
+TAB_INACTIVE_FOREGROUND = "#9fbdcc"
+TAB_ACTIVE_UNDERLINE = "#00e5ff"
+HEADER_BACKGROUND = "#181c22"
 
 
 def load_private_font_assets() -> list[Path]:
@@ -248,7 +252,7 @@ class DashboardApp:
             "jobs": [],
         }
         self.jobs_detail_job_id: str | None = None
-        self.jobs_status_message = "Refresh managed jobs to inspect local Windows state."
+        self.jobs_status_message = "Press Refresh to inspect local Windows state."
         self.debug_log_path = self.config_path.parent / "dashboard-debug.log"
         self._append_debug_log("dashboard_started")
 
@@ -408,6 +412,42 @@ class DashboardApp:
             "HeaderAccent.TButton",
             background=[("active", "#2ee8ff")],
         )
+        style.configure(
+            "ToolbarQuiet.TButton",
+            background="#303743",
+            foreground="#dfe2eb",
+            font=("Inter", 8, "bold"),
+            borderwidth=0,
+            focusthickness=0,
+        )
+        style.map(
+            "ToolbarQuiet.TButton",
+            background=[("active", "#3b4450")],
+        )
+        style.configure(
+            "ToolbarAccent.TButton",
+            background="#16d9f5",
+            foreground="#10141a",
+            font=("Inter", 8, "bold"),
+            borderwidth=0,
+            focusthickness=0,
+        )
+        style.map(
+            "ToolbarAccent.TButton",
+            background=[("active", "#2ee8ff")],
+        )
+        style.configure(
+            "StatusValue.TLabel",
+            background="#181c22",
+            foreground="#bff4ff",
+            font=("Inter", 12, "bold"),
+        )
+        style.configure(
+            "StatusDetail.TLabel",
+            background="#181c22",
+            foreground="#8fa8bb",
+            font=("Inter", 9),
+        )
     def _build_overlay(self) -> None:
         self.container = ttk.Frame(self.overlay, style="Overlay.TFrame", padding=28)
         self.container.pack(fill="both", expand=True)
@@ -417,70 +457,59 @@ class DashboardApp:
 
         header = ttk.Frame(self.shell, style="Header.TFrame", padding=(16, 12))
         header.pack(fill="x")
+        header.columnconfigure(0, weight=1)
         brand_row = ttk.Frame(header, style="Header.TFrame")
-        brand_row.pack(side="left")
-        ttk.Label(brand_row, text="CODEX DASHBOARD", style="Brand.TLabel").pack(side="left")
-        ttk.Label(brand_row, text="VELOCITY.V2", style="Badge.TLabel").pack(side="left", padx=(8, 0))
-        self.tab_buttons: dict[str, ttk.Button] = {}
+        brand_row.grid(row=0, column=0, sticky="w")
+        ttk.Label(brand_row, text="CODEX_DASHBOARD", style="Brand.TLabel").pack(side="left")
+        self.tab_buttons: dict[str, tk.Label] = {}
+        self.tab_underlines: dict[str, tk.Frame] = {}
         nav_row = ttk.Frame(brand_row, style="Header.TFrame")
-        nav_row.pack(side="left", padx=(18, 0))
+        nav_row.pack(side="left", padx=(24, 0))
         for tab_id, label in (("usage", "Usage"), ("jobs", "Jobs")):
-            button = ttk.Button(
-                nav_row,
-                text=label,
-                style="HeaderQuiet.TButton",
-                command=lambda key=tab_id: self.select_tab(key),
-                width=7,
+            tab_shell = tk.Frame(nav_row, bg=HEADER_BACKGROUND)
+            tab_shell.pack(side="left", padx=(0, 20))
+            tab_label = tk.Label(
+                tab_shell,
+                text=label.upper(),
+                bg=HEADER_BACKGROUND,
+                fg=TAB_INACTIVE_FOREGROUND,
+                font=("Space Grotesk", 10, "bold"),
+                cursor="hand2",
             )
-            button.pack(side="left", padx=(0, 6))
-            self.tab_buttons[tab_id] = button
-        ttk.Label(nav_row, text="Logs", style="Tiny.TLabel").pack(side="left", padx=(8, 6))
-        ttk.Label(nav_row, text="Terminal", style="Tiny.TLabel").pack(side="left")
+            tab_label.pack(anchor="w")
+            underline = tk.Frame(
+                tab_shell,
+                bg=HEADER_BACKGROUND,
+                height=2,
+                width=30,
+            )
+            underline.pack(anchor="w", pady=(5, 0))
+            for widget in (tab_shell, tab_label, underline):
+                widget.bind("<Button-1>", lambda _event, key=tab_id: self.select_tab(key))
+            self.tab_buttons[tab_id] = tab_label
+            self.tab_underlines[tab_id] = underline
+        tk.Label(
+            nav_row,
+            text="LOGS",
+            bg=HEADER_BACKGROUND,
+            fg=TAB_INACTIVE_FOREGROUND,
+            font=("Space Grotesk", 10),
+        ).pack(side="left", padx=(0, 20))
+        tk.Label(
+            nav_row,
+            text="TERMINAL",
+            bg=HEADER_BACKGROUND,
+            fg=TAB_INACTIVE_FOREGROUND,
+            font=("Space Grotesk", 10),
+        ).pack(side="left")
 
-        self.usage_header_controls = ttk.Frame(header, style="Header.TFrame")
-        self.usage_header_controls.pack(side="right")
-        self.interval_buttons: dict[str, ttk.Button] = {}
-        for interval_key in ("1m", "5m", "15m", "1h", "1d"):
-            button = ttk.Button(
-                self.usage_header_controls,
-                text=interval_key,
-                style="HeaderQuiet.TButton",
-                command=lambda key=interval_key: self.select_interval(key),
-                width=4,
-            )
-            button.pack(side="left", padx=(0, 6))
-            self.interval_buttons[interval_key] = button
-        tk.Frame(self.usage_header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
-        self.chart_mode_buttons: dict[str, ttk.Button] = {}
-        for chart_mode, label in CHART_MODES.items():
-            button = ttk.Button(
-                self.usage_header_controls,
-                text=label,
-                style="HeaderQuiet.TButton",
-                command=lambda mode=chart_mode: self.select_chart_mode(mode),
-                width=6,
-            )
-            button.pack(side="left", padx=(0, 6))
-            self.chart_mode_buttons[chart_mode] = button
-        tk.Frame(self.usage_header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
-        self.metric_mode_buttons: dict[str, ttk.Button] = {}
-        for metric_mode, label in METRIC_MODES.items():
-            button = ttk.Button(
-                self.usage_header_controls,
-                text=label,
-                style="HeaderQuiet.TButton",
-                command=lambda mode=metric_mode: self.select_metric_mode(mode),
-                width=6,
-            )
-            button.pack(side="left", padx=(0, 6))
-            self.metric_mode_buttons[metric_mode] = button
         ttk.Button(
-            self.usage_header_controls,
+            header,
             text="X",
             style="HeaderQuiet.TButton",
             command=self.hide_overlay,
             width=3,
-        ).pack(side="left", padx=(10, 0))
+        ).grid(row=0, column=1, sticky="e")
 
         tk.Frame(self.shell, bg="#39424d", height=1).pack(fill="x")
 
@@ -490,6 +519,53 @@ class DashboardApp:
         body = ttk.Frame(self.content_stack, style="BodyPanel.TFrame", padding=(16, 14))
         body.pack(fill="both", expand=True)
         self.usage_body = body
+
+        usage_toolbar = ttk.Frame(body, style="BodyPanel.TFrame")
+        usage_toolbar.pack(fill="x", pady=(0, 12))
+        self.usage_header_controls = ttk.Frame(usage_toolbar, style="BodyPanel.TFrame")
+        self.usage_header_controls.pack(side="left")
+
+        interval_shell = ttk.Frame(self.usage_header_controls, style="Shell.TFrame", padding=(8, 6))
+        interval_shell.pack(side="left", padx=(0, 8))
+        self.interval_buttons: dict[str, ttk.Button] = {}
+        for interval_key in ("1m", "5m", "15m", "1h", "1d"):
+            button = ttk.Button(
+                interval_shell,
+                text=interval_key,
+                style="ToolbarQuiet.TButton",
+                command=lambda key=interval_key: self.select_interval(key),
+                width=4,
+            )
+            button.pack(side="left", padx=(0, 6))
+            self.interval_buttons[interval_key] = button
+
+        chart_mode_shell = ttk.Frame(self.usage_header_controls, style="Shell.TFrame", padding=(8, 6))
+        chart_mode_shell.pack(side="left", padx=(0, 8))
+        self.chart_mode_buttons: dict[str, ttk.Button] = {}
+        for chart_mode, label in CHART_MODES.items():
+            button = ttk.Button(
+                chart_mode_shell,
+                text=label,
+                style="ToolbarQuiet.TButton",
+                command=lambda mode=chart_mode: self.select_chart_mode(mode),
+                width=6,
+            )
+            button.pack(side="left", padx=(0, 6))
+            self.chart_mode_buttons[chart_mode] = button
+
+        metric_mode_shell = ttk.Frame(self.usage_header_controls, style="Shell.TFrame", padding=(8, 6))
+        metric_mode_shell.pack(side="left")
+        self.metric_mode_buttons: dict[str, ttk.Button] = {}
+        for metric_mode, label in METRIC_MODES.items():
+            button = ttk.Button(
+                metric_mode_shell,
+                text=label,
+                style="ToolbarQuiet.TButton",
+                command=lambda mode=metric_mode: self.select_metric_mode(mode),
+                width=6,
+            )
+            button.pack(side="left", padx=(0, 6))
+            self.metric_mode_buttons[metric_mode] = button
 
         status_row = ttk.Frame(body, style="BodyPanel.TFrame")
         status_row.pack(fill="x", pady=(0, 12))
@@ -526,12 +602,6 @@ class DashboardApp:
             style="Accent.TButton",
             command=self.save_budget,
         ).pack(side="left", padx=(0, 10))
-        self.hotkey_label = ttk.Label(
-            status_controls,
-            text=f"Toggle: {self.config.hotkey}",
-            style="Tiny.TLabel",
-        )
-        self.hotkey_label.pack(side="left", padx=(8, 0))
 
         metrics_row = ttk.Frame(body, style="BodyPanel.TFrame")
         metrics_row.pack(fill="x", pady=(0, 14))
@@ -574,13 +644,17 @@ class DashboardApp:
         self.status_card = ttk.Frame(metrics_row, style="Card.TFrame", padding=(0, 10))
         self.status_card.grid(row=0, column=3, sticky="nsew")
         self.status_card.columnconfigure(1, weight=1)
-        self.status_accent = tk.Frame(self.status_card, bg="#16d9f5", width=3)
+        self.status_accent = tk.Frame(self.status_card, bg="#16d9f5", width=2)
         self.status_accent.grid(row=0, column=0, rowspan=3, sticky="ns", padx=(0, 10))
         ttk.Label(self.status_card, text="STATUS", style="MetricTitle.TLabel").grid(row=0, column=1, sticky="w", padx=(2, 0))
-        self.status_metric_value = ttk.Label(self.status_card, text="Awaiting data", style="MetricValue.TLabel")
-        self.status_metric_value.grid(row=1, column=1, sticky="w", padx=(2, 0), pady=(8, 0))
-        self.status_metric_detail = ttk.Label(self.status_card, text="No ingest cycle completed yet.", style="MetricDetail.TLabel")
-        self.status_metric_detail.grid(row=2, column=1, sticky="w", padx=(2, 0), pady=(2, 0))
+        status_value_row = ttk.Frame(self.status_card, style="Card.TFrame")
+        status_value_row.grid(row=1, column=1, sticky="w", padx=(2, 0), pady=(10, 0))
+        self.status_dot = tk.Frame(status_value_row, bg="#16d9f5", width=7, height=7)
+        self.status_dot.pack(side="left", padx=(0, 8), pady=(3, 0))
+        self.status_metric_value = ttk.Label(status_value_row, text="Awaiting data", style="StatusValue.TLabel")
+        self.status_metric_value.pack(side="left")
+        self.status_metric_detail = ttk.Label(self.status_card, text="No ingest cycle completed yet.", style="StatusDetail.TLabel")
+        self.status_metric_detail.grid(row=2, column=1, sticky="w", padx=(19, 0), pady=(4, 0))
 
         chart_header = ttk.Frame(body, style="BodyPanel.TFrame")
         chart_header.pack(fill="x", pady=(0, 8))
@@ -618,14 +692,21 @@ class DashboardApp:
 
         info_row = ttk.Frame(body, style="BodyPanel.TFrame")
         info_row.pack(fill="x", pady=(12, 0))
+        info_row.columnconfigure(0, weight=1)
         self.advisory_label = ttk.Label(
             info_row,
             text="No weekly advisory yet.",
             style="Status.TLabel",
-            wraplength=860,
+            wraplength=720,
             justify="left",
         )
-        self.advisory_label.pack(fill="x")
+        self.advisory_label.grid(row=0, column=0, sticky="w")
+        self.hotkey_label = ttk.Label(
+            info_row,
+            text=f"Toggle: {self.config.hotkey}",
+            style="Tiny.TLabel",
+        )
+        self.hotkey_label.grid(row=0, column=1, sticky="e", padx=(12, 0))
 
         self._refresh_interval_buttons()
         self._refresh_chart_mode_buttons()
@@ -633,7 +714,6 @@ class DashboardApp:
         self._build_jobs_lane()
         self._refresh_tab_buttons()
         self._render_active_tab()
-        self.refresh_jobs_data()
 
     def _build_jobs_lane(self) -> None:
         self.jobs_body = ttk.Frame(self.content_stack, style="BodyPanel.TFrame", padding=(16, 14))
@@ -657,18 +737,18 @@ class DashboardApp:
         action_row.pack(fill="x", pady=(0, 12))
         ttk.Label(
             action_row,
-            text="Filter: all managed jobs",
+            text="FILTER: ALL_TYPES",
             style="Tiny.TLabel",
         ).pack(side="left")
         ttk.Button(
             action_row,
-            text="Refresh state",
+            text="REFRESH",
             style="Quiet.TButton",
             command=self.refresh_jobs_data,
         ).pack(side="right", padx=(8, 0))
         ttk.Button(
             action_row,
-            text="Reconcile supported drift",
+            text="FORCE RECONCILE",
             style="Accent.TButton",
             command=lambda: self.refresh_jobs_data(apply_changes=True),
         ).pack(side="right")
@@ -723,25 +803,24 @@ class DashboardApp:
     def select_tab(self, tab_id: str) -> None:
         self.active_tab = tab_id
         self._render_active_tab()
-        if tab_id == "jobs":
-            self.refresh_jobs_data()
 
     def _render_active_tab(self) -> None:
         self._refresh_tab_buttons()
         if self.active_tab == "jobs":
             self.usage_body.pack_forget()
-            self.usage_header_controls.pack_forget()
             self.jobs_body.pack(fill="both", expand=True)
             return
         self.jobs_body.pack_forget()
         self.usage_body.pack(fill="both", expand=True)
-        if not self.usage_header_controls.winfo_manager():
-            self.usage_header_controls.pack(side="right")
 
     def _refresh_tab_buttons(self) -> None:
-        for tab_id, button in self.tab_buttons.items():
-            button.configure(
-                style="HeaderAccent.TButton" if tab_id == self.active_tab else "HeaderQuiet.TButton"
+        for tab_id, label in self.tab_buttons.items():
+            is_active = tab_id == self.active_tab
+            label.configure(
+                fg=TAB_ACTIVE_FOREGROUND if is_active else TAB_INACTIVE_FOREGROUND,
+            )
+            self.tab_underlines[tab_id].configure(
+                bg=TAB_ACTIVE_UNDERLINE if is_active else HEADER_BACKGROUND,
             )
 
     def refresh_jobs_data(self, apply_changes: bool = False) -> None:
@@ -749,11 +828,12 @@ class DashboardApp:
             self.jobs_registry = ensure_jobs_registry(codex_root=Path(self.config.codex_root))
             if apply_changes:
                 self.jobs_snapshot = apply_registry(self.jobs_registry)
-                self.status_label.configure(text="Jobs reconcile completed for supported drift.")
+                self.jobs_status_message = "Jobs reconcile completed for supported drift."
             else:
                 self.jobs_snapshot = reconcile_registry(self.jobs_registry)
-                if self.active_tab == "jobs":
-                    self.status_label.configure(text="Jobs state refreshed from local Windows state.")
+                self.jobs_status_message = "Jobs state refreshed from local Windows state."
+            if self.active_tab == "jobs":
+                self.status_label.configure(text=self.jobs_status_message)
         except Exception as exc:
             self.jobs_snapshot = {
                 "last_reconciled_at": None,
@@ -771,7 +851,8 @@ class DashboardApp:
                     }
                 ],
             }
-            self.status_label.configure(text=f"Jobs error: {exc}")
+            self.jobs_status_message = f"Jobs error: {exc}"
+            self.status_label.configure(text=self.jobs_status_message)
         self._render_jobs_snapshot()
 
     def _render_jobs_snapshot(self) -> None:
@@ -787,6 +868,18 @@ class DashboardApp:
 
         for child in self.jobs_rows_container.winfo_children():
             child.destroy()
+
+        if not jobs:
+            ttk.Label(
+                self.jobs_rows_container,
+                text=self.jobs_status_message,
+                style="Status.TLabel",
+                wraplength=760,
+                justify="left",
+            ).pack(anchor="w", padx=12, pady=(12, 0))
+            self.jobs_detail_job_id = None
+            self.jobs_detail_shell.pack_forget()
+            return
 
         selected_job = None
         for job in jobs:
@@ -1081,6 +1174,7 @@ class DashboardApp:
             detail = "Within weekly budget."
 
         self.status_accent.configure(bg=accent)
+        self.status_dot.configure(bg=accent)
         self.status_metric_value.configure(text=value, foreground=accent)
         self.status_metric_detail.configure(text=detail)
 
@@ -1180,21 +1274,30 @@ class DashboardApp:
 
         if show_budget_line:
             threshold_y = bottom - ((threshold_tokens / max_tokens) * chart_height)
+            threshold_color = "#ff5a52"
             self.canvas.create_line(
                 left,
                 threshold_y,
                 right,
                 threshold_y,
-                fill="#8ec5ff",
-                width=2,
-                dash=(6, 4),
+                fill=threshold_color,
+                width=1,
+            )
+            label_left = left + 12
+            label_right = label_left + 58
+            self.canvas.create_rectangle(
+                label_left,
+                threshold_y - 9,
+                label_right,
+                threshold_y + 5,
+                fill=threshold_color,
+                outline="",
             )
             self.canvas.create_text(
-                right - 4,
-                threshold_y - 8,
-                anchor="e",
-                text="BUDGET LINE",
-                fill="#8ec5ff",
+                (label_left + label_right) / 2,
+                threshold_y - 2,
+                text="REDLINE",
+                fill="#ffffff",
                 font=("Inter", 7, "bold"),
             )
 
@@ -1239,8 +1342,8 @@ class DashboardApp:
             else:
                 bar_height = (bucket.total_tokens / max_tokens) * (chart_height - 8)
                 y0 = bottom - bar_height
-                if bucket.total_tokens >= threshold_tokens and bucket.total_tokens > 0:
-                    fill = "#7fc2ff"
+                if show_budget_line and bucket.total_tokens >= threshold_tokens and bucket.total_tokens > 0:
+                    fill = "#ff7a6e"
                 elif index == len(buckets) - 1:
                     fill = "#58a8ff"
                 elif bucket.total_tokens == 0:
@@ -1290,19 +1393,19 @@ class DashboardApp:
     def _refresh_interval_buttons(self) -> None:
         for key, button in self.interval_buttons.items():
             button.configure(
-                style="HeaderAccent.TButton" if key == self.selected_interval else "HeaderQuiet.TButton"
+                style="ToolbarAccent.TButton" if key == self.selected_interval else "ToolbarQuiet.TButton"
             )
 
     def _refresh_chart_mode_buttons(self) -> None:
         for key, button in self.chart_mode_buttons.items():
             button.configure(
-                style="HeaderAccent.TButton" if key == self.selected_chart_mode else "HeaderQuiet.TButton"
+                style="ToolbarAccent.TButton" if key == self.selected_chart_mode else "ToolbarQuiet.TButton"
             )
 
     def _refresh_metric_mode_buttons(self) -> None:
         for key, button in self.metric_mode_buttons.items():
             button.configure(
-                style="HeaderAccent.TButton" if key == self.selected_metric_mode else "HeaderQuiet.TButton"
+                style="ToolbarAccent.TButton" if key == self.selected_metric_mode else "ToolbarQuiet.TButton"
             )
 
     def _chart_region_at(self, x: int, y: int) -> dict[str, object] | None:
@@ -1513,6 +1616,8 @@ class DashboardApp:
         artifact_dir.mkdir(parents=True, exist_ok=True)
         if self.smoke_tab in {"usage", "jobs"}:
             self.select_tab(self.smoke_tab)
+        if self.smoke_tab == "jobs":
+            self.refresh_jobs_data()
         if not self.overlay_visible:
             self.smoke_overlay_fallback = True
             self.show_overlay()

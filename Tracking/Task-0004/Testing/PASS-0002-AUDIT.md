@@ -2,19 +2,15 @@
 
 ## Scope
 
-`PASS-0002` closed Task 0004 with final validation, repo-canonical regression, and durable handoff updates. A same-task hotfix then corrected the visible hotkey-close regression before the final checkpoint.
+`PASS-0002` was reopened after the live `Jobs` regression reported in [BUG-0001](/c:/Agent/CodexDashboard/Tracking/Task-0004/BUG-0001.md).
 
-Completed in this pass:
+This reopened pass now includes:
 
-- repaired `app/codex_dashboard/ui.py` so:
-  - the borderless overlay tracks visibility explicitly instead of trusting Tk window state for toggle truth
-  - `Ctrl+Alt+Space` can hide the visible dashboard again
-  - `--smoke-tab jobs` emits jobs-specific evidence instead of serializing usage metrics
-  - `--smoke-tab jobs` exits cleanly again
-- added focused desktop-support coverage for the restored toggle path in `tests/test_desktop_support.py`
-- executed repo-canonical regression `REG-001` from the real desktop app surface
-- captured current end-state proof for the additive `Jobs` lane
-- refreshed task artifacts for the repaired final state
+- removing jobs refresh and reconcile work from the `Jobs` tab click path
+- hiding child PowerShell windows during explicit jobs actions
+- recomposing the overlay so the primary nav is its own top strip and `Usage` controls live in the tab content area
+- tightening tab/header fidelity toward the approved Stitch direction
+- restyling the chart redline label closer to the approved mockup treatment
 
 ## Verification
 
@@ -23,46 +19,47 @@ Executed from repo root:
 ```powershell
 python -m unittest discover -s tests -p "test_*.py" -v
 python -m app.codex_dashboard --scan-once --print-summary
-python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0003
-python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0004 --smoke-tab jobs
+python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0004
+python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005 --smoke-tab jobs
 ```
 
 Observed result:
 
-- full unit coverage passed: `45` tests
+- full unit coverage passed: `47` tests
 - the supporting `--scan-once --print-summary` path still completed successfully against the live telemetry tree
-- repo-canonical regression `REG-001` passed on the real overlay path with:
-  - ingest completing against the live telemetry tree
-  - overlay activation through the real startup path
-  - interval, budget, and advisory state captured in:
-    - `Tracking/Task-0004/Testing/PASS-0002-REG-001-0003/overlay-summary.txt`
-    - `Tracking/Task-0004/Testing/PASS-0002-REG-001-0003/overlay-chart.ps`
-- the additive `Jobs` lane also rendered through the real app path with:
-  - `active_tab=jobs`
-  - `Jobs state refreshed from local Windows state.`
-  - artifacts captured in:
-    - `Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0004/overlay-summary.txt`
-- focused desktop-support validation now proves the repaired toggle path by covering:
-  - hide when the overlay is already visible
-  - visibility flag updates on show and hide
+- refreshed `Usage` smoke evidence was captured in:
+  - [desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/desktop-overlay.png)
+  - [overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/overlay-summary.txt)
+  - [overlay-chart.ps](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/overlay-chart.ps)
+- refreshed `Jobs` smoke evidence was captured in:
+  - [desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/desktop-overlay.png)
+  - [overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt)
+- the new jobs smoke explicitly refreshes jobs state after selecting the `Jobs` surface, so the captured summary reflects the new button-driven interaction model instead of an implicit tab-click refresh
 
 ## Requirement Mapping
 
 | Requirement | Evidence | Result |
 | --- | --- | --- |
-| Task-level regression must start from the real desktop app surface | `REGRESSION.md`; `PASS-0002-REG-001-0003` artifacts | Passed |
-| `Usage` remains the default overlay surface | `PASS-0002-REG-001-0003/overlay-summary.txt` shows `active_tab=usage` | Passed |
-| Additive `Jobs` lane remains reachable from the real app path | `PASS-0002-JOBS-SMOKE-0004/overlay-summary.txt` shows `active_tab=jobs` | Passed |
-| `Ctrl+Alt+Space` can hide the visible dashboard again | `tests/test_desktop_support.py`; explicit overlay visibility tracking in `app/codex_dashboard/ui.py` | Passed |
-| Full unit coverage remains green after the UI slice | `python -m unittest discover -s tests -p "test_*.py" -v` | Passed |
-| Task artifacts and machine-readable state reflect closure honestly | `HANDOFF.md`; `TASK-STATE.json` | Passed |
+| `Jobs` tab click path must not trigger refresh or reconcile work | `app/codex_dashboard/ui.py`; `tests/test_desktop_support.py` | Passed |
+| Explicit jobs actions must not surface extra shell windows | `app/codex_dashboard/jobs.py`; `tests/test_jobs.py` | Passed |
+| Primary nav must be its own strip with tab-owned controls below | `app/codex_dashboard/ui.py`; refreshed desktop overlay screenshots | Passed |
+| Supporting runtime proof must reflect the current `.codex\\Orchestration` jobs location | [overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt) | Passed |
+| Full unit coverage remains green after the reopened UI/debug pass | `python -m unittest discover -s tests -p "test_*.py" -v` | Passed |
 
-## Notes
+## Caveat
 
-- the original `a7c9a24` closure checkpoint was reopened in-place after the hotkey-close regression was reported on the live dashboard
-- the final repo state now matches the repaired validation and smoke results
-- no additional repo-documented regression caveat was needed for this task
+The reopened pass is not closed yet.
+
+The repo-local `REG-002` definition now expects the real live flow to be:
+
+1. open the overlay
+2. click `Jobs`
+3. verify there is no hitch and no extra windows
+4. click `Refresh`
+5. verify the rendered jobs state and fidelity
+
+The current artifacts are strong supporting runtime proof, but final reopened closeout still needs live readback on that real click path.
 
 ## Verdict
 
-`ready`
+`ready_with_caveats`

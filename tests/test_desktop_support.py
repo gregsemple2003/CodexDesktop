@@ -173,6 +173,19 @@ class DesktopSupportTests(unittest.TestCase):
             "12:01 PM",
         )
 
+    def test_select_tab_does_not_trigger_jobs_refresh(self) -> None:
+        app = SimpleNamespace(
+            active_tab="usage",
+            _render_active_tab=mock.Mock(),
+            refresh_jobs_data=mock.Mock(),
+        )
+
+        DashboardApp.select_tab(app, "jobs")
+
+        self.assertEqual(app.active_tab, "jobs")
+        app._render_active_tab.assert_called_once_with()
+        app.refresh_jobs_data.assert_not_called()
+
     def test_toggle_overlay_hides_visible_overlay_from_explicit_flag(self) -> None:
         app = SimpleNamespace(
             smoke_artifact_dir=None,

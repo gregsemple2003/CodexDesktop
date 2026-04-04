@@ -2,73 +2,60 @@
 
 ## Current Status
 
-`Task-0004` is complete.
+`Task-0004` is reopened and in regression.
 
-`PASS-0002` closed the task with passing validation and repo-canonical regression, and a same-task hotfix restored the `Ctrl+Alt+Space` close path before final checkpointing.
+The original closure was invalidated by the live `Jobs` interaction regression and the mockup-fidelity miss. The current repo state contains a candidate fix set with fresh supporting proof, but the task is not honestly closed again until the live overlay readback is positive.
 
 ## Current Baseline
 
-The repo now has both the backend jobs model and the first additive `Jobs` lane in the overlay.
-
-Backend foundation:
+The current candidate baseline includes:
 
 - managed jobs registry bootstrap under `C:\Users\gregs\.codex\Orchestration\codex-jobs-registry.json`
-- supported job kinds:
-  - Startup-folder launcher
-  - Scheduled Task
-- reconciliation states for in-sync, missing, drifted, disabled, and blocked
-- bounded apply behavior for the supported job kinds
-- bootstrap wired into the existing CLI and app startup path
-
-The live machine bootstrap already imported:
-
-- the CodexDashboard startup launcher
-- `Codex Daily Agentic SWE Digest`
-- `Codex Daily Physical Agents Digest`
-- `Codex Daily UE Determinism Digest`
-
-Overlay surface now includes:
-
-- `Usage` as the default tab
-- additive `Jobs` tab
-- summary cards for declared jobs, in-sync jobs, needs-attention count, and last reconciliation time
-- per-job rows with mechanism, desired versus observed state, drift status, and visible reason text
-- bounded `Refresh state` and `Reconcile supported drift` actions
-- inert `Logs` and `Terminal` placeholders only
-- explicit overlay visibility tracking so the global hotkey can reliably hide the borderless dashboard again
+- `Jobs` tab clicks that only switch surfaces
+- explicit `Refresh` and `Force Reconcile` actions for jobs-state work
+- hidden child PowerShell windows for explicit jobs actions
+- a separate primary-nav strip with tab-owned controls below it
+- stronger tab emphasis and a quieter header closer to the approved Stitch direction
+- a redline label treatment that matches the approved chart language more closely than the old right-edge utility annotation
 
 ## Validation Status
 
-Final proof passed:
+Executed successfully:
 
 - `python -m unittest discover -s tests -p "test_*.py" -v`
 - `python -m app.codex_dashboard --scan-once --print-summary`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0003`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0004 --smoke-tab jobs`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0004`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005 --smoke-tab jobs`
 
-Regression status:
+Current evidence:
 
-- repo-canonical `REG-001` passed
-- additive `Jobs` lane smoke passed on the real app path
-- focused desktop-support coverage passed for the restored hotkey close path
+- [PASS-0002-REG-001-0004/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/desktop-overlay.png)
+- [PASS-0002-REG-001-0004/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0004/overlay-summary.txt)
+- [PASS-0002-JOBS-SMOKE-0005/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/desktop-overlay.png)
+- [PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0005/overlay-summary.txt)
 
 ## Next Step
 
-No further task work is pending under `Task-0004`.
+Run the live reopened regression readback on the actual overlay:
+
+1. `Ctrl+Alt+Space`
+2. click `Jobs`
+3. confirm there is no hitch and no extra windows
+4. click `Refresh`
+5. confirm the rendered `Jobs` surface is close enough to the approved mockup direction
+
+If that readback is positive, update the reopened pass artifacts one more time and close the task honestly.
 
 ## Watchouts
 
-- preserve the hotkey-first overlay behavior and keep `Usage` as the default tab
-- keep the explicit overlay visibility flag aligned with any future show/hide path changes; do not fall back to Tk window-state checks for toggle truth
-- keep visible copy human-facing; do not expose operator acronyms on the default surface
-- keep `Logs` and `Terminal` inactive unless a later task explicitly pulls them into scope
+- keep `Jobs` refresh and reconcile off the tab click path
+- keep repo-local [REGRESSION.md](/c:/Agent/CodexDashboard/REGRESSION.md) aligned with the actual live interaction model
+- keep visible copy human-facing and keep raw Windows plumbing behind details
+- do not let future shell controls drift back into the primary nav strip
 
 ## References
 
-- `Tracking/Task-0004/TASK.md`
-- `Tracking/Task-0004/PLAN.md`
-- `Tracking/Task-0004/RESEARCH.md`
-- `Tracking/Task-0004/Testing/PASS-0000-AUDIT.md`
-- `Tracking/Task-0004/Testing/PASS-0001-AUDIT.md`
-- `Tracking/Task-0004/Testing/PASS-0002-AUDIT.md`
-- `C:\Users\gregs\.codex\Orchestration\codex-jobs-registry.json`
+- [TASK.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/TASK.md)
+- [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/PLAN.md)
+- [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/BUG-0001.md)
+- [PASS-0002-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-AUDIT.md)

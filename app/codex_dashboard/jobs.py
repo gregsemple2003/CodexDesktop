@@ -23,6 +23,7 @@ JOB_STATUS_IN_SYNC = "in_sync"
 JOB_STATUS_MISSING = "missing"
 DESIRED_STATE_DISABLED = "disabled"
 DESIRED_STATE_ENABLED = "enabled"
+POWERSHELL_CREATION_FLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 @dataclass(slots=True)
@@ -51,12 +52,24 @@ def _powershell_literal(raw_value: str) -> str:
     return raw_value.replace("'", "''")
 
 
+def _powershell_startupinfo():
+    startupinfo_ctor = getattr(subprocess, "STARTUPINFO", None)
+    if startupinfo_ctor is None:
+        return None
+    startupinfo = startupinfo_ctor()
+    startupinfo.dwFlags |= getattr(subprocess, "STARTF_USESHOWWINDOW", 0)
+    startupinfo.wShowWindow = 0
+    return startupinfo
+
+
 def _run_powershell(script: str) -> str:
     completed = subprocess.run(
         ["powershell", "-NoProfile", "-Command", script],
         capture_output=True,
         text=True,
         encoding="utf-8",
+        creationflags=POWERSHELL_CREATION_FLAGS,
+        startupinfo=_powershell_startupinfo(),
         check=False,
     )
     if completed.returncode != 0:

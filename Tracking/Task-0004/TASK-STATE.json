@@ -1,19 +1,24 @@
 {
   "schema_version": 1,
   "task_id": "Task-0004",
-  "status": "complete",
-  "phase": "closure",
+  "status": "in_progress",
+  "phase": "regression",
   "plan_approved": true,
-  "current_pass": null,
+  "current_pass": "PASS-0002",
   "last_completed_pass": "PASS-0002",
-  "current_gate": "none",
-  "latest_audit_verdict": "ready",
+  "current_gate": "regression",
+  "latest_audit_verdict": "ready_with_caveats",
   "validation": {
     "build": "not_applicable",
     "unit_tests": "passing",
-    "regression": "passing"
+    "regression": "blocked"
   },
-  "blockers": [],
-  "next_expected_artifacts": [],
-  "updated_at": "2026-04-04T12:28:00-04:00"
+  "blockers": [
+    "Final reopened closeout still needs live readback that clicking `Jobs` no longer hitches the overlay and that the updated header/tab treatment is close enough to the approved mockup."
+  ],
+  "next_expected_artifacts": [
+    "Testing/PASS-0002-AUDIT.md",
+    "HANDOFF.md"
+  ],
+  "updated_at": "2026-04-04T13:47:00-04:00"
 }

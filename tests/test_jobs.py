@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
+import app.codex_dashboard.jobs as jobs_module
 from app.codex_dashboard.jobs import (
     DESIRED_STATE_DISABLED,
     DESIRED_STATE_ENABLED,
@@ -239,6 +242,20 @@ class JobsTests(unittest.TestCase):
         self.assertEqual(updated_registry["jobs"][0]["desired_state"], DESIRED_STATE_ENABLED)
         self.assertEqual(updated_registry["jobs"][1]["desired_state"], DESIRED_STATE_DISABLED)
         self.assertNotEqual(updated_registry["updated_at"], registry["updated_at"])
+
+    def test_run_powershell_hides_child_windows(self) -> None:
+        with mock.patch(
+            "app.codex_dashboard.jobs.subprocess.run",
+            return_value=SimpleNamespace(returncode=0, stderr="", stdout="ok"),
+        ) as run_powershell:
+            result = jobs_module._run_powershell("Write-Output 'ok'")
+
+        self.assertEqual(result, "ok")
+        self.assertEqual(
+            run_powershell.call_args.kwargs["creationflags"],
+            getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        self.assertIs(run_powershell.call_args.kwargs["check"], False)
 
 
 if __name__ == "__main__":
