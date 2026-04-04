@@ -11,6 +11,14 @@ def default_codex_root() -> Path:
     return Path.home() / ".codex"
 
 
+def orchestration_root(codex_root: Path | None = None) -> Path:
+    return (codex_root or default_codex_root()) / "Orchestration"
+
+
+def default_jobs_registry_path(codex_root: Path | None = None) -> Path:
+    return orchestration_root(codex_root) / "codex-jobs-registry.json"
+
+
 def app_data_root() -> Path:
     return Path.home() / "AppData" / "Local" / "CodexDashboard"
 

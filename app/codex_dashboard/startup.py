@@ -45,6 +45,7 @@ def is_startup_enabled() -> bool:
 def set_startup_enabled(enabled: bool) -> None:
     script_path = startup_script_path()
     if enabled:
-        script_path.write_text(startup_command(), encoding="utf-8")
+        with script_path.open("w", encoding="utf-8", newline="") as handle:
+            handle.write(startup_command())
     elif script_path.exists():
         script_path.unlink()

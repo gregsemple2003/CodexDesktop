@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .aggregation import INTERVAL_SECONDS, build_buckets, is_over_redline, project_weekly_burn
 from .config import DashboardConfig, load_config, maybe_upgrade_weekly_budget, save_config
+from .jobs import ensure_jobs_registry
 from .storage import connect, count_events, initialize_db, load_events_since
 from .scanner import ingest_once
 from .ui import DashboardApp, ROLLING_PROJECTION_BUCKETS, rolling_average_tokens
@@ -75,6 +76,7 @@ def main() -> int:
         config.db_path = str(args.db_path)
     if args.codex_root is not None:
         config.codex_root = str(args.codex_root)
+    ensure_jobs_registry(codex_root=Path(config.codex_root))
     connection = connect(Path(config.db_path))
     try:
         if args.scan_once:
