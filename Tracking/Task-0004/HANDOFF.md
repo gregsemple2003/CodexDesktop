@@ -2,9 +2,9 @@
 
 ## Current Status
 
-`Task-0004` is active.
+`Task-0004` is complete.
 
-`PASS-0001` is complete and `PASS-0002` is now the active closure pass.
+`PASS-0002` closed the task with passing validation and repo-canonical regression.
 
 ## Current Baseline
 
@@ -38,28 +38,27 @@ Overlay surface now includes:
 
 ## Validation Status
 
-Pass-local proof passed:
+Final proof passed:
 
 - `python -m unittest discover -s tests -p "test_*.py" -v`
 - `python -m app.codex_dashboard --scan-once --print-summary`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0001-UI-SMOKE-0002 --smoke-tab jobs`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0002`
+- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0002 --smoke-tab jobs`
 
-Task-level regression has not run yet.
+Regression status:
+
+- repo-canonical `REG-001` passed
+- additive `Jobs` lane smoke passed on the real app path
 
 ## Next Step
 
-Execute `PASS-0002`:
-
-- run repo-canonical regression lane `REG-001` from the real desktop app surface
-- capture honest closure evidence for the additive `Jobs` lane alongside the existing usage surface
-- close task artifacts once validation and regression status are durable
+No further task work is pending under `Task-0004`.
 
 ## Watchouts
 
 - preserve the hotkey-first overlay behavior and keep `Usage` as the default tab
 - keep visible copy human-facing; do not expose operator acronyms on the default surface
 - keep `Logs` and `Terminal` inactive unless a later task explicitly pulls them into scope
-- treat smoke proof as supporting evidence only; do not substitute it for repo-canonical regression
 
 ## References
 
@@ -68,4 +67,5 @@ Execute `PASS-0002`:
 - `Tracking/Task-0004/RESEARCH.md`
 - `Tracking/Task-0004/Testing/PASS-0000-AUDIT.md`
 - `Tracking/Task-0004/Testing/PASS-0001-AUDIT.md`
+- `Tracking/Task-0004/Testing/PASS-0002-AUDIT.md`
 - `C:\Users\gregs\.codex\Orchestration\codex-jobs-registry.json`

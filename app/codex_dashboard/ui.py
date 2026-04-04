@@ -38,8 +38,6 @@ from .jobs import (
     default_jobs_registry_path,
     ensure_jobs_registry,
     reconcile_registry,
-    save_jobs_registry,
-    set_job_desired_state,
 )
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
@@ -74,11 +72,6 @@ JOBS_STATUS_COLORS = {
     "disabled": "#ff8a52",
     "missing": "#ff8a52",
     "blocked": "#ff5a52",
-}
-JOBS_ATTENTION_STATUSES = {
-    JOB_STATUS_BLOCKED,
-    JOB_STATUS_DRIFTED,
-    JOB_STATUS_MISSING,
 }
 
 
@@ -206,38 +199,15 @@ def interval_redline_tokens(weekly_budget_tokens: int, interval_seconds: int) ->
     return max(1, int(weekly_budget_tokens * interval_seconds / (7 * 24 * 60 * 60)))
 
 
-def job_needs_attention(job: dict[str, object]) -> bool:
-    status = str(job.get("status") or "")
-    if status in JOBS_ATTENTION_STATUSES:
-        return True
-    return status == JOB_STATUS_DISABLED and job.get("desired_state") == DESIRED_STATE_ENABLED
+def jobs_needs_attention_count(summary: dict[str, int]) -> int:
+    return sum(count for status, count in summary.items() if status != "in_sync")
 
 
-def jobs_needs_attention_count(jobs: list[dict[str, object]]) -> int:
-    return sum(1 for job in jobs if job_needs_attention(job))
-
-
-def format_jobs_timestamp(
-    raw_value: str | None,
-    now: datetime | None = None,
-) -> str:
+def format_jobs_timestamp(raw_value: str | None) -> str:
     if not raw_value:
         return "Not reconciled"
     parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
-    local_time = parsed.astimezone()
-    current_time = now or datetime.now(local_time.tzinfo or UTC)
-    if current_time.tzinfo is None:
-        current_time = current_time.replace(tzinfo=local_time.tzinfo or UTC)
-    else:
-        current_time = current_time.astimezone(local_time.tzinfo or UTC)
-    delta_seconds = max(0, int((current_time - local_time).total_seconds()))
-    if delta_seconds < 60:
-        return "Just now"
-    if delta_seconds < 3600:
-        return f"{delta_seconds // 60}m ago"
-    if delta_seconds < 86400:
-        return f"{delta_seconds // 3600}h ago"
-    return f"{delta_seconds // 86400}d ago"
+    return parsed.astimezone().strftime("%I:%M %p").lstrip("0")
 
 
 class DashboardApp:
@@ -245,7 +215,7 @@ class DashboardApp:
         self,
         config_path: Path | None = None,
         smoke_artifact_dir: Path | None = None,
-        smoke_tab: str = "usage",
+        smoke_tab: str | None = None,
     ) -> None:
         self.config_path = config_path or default_config_path()
         self.config = load_config(self.config_path)

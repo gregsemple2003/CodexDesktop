@@ -1,0 +1,13 @@
+Jobs state refreshed from local Windows state.
+interval=15m
+metric_mode=total
+active_tab=jobs
+weekly_budget=3550000000
+7d_total=2.4B
+projected=12B
+headroom=-12.5M
+budget_line=5.3M
+status=Redline
+Codex advisory window: 93.0% used | reset in 3.7d
+hotkey_triggered=True
+overlay_fallback=False
