@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 import queue
 import shutil
@@ -26,6 +27,19 @@ from .investigation import (
     build_codex_launch_command,
     report_path_for_brief,
     write_bucket_investigation,
+)
+from .jobs import (
+    DESIRED_STATE_ENABLED,
+    JOB_STATUS_BLOCKED,
+    JOB_STATUS_DISABLED,
+    JOB_STATUS_DRIFTED,
+    JOB_STATUS_MISSING,
+    apply_registry,
+    default_jobs_registry_path,
+    ensure_jobs_registry,
+    reconcile_registry,
+    save_jobs_registry,
+    set_job_desired_state,
 )
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
@@ -54,6 +68,18 @@ REPO_STACK_COLORS = (
     "#6e7b8c",
 )
 REPO_STACK_OUTLINE = "#0d131b"
+JOBS_STATUS_COLORS = {
+    "in_sync": "#16d9f5",
+    "drifted": "#ff8a52",
+    "disabled": "#ff8a52",
+    "missing": "#ff8a52",
+    "blocked": "#ff5a52",
+}
+JOBS_ATTENTION_STATUSES = {
+    JOB_STATUS_BLOCKED,
+    JOB_STATUS_DRIFTED,
+    JOB_STATUS_MISSING,
+}
 
 
 def load_private_font_assets() -> list[Path]:
@@ -180,14 +206,50 @@ def interval_redline_tokens(weekly_budget_tokens: int, interval_seconds: int) ->
     return max(1, int(weekly_budget_tokens * interval_seconds / (7 * 24 * 60 * 60)))
 
 
+def job_needs_attention(job: dict[str, object]) -> bool:
+    status = str(job.get("status") or "")
+    if status in JOBS_ATTENTION_STATUSES:
+        return True
+    return status == JOB_STATUS_DISABLED and job.get("desired_state") == DESIRED_STATE_ENABLED
+
+
+def jobs_needs_attention_count(jobs: list[dict[str, object]]) -> int:
+    return sum(1 for job in jobs if job_needs_attention(job))
+
+
+def format_jobs_timestamp(
+    raw_value: str | None,
+    now: datetime | None = None,
+) -> str:
+    if not raw_value:
+        return "Not reconciled"
+    parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+    local_time = parsed.astimezone()
+    current_time = now or datetime.now(local_time.tzinfo or UTC)
+    if current_time.tzinfo is None:
+        current_time = current_time.replace(tzinfo=local_time.tzinfo or UTC)
+    else:
+        current_time = current_time.astimezone(local_time.tzinfo or UTC)
+    delta_seconds = max(0, int((current_time - local_time).total_seconds()))
+    if delta_seconds < 60:
+        return "Just now"
+    if delta_seconds < 3600:
+        return f"{delta_seconds // 60}m ago"
+    if delta_seconds < 86400:
+        return f"{delta_seconds // 3600}h ago"
+    return f"{delta_seconds // 86400}d ago"
+
+
 class DashboardApp:
     def __init__(
         self,
         config_path: Path | None = None,
         smoke_artifact_dir: Path | None = None,
+        smoke_tab: str = "usage",
     ) -> None:
         self.config_path = config_path or default_config_path()
         self.config = load_config(self.config_path)
+        self.active_tab = "usage"
         self.selected_interval = "15m"
         self.selected_chart_mode = "velocity"
         self.selected_metric_mode = "total"
@@ -196,6 +258,7 @@ class DashboardApp:
         self.last_ingest_error: str | None = None
         self.hotkey_registered = False
         self.smoke_artifact_dir = smoke_artifact_dir
+        self.smoke_tab = smoke_tab
         self._quitting = False
         self.smoke_hotkey_triggered = False
         self.smoke_overlay_fallback = False
@@ -207,6 +270,15 @@ class DashboardApp:
         self.latest_session_context_markers: dict[str, list[object]] = {}
         self.latest_repo_legend: list[tuple[str, str]] = []
         self.latest_repo_totals: list[dict[str, int]] = []
+        self.jobs_registry_path = default_jobs_registry_path(Path(self.config.codex_root))
+        self.jobs_registry = {"jobs": []}
+        self.jobs_snapshot: dict[str, object] = {
+            "last_reconciled_at": None,
+            "summary": {},
+            "jobs": [],
+        }
+        self.jobs_detail_job_id: str | None = None
+        self.jobs_status_message = "Refresh managed jobs to inspect local Windows state."
         self.debug_log_path = self.config_path.parent / "dashboard-debug.log"
         self._append_debug_log("dashboard_started")
 
@@ -378,13 +450,28 @@ class DashboardApp:
         brand_row.pack(side="left")
         ttk.Label(brand_row, text="CODEX DASHBOARD", style="Brand.TLabel").pack(side="left")
         ttk.Label(brand_row, text="VELOCITY.V2", style="Badge.TLabel").pack(side="left", padx=(8, 0))
+        self.tab_buttons: dict[str, ttk.Button] = {}
+        nav_row = ttk.Frame(brand_row, style="Header.TFrame")
+        nav_row.pack(side="left", padx=(18, 0))
+        for tab_id, label in (("usage", "Usage"), ("jobs", "Jobs")):
+            button = ttk.Button(
+                nav_row,
+                text=label,
+                style="HeaderQuiet.TButton",
+                command=lambda key=tab_id: self.select_tab(key),
+                width=7,
+            )
+            button.pack(side="left", padx=(0, 6))
+            self.tab_buttons[tab_id] = button
+        ttk.Label(nav_row, text="Logs", style="Tiny.TLabel").pack(side="left", padx=(8, 6))
+        ttk.Label(nav_row, text="Terminal", style="Tiny.TLabel").pack(side="left")
 
-        header_controls = ttk.Frame(header, style="Header.TFrame")
-        header_controls.pack(side="right")
+        self.usage_header_controls = ttk.Frame(header, style="Header.TFrame")
+        self.usage_header_controls.pack(side="right")
         self.interval_buttons: dict[str, ttk.Button] = {}
         for interval_key in ("1m", "5m", "15m", "1h", "1d"):
             button = ttk.Button(
-                header_controls,
+                self.usage_header_controls,
                 text=interval_key,
                 style="HeaderQuiet.TButton",
                 command=lambda key=interval_key: self.select_interval(key),
@@ -392,11 +479,11 @@ class DashboardApp:
             )
             button.pack(side="left", padx=(0, 6))
             self.interval_buttons[interval_key] = button
-        tk.Frame(header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
+        tk.Frame(self.usage_header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
         self.chart_mode_buttons: dict[str, ttk.Button] = {}
         for chart_mode, label in CHART_MODES.items():
             button = ttk.Button(
-                header_controls,
+                self.usage_header_controls,
                 text=label,
                 style="HeaderQuiet.TButton",
                 command=lambda mode=chart_mode: self.select_chart_mode(mode),
@@ -404,11 +491,11 @@ class DashboardApp:
             )
             button.pack(side="left", padx=(0, 6))
             self.chart_mode_buttons[chart_mode] = button
-        tk.Frame(header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
+        tk.Frame(self.usage_header_controls, bg="#39424d", width=1, height=24).pack(side="left", padx=(4, 10))
         self.metric_mode_buttons: dict[str, ttk.Button] = {}
         for metric_mode, label in METRIC_MODES.items():
             button = ttk.Button(
-                header_controls,
+                self.usage_header_controls,
                 text=label,
                 style="HeaderQuiet.TButton",
                 command=lambda mode=metric_mode: self.select_metric_mode(mode),
@@ -417,7 +504,7 @@ class DashboardApp:
             button.pack(side="left", padx=(0, 6))
             self.metric_mode_buttons[metric_mode] = button
         ttk.Button(
-            header_controls,
+            self.usage_header_controls,
             text="X",
             style="HeaderQuiet.TButton",
             command=self.hide_overlay,
@@ -426,8 +513,12 @@ class DashboardApp:
 
         tk.Frame(self.shell, bg="#39424d", height=1).pack(fill="x")
 
-        body = ttk.Frame(self.shell, style="BodyPanel.TFrame", padding=(16, 14))
+        self.content_stack = ttk.Frame(self.shell, style="BodyPanel.TFrame")
+        self.content_stack.pack(fill="both", expand=True)
+
+        body = ttk.Frame(self.content_stack, style="BodyPanel.TFrame", padding=(16, 14))
         body.pack(fill="both", expand=True)
+        self.usage_body = body
 
         status_row = ttk.Frame(body, style="BodyPanel.TFrame")
         status_row.pack(fill="x", pady=(0, 12))
@@ -568,6 +659,246 @@ class DashboardApp:
         self._refresh_interval_buttons()
         self._refresh_chart_mode_buttons()
         self._refresh_metric_mode_buttons()
+        self._build_jobs_lane()
+        self._refresh_tab_buttons()
+        self._render_active_tab()
+        self.refresh_jobs_data()
+
+    def _build_jobs_lane(self) -> None:
+        self.jobs_body = ttk.Frame(self.content_stack, style="BodyPanel.TFrame", padding=(16, 14))
+
+        summary_row = ttk.Frame(self.jobs_body, style="BodyPanel.TFrame")
+        summary_row.pack(fill="x", pady=(0, 12))
+        for column in range(4):
+            summary_row.columnconfigure(column, weight=1)
+
+        self.jobs_declared_value = self._build_jobs_summary_card(summary_row, 0, "DECLARED JOBS", "0")
+        self.jobs_synced_value = self._build_jobs_summary_card(summary_row, 1, "IN SYNC", "0")
+        self.jobs_attention_value = self._build_jobs_summary_card(summary_row, 2, "NEEDS ATTENTION", "0")
+        self.jobs_last_reconciled_value = self._build_jobs_summary_card(
+            summary_row,
+            3,
+            "LAST RECONCILED",
+            "Not reconciled",
+        )
+
+        action_row = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        action_row.pack(fill="x", pady=(0, 12))
+        ttk.Label(
+            action_row,
+            text="Filter: all managed jobs",
+            style="Tiny.TLabel",
+        ).pack(side="left")
+        ttk.Button(
+            action_row,
+            text="Refresh state",
+            style="Quiet.TButton",
+            command=self.refresh_jobs_data,
+        ).pack(side="right", padx=(8, 0))
+        ttk.Button(
+            action_row,
+            text="Reconcile supported drift",
+            style="Accent.TButton",
+            command=lambda: self.refresh_jobs_data(apply_changes=True),
+        ).pack(side="right")
+
+        self.jobs_rows_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        self.jobs_rows_shell.pack(fill="both", expand=True)
+
+        header_row = ttk.Frame(self.jobs_rows_shell, style="Shell.TFrame")
+        header_row.pack(fill="x", pady=(0, 8))
+        for text, width in (
+            ("Job", 34),
+            ("Mechanism", 16),
+            ("Desired / observed", 20),
+            ("Drift status", 18),
+            ("Actions", 10),
+        ):
+            ttk.Label(header_row, text=text, style="Tiny.TLabel", width=width).pack(side="left")
+
+        self.jobs_rows_container = ttk.Frame(self.jobs_rows_shell, style="Shell.TFrame")
+        self.jobs_rows_container.pack(fill="both", expand=True)
+
+        self.jobs_detail_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        self.jobs_detail_title = ttk.Label(self.jobs_detail_shell, text="", style="ChartTitle.TLabel")
+        self.jobs_detail_title.pack(anchor="w", pady=(0, 6))
+        self.jobs_detail_text = tk.Text(
+            self.jobs_detail_shell,
+            height=8,
+            bg="#10141a",
+            fg="#dfe2eb",
+            relief="flat",
+            wrap="word",
+            font=("Inter", 9),
+            insertbackground="#dfe2eb",
+        )
+        self.jobs_detail_text.pack(fill="x")
+        self.jobs_detail_text.configure(state="disabled")
+
+    def _build_jobs_summary_card(
+        self,
+        parent: ttk.Frame,
+        column: int,
+        title: str,
+        value: str,
+    ) -> ttk.Label:
+        card = ttk.Frame(parent, style="Card.TFrame", padding=(12, 10))
+        card.grid(row=0, column=column, sticky="nsew", padx=(0, 10) if column < 3 else (0, 0))
+        ttk.Label(card, text=title, style="MetricTitle.TLabel").pack(anchor="w")
+        value_label = ttk.Label(card, text=value, style="MetricValue.TLabel")
+        value_label.pack(anchor="w", pady=(8, 0))
+        return value_label
+
+    def select_tab(self, tab_id: str) -> None:
+        self.active_tab = tab_id
+        self._render_active_tab()
+        if tab_id == "jobs":
+            self.refresh_jobs_data()
+
+    def _render_active_tab(self) -> None:
+        self._refresh_tab_buttons()
+        if self.active_tab == "jobs":
+            self.usage_body.pack_forget()
+            self.usage_header_controls.pack_forget()
+            self.jobs_body.pack(fill="both", expand=True)
+            return
+        self.jobs_body.pack_forget()
+        self.usage_body.pack(fill="both", expand=True)
+        if not self.usage_header_controls.winfo_manager():
+            self.usage_header_controls.pack(side="right")
+
+    def _refresh_tab_buttons(self) -> None:
+        for tab_id, button in self.tab_buttons.items():
+            button.configure(
+                style="HeaderAccent.TButton" if tab_id == self.active_tab else "HeaderQuiet.TButton"
+            )
+
+    def refresh_jobs_data(self, apply_changes: bool = False) -> None:
+        try:
+            self.jobs_registry = ensure_jobs_registry(codex_root=Path(self.config.codex_root))
+            if apply_changes:
+                self.jobs_snapshot = apply_registry(self.jobs_registry)
+                self.status_label.configure(text="Jobs reconcile completed for supported drift.")
+            else:
+                self.jobs_snapshot = reconcile_registry(self.jobs_registry)
+                if self.active_tab == "jobs":
+                    self.status_label.configure(text="Jobs state refreshed from local Windows state.")
+        except Exception as exc:
+            self.jobs_snapshot = {
+                "last_reconciled_at": None,
+                "summary": {"blocked": 1},
+                "jobs": [
+                    {
+                        "job_id": "jobs-backend-blocked",
+                        "label": "Jobs backend",
+                        "mechanism_label": "Registry",
+                        "desired_label": "Enabled",
+                        "observed_label": "Blocked",
+                        "status": "blocked",
+                        "reason": str(exc),
+                        "details": {"error": str(exc)},
+                    }
+                ],
+            }
+            self.status_label.configure(text=f"Jobs error: {exc}")
+        self._render_jobs_snapshot()
+
+    def _render_jobs_snapshot(self) -> None:
+        snapshot = self.jobs_snapshot
+        summary = dict(snapshot.get("summary", {}))
+        jobs = list(snapshot.get("jobs", []))
+        self.jobs_declared_value.configure(text=f"{len(jobs):02d}")
+        self.jobs_synced_value.configure(text=f"{summary.get('in_sync', 0):02d}")
+        self.jobs_attention_value.configure(text=f"{jobs_needs_attention_count(summary):02d}")
+        self.jobs_last_reconciled_value.configure(
+            text=format_jobs_timestamp(snapshot.get("last_reconciled_at"))
+        )
+
+        for child in self.jobs_rows_container.winfo_children():
+            child.destroy()
+
+        selected_job = None
+        for job in jobs:
+            if job["job_id"] == self.jobs_detail_job_id:
+                selected_job = job
+            self._build_jobs_row(job)
+
+        if selected_job is None:
+            self.jobs_detail_job_id = None
+            self.jobs_detail_shell.pack_forget()
+        else:
+            self._show_job_details(selected_job)
+
+    def _build_jobs_row(self, job: dict[str, object]) -> None:
+        row = ttk.Frame(self.jobs_rows_container, style="Card.TFrame", padding=(12, 10))
+        row.pack(fill="x", pady=(0, 8))
+
+        title_column = ttk.Frame(row, style="Card.TFrame")
+        title_column.pack(side="left", fill="x", expand=True)
+        ttk.Label(
+            title_column,
+            text=str(job["label"]),
+            style="ChartTitle.TLabel",
+        ).pack(anchor="w")
+        ttk.Label(
+            title_column,
+            text=str(job["reason"]),
+            style="Status.TLabel",
+            wraplength=320,
+            justify="left",
+        ).pack(anchor="w", pady=(4, 0))
+
+        ttk.Label(
+            row,
+            text=str(job.get("mechanism_label", job.get("kind", ""))),
+            style="Status.TLabel",
+            width=16,
+        ).pack(side="left", padx=(10, 0))
+        ttk.Label(
+            row,
+            text=f"{job.get('desired_label', 'Unknown')} / {job.get('observed_label', 'Unknown')}",
+            style="Status.TLabel",
+            width=20,
+        ).pack(side="left", padx=(10, 0))
+
+        status = str(job["status"])
+        status_chip = tk.Label(
+            row,
+            text=status.replace("_", " ").upper(),
+            bg="#10141a",
+            fg=JOBS_STATUS_COLORS.get(status, "#dfe2eb"),
+            padx=8,
+            pady=4,
+            font=("Space Grotesk", 8, "bold"),
+        )
+        status_chip.pack(side="left", padx=(10, 0))
+
+        ttk.Button(
+            row,
+            text="Details",
+            style="Quiet.TButton",
+            command=lambda payload=job: self.toggle_job_details(payload),
+            width=8,
+        ).pack(side="right")
+
+    def toggle_job_details(self, job: dict[str, object]) -> None:
+        if self.jobs_detail_job_id == job["job_id"]:
+            self.jobs_detail_job_id = None
+            self.jobs_detail_shell.pack_forget()
+            return
+        self.jobs_detail_job_id = str(job["job_id"])
+        self._show_job_details(job)
+
+    def _show_job_details(self, job: dict[str, object]) -> None:
+        details = dict(job.get("details", {}))
+        detail_lines = [f"{key}: {value}" for key, value in details.items()]
+        self.jobs_detail_title.configure(text=f"{job['label']} details")
+        self.jobs_detail_text.configure(state="normal")
+        self.jobs_detail_text.delete("1.0", "end")
+        self.jobs_detail_text.insert("1.0", "\n".join(detail_lines) or "No details available.")
+        self.jobs_detail_text.configure(state="disabled")
+        if not self.jobs_detail_shell.winfo_manager():
+            self.jobs_detail_shell.pack(fill="x", pady=(12, 0))
 
     def _poll_hotkey(self) -> None:
         if self.hotkey_registered:
@@ -1207,6 +1538,8 @@ class DashboardApp:
         if artifact_dir is None:
             return
         artifact_dir.mkdir(parents=True, exist_ok=True)
+        if self.smoke_tab in {"usage", "jobs"}:
+            self.select_tab(self.smoke_tab)
         if self.overlay.state() == "withdrawn":
             self.smoke_overlay_fallback = True
             self.show_overlay()
@@ -1220,6 +1553,7 @@ class DashboardApp:
                 self.status_label.cget("text"),
                 f"interval={self.selected_interval}",
                 f"metric_mode={self.selected_metric_mode}",
+                f"active_tab={self.active_tab}",
                 f"weekly_budget={self.config.weekly_budget_tokens}",
                 f"7d_total={self.local_total_value.cget('text')}",
                 f"projected={self.projected_value.cget('text')}",

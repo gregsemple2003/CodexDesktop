@@ -17,6 +17,7 @@ from app.codex_dashboard.startup import startup_command
 from app.codex_dashboard.ui import (
     format_budget_billions,
     format_chart_title,
+    format_jobs_timestamp,
     format_repo_tooltip,
     format_reset_remaining,
     format_tick_label,
@@ -24,6 +25,7 @@ from app.codex_dashboard.ui import (
     format_token_value,
     format_velocity_tooltip,
     interval_redline_tokens,
+    jobs_needs_attention_count,
     parse_budget_billions,
     rolling_average_tokens,
 )
@@ -150,6 +152,25 @@ class DesktopSupportTests(unittest.TestCase):
 
         self.assertTrue(updated)
         self.assertEqual(config.weekly_budget_tokens, 3_550_000_000)
+
+    def test_jobs_needs_attention_count_excludes_in_sync(self) -> None:
+        self.assertEqual(
+            jobs_needs_attention_count(
+                {
+                    "in_sync": 2,
+                    "drifted": 1,
+                    "missing": 1,
+                    "blocked": 1,
+                }
+            ),
+            3,
+        )
+
+    def test_format_jobs_timestamp_uses_local_clock_label(self) -> None:
+        self.assertEqual(
+            format_jobs_timestamp("2026-04-04T12:01:55-04:00"),
+            "12:01 PM",
+        )
 
 
 if __name__ == "__main__":

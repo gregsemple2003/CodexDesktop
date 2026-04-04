@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 from app.codex_dashboard.jobs import (
+    DESIRED_STATE_DISABLED,
     DESIRED_STATE_ENABLED,
     JOB_KIND_SCHEDULED_TASK,
     JOB_KIND_STARTUP_LAUNCHER,
@@ -19,6 +20,7 @@ from app.codex_dashboard.jobs import (
     default_jobs_registry_path,
     ensure_jobs_registry,
     reconcile_job,
+    set_job_desired_state,
 )
 
 
@@ -198,6 +200,45 @@ class JobsTests(unittest.TestCase):
         self.assertIn("Register-ScheduledTask", run_powershell.call_args.args[0])
         self.assertIn("Enable-ScheduledTask", run_powershell.call_args.args[0])
         reconcile.assert_called_once_with(job)
+
+    def test_set_job_desired_state_updates_only_target_job(self) -> None:
+        registry = {
+            "schema_version": 1,
+            "updated_at": "2026-04-04T00:00:00-04:00",
+            "jobs": [
+                {
+                    "job_id": "codex-dashboard-startup",
+                    "label": "CodexDashboard overlay at sign-in",
+                    "kind": JOB_KIND_STARTUP_LAUNCHER,
+                    "desired_state": DESIRED_STATE_ENABLED,
+                    "definition": {
+                        "script_path": str(self.root / "Startup" / "CodexDashboard.cmd"),
+                        "command_text": "@echo off\r\nexpected\r\n",
+                    },
+                },
+                {
+                    "job_id": "codex-digest",
+                    "label": "Codex Digest",
+                    "kind": JOB_KIND_SCHEDULED_TASK,
+                    "desired_state": DESIRED_STATE_ENABLED,
+                    "definition": {
+                        "task_name": "Codex Digest",
+                        "task_path": "\\",
+                        "task_xml": "<Task />",
+                    },
+                },
+            ],
+        }
+
+        updated_registry = set_job_desired_state(
+            registry,
+            "codex-digest",
+            DESIRED_STATE_DISABLED,
+        )
+
+        self.assertEqual(updated_registry["jobs"][0]["desired_state"], DESIRED_STATE_ENABLED)
+        self.assertEqual(updated_registry["jobs"][1]["desired_state"], DESIRED_STATE_DISABLED)
+        self.assertNotEqual(updated_registry["updated_at"], registry["updated_at"])
 
 
 if __name__ == "__main__":

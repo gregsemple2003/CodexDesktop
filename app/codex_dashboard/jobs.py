@@ -338,11 +338,26 @@ def reconcile_job(job: dict[str, Any], observation: JobObservation | None = None
             status = JOB_STATUS_DRIFTED
             reason = "Job remains enabled even though the desired state is disabled."
 
+    observed_label = "Missing"
+    if observed.blocked_reason:
+        observed_label = "Blocked"
+    elif observed.exists and observed.enabled is False:
+        observed_label = "Disabled"
+    elif observed.exists:
+        observed_label = "Enabled"
+
+    mechanism_label = "Startup launcher"
+    if job["kind"] == JOB_KIND_SCHEDULED_TASK:
+        mechanism_label = "Scheduled Task"
+
     return {
         "job_id": job["job_id"],
         "label": job["label"],
         "kind": job["kind"],
+        "mechanism_label": mechanism_label,
         "desired_state": desired_state,
+        "desired_label": "Enabled" if desired_state == DESIRED_STATE_ENABLED else "Disabled",
+        "observed_label": observed_label,
         "status": status,
         "reason": reason,
         "details": dict(observed.details),
@@ -418,3 +433,29 @@ def apply_registry(registry: dict[str, Any]) -> dict[str, Any]:
         "summary": dict(counts),
         "jobs": jobs,
     }
+
+
+def set_job_desired_state(
+    registry: dict[str, Any],
+    job_id: str,
+    desired_state: str,
+) -> dict[str, Any]:
+    if desired_state not in {DESIRED_STATE_DISABLED, DESIRED_STATE_ENABLED}:
+        raise ValueError(f"Unsupported desired state: {desired_state}")
+
+    updated_jobs: list[dict[str, Any]] = []
+    found = False
+    for job in registry.get("jobs", []):
+        updated_job = dict(job)
+        if updated_job.get("job_id") == job_id:
+            updated_job["desired_state"] = desired_state
+            found = True
+        updated_jobs.append(updated_job)
+
+    if not found:
+        raise KeyError(f"Unknown job id: {job_id}")
+
+    updated_registry = dict(registry)
+    updated_registry["updated_at"] = _now_timestamp()
+    updated_registry["jobs"] = updated_jobs
+    return updated_registry

@@ -19,6 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--print-summary", action="store_true")
     parser.add_argument("--no-ui", action="store_true")
     parser.add_argument("--smoke-artifact-dir", type=Path, default=None)
+    parser.add_argument("--smoke-tab", choices=("usage", "jobs"), default=None)
     parser.add_argument("--db-path", type=Path, default=None)
     parser.add_argument("--codex-root", type=Path, default=None)
     parser.add_argument(
@@ -94,7 +95,7 @@ def main() -> int:
         if args.no_ui:
             parser.print_help()
             return 0
-        app = DashboardApp(args.config_path, args.smoke_artifact_dir)
+        app = DashboardApp(args.config_path, args.smoke_artifact_dir, args.smoke_tab)
         app.run()
         return 0
     finally:
