@@ -72,6 +72,7 @@ JOBS_STATUS_COLORS = {
     "disabled": "#ff8a52",
     "missing": "#ff8a52",
     "blocked": "#ff5a52",
+    "unknown": "#8fa8bb",
 }
 TAB_ACTIVE_FOREGROUND = "#c3f5ff"
 TAB_INACTIVE_FOREGROUND = "#9fbdcc"
@@ -212,6 +213,14 @@ def format_jobs_timestamp(raw_value: str | None) -> str:
         return "Not reconciled"
     parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
     return parsed.astimezone().strftime("%I:%M %p").lstrip("0")
+
+
+def jobs_mechanism_label(kind: str) -> str:
+    if kind == "scheduled_task":
+        return "Scheduled Task"
+    if kind == "startup_launcher":
+        return "Startup launcher"
+    return kind.replace("_", " ").title()
 
 
 class DashboardApp:
@@ -735,6 +744,22 @@ class DashboardApp:
             command=lambda: self.refresh_jobs_data(apply_changes=True),
         ).pack(side="right")
 
+        self.jobs_detail_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
+        self.jobs_detail_title = ttk.Label(self.jobs_detail_shell, text="", style="ChartTitle.TLabel")
+        self.jobs_detail_title.pack(anchor="w", pady=(0, 6))
+        self.jobs_detail_text = tk.Text(
+            self.jobs_detail_shell,
+            height=10,
+            bg="#10141a",
+            fg="#dfe2eb",
+            relief="flat",
+            wrap="word",
+            font=("Inter", 9),
+            insertbackground="#dfe2eb",
+        )
+        self.jobs_detail_text.pack(fill="x")
+        self.jobs_detail_text.configure(state="disabled")
+
         self.jobs_rows_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
         self.jobs_rows_shell.pack(fill="both", expand=True)
 
@@ -752,22 +777,6 @@ class DashboardApp:
         self.jobs_rows_container = ttk.Frame(self.jobs_rows_shell, style="Shell.TFrame")
         self.jobs_rows_container.pack(fill="both", expand=True)
 
-        self.jobs_detail_shell = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
-        self.jobs_detail_title = ttk.Label(self.jobs_detail_shell, text="", style="ChartTitle.TLabel")
-        self.jobs_detail_title.pack(anchor="w", pady=(0, 6))
-        self.jobs_detail_text = tk.Text(
-            self.jobs_detail_shell,
-            height=8,
-            bg="#10141a",
-            fg="#dfe2eb",
-            relief="flat",
-            wrap="word",
-            font=("Inter", 9),
-            insertbackground="#dfe2eb",
-        )
-        self.jobs_detail_text.pack(fill="x")
-        self.jobs_detail_text.configure(state="disabled")
-
     def _build_jobs_summary_card(
         self,
         parent: ttk.Frame,
@@ -784,6 +793,8 @@ class DashboardApp:
 
     def select_tab(self, tab_id: str) -> None:
         self.active_tab = tab_id
+        if tab_id == "jobs":
+            self._prime_jobs_snapshot()
         self._render_active_tab()
 
     def _render_active_tab(self) -> None:
@@ -836,6 +847,60 @@ class DashboardApp:
             self.jobs_status_message = f"Jobs error: {exc}"
             self.status_label.configure(text=self.jobs_status_message)
         self._render_jobs_snapshot()
+
+    def _prime_jobs_snapshot(self) -> None:
+        existing_jobs = list(self.jobs_snapshot.get("jobs", []))
+        if existing_jobs:
+            return
+        try:
+            self.jobs_registry = ensure_jobs_registry(codex_root=Path(self.config.codex_root))
+            self.jobs_snapshot = self._declared_jobs_snapshot()
+        except Exception as exc:
+            self.jobs_snapshot = {
+                "last_reconciled_at": None,
+                "summary": {"blocked": 1},
+                "jobs": [
+                    {
+                        "job_id": "jobs-backend-blocked",
+                        "label": "Jobs backend",
+                        "mechanism_label": "Registry",
+                        "desired_label": "Enabled",
+                        "observed_label": "Blocked",
+                        "status": "blocked",
+                        "reason": str(exc),
+                        "definition": {},
+                        "details": {"error": str(exc)},
+                    }
+                ],
+            }
+            self.jobs_status_message = f"Jobs error: {exc}"
+        self._render_jobs_snapshot()
+
+    def _declared_jobs_snapshot(self) -> dict[str, object]:
+        jobs: list[dict[str, object]] = []
+        for job in self.jobs_registry.get("jobs", []):
+            desired_state = str(job.get("desired_state", DESIRED_STATE_ENABLED))
+            desired_label = "Enabled" if desired_state == DESIRED_STATE_ENABLED else "Disabled"
+            jobs.append(
+                {
+                    "job_id": str(job.get("job_id", "unknown-job")),
+                    "label": str(job.get("label", "Unnamed job")),
+                    "kind": str(job.get("kind", "")),
+                    "mechanism_label": jobs_mechanism_label(str(job.get("kind", ""))),
+                    "desired_state": desired_state,
+                    "desired_label": desired_label,
+                    "observed_label": "Unknown",
+                    "status": "unknown",
+                    "reason": "State has not been checked yet. Press Refresh to inspect Windows state.",
+                    "definition": dict(job.get("definition", {})),
+                    "details": {},
+                }
+            )
+        return {
+            "last_reconciled_at": None,
+            "summary": {},
+            "jobs": jobs,
+        }
 
     def _render_jobs_snapshot(self) -> None:
         snapshot = self.jobs_snapshot
@@ -936,15 +1001,20 @@ class DashboardApp:
         self._show_job_details(job)
 
     def _show_job_details(self, job: dict[str, object]) -> None:
-        details = dict(job.get("details", {}))
-        detail_lines = [f"{key}: {value}" for key, value in details.items()]
-        self.jobs_detail_title.configure(text=f"{job['label']} details")
+        declared_job = {
+            "job_id": job.get("job_id", ""),
+            "label": job.get("label", ""),
+            "kind": job.get("kind", ""),
+            "desired_state": job.get("desired_state", ""),
+            "definition": dict(job.get("definition", {})),
+        }
+        self.jobs_detail_title.configure(text=f"{job['label']} declared job")
         self.jobs_detail_text.configure(state="normal")
         self.jobs_detail_text.delete("1.0", "end")
-        self.jobs_detail_text.insert("1.0", "\n".join(detail_lines) or "No details available.")
+        self.jobs_detail_text.insert("1.0", json.dumps(declared_job, indent=2, sort_keys=True))
         self.jobs_detail_text.configure(state="disabled")
         if not self.jobs_detail_shell.winfo_manager():
-            self.jobs_detail_shell.pack(fill="x", pady=(12, 0))
+            self.jobs_detail_shell.pack(fill="x", pady=(0, 12), before=self.jobs_rows_shell)
 
     def _poll_hotkey(self) -> None:
         if self.hotkey_registered:
@@ -1066,19 +1136,11 @@ class DashboardApp:
         headroom_tokens = budget_line_tokens - pace_tokens
 
         self.local_total_value.configure(text=format_token_value(total_7d))
-        self.local_total_detail.configure(text=f"{total_7d:,} tokens in the last 7 days")
+        self.local_total_detail.configure(text="in the last 7d")
         self.projected_value.configure(text=format_token_value(projected))
-        self.projected_detail.configure(
-            text=(
-                f"Over {format_budget_billions(self.config.weekly_budget_tokens)}B budget"
-                if redline
-                else f"Budget {format_budget_billions(self.config.weekly_budget_tokens)}B"
-            )
-        )
+        self.projected_detail.configure(text=f"based on the last {pace_sample_size} bars")
         self.headroom_value.configure(text=format_signed_token_value(headroom_tokens))
-        self.headroom_detail.configure(
-            text=f"vs Pace {format_token_value(budget_line_tokens)}"
-        )
+        self.headroom_detail.configure(text="until exceeding budget")
         if latest_advisory is None:
             self.advisory_label.configure(text="No weekly advisory yet.")
         else:

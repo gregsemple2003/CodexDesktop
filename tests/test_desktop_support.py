@@ -176,6 +176,7 @@ class DesktopSupportTests(unittest.TestCase):
     def test_select_tab_does_not_trigger_jobs_refresh(self) -> None:
         app = SimpleNamespace(
             active_tab="usage",
+            _prime_jobs_snapshot=mock.Mock(),
             _render_active_tab=mock.Mock(),
             refresh_jobs_data=mock.Mock(),
         )
@@ -183,8 +184,65 @@ class DesktopSupportTests(unittest.TestCase):
         DashboardApp.select_tab(app, "jobs")
 
         self.assertEqual(app.active_tab, "jobs")
+        app._prime_jobs_snapshot.assert_called_once_with()
         app._render_active_tab.assert_called_once_with()
         app.refresh_jobs_data.assert_not_called()
+
+    def test_declared_jobs_snapshot_uses_unknown_observed_state(self) -> None:
+        app = SimpleNamespace(
+            jobs_registry={
+                "jobs": [
+                    {
+                        "job_id": "codex-dashboard-startup",
+                        "label": "CodexDashboard overlay at sign-in",
+                        "kind": "startup_launcher",
+                        "desired_state": "enabled",
+                        "definition": {"script_path": "C:/Startup/CodexDashboard.cmd"},
+                    }
+                ]
+            }
+        )
+
+        snapshot = DashboardApp._declared_jobs_snapshot(app)
+
+        self.assertEqual(snapshot["last_reconciled_at"], None)
+        self.assertEqual(len(snapshot["jobs"]), 1)
+        self.assertEqual(snapshot["jobs"][0]["desired_label"], "Enabled")
+        self.assertEqual(snapshot["jobs"][0]["observed_label"], "Unknown")
+        self.assertEqual(snapshot["jobs"][0]["status"], "unknown")
+
+    def test_show_job_details_includes_definition_and_observed_sections(self) -> None:
+        jobs_detail_title = mock.Mock()
+        jobs_detail_text = mock.Mock()
+        jobs_detail_shell = mock.Mock()
+        jobs_detail_shell.winfo_manager.return_value = False
+        app = SimpleNamespace(
+            jobs_detail_title=jobs_detail_title,
+            jobs_detail_text=jobs_detail_text,
+            jobs_detail_shell=jobs_detail_shell,
+            jobs_rows_shell=object(),
+        )
+
+        DashboardApp._show_job_details(
+            app,
+            {
+                "job_id": "codex-dashboard-startup",
+                "label": "CodexDashboard overlay at sign-in",
+                "kind": "startup_launcher",
+                "desired_state": "enabled",
+                "desired_label": "Enabled",
+                "observed_label": "Enabled",
+                "status": "in_sync",
+                "reason": "Job matches the managed definition.",
+                "definition": {"script_path": "C:/Startup/CodexDashboard.cmd"},
+                "details": {"command_text": "@echo off"},
+            },
+        )
+
+        inserted_text = jobs_detail_text.insert.call_args.args[1]
+        self.assertIn('"definition"', inserted_text)
+        self.assertNotIn("command_text", inserted_text)
+        jobs_detail_shell.pack.assert_called_once()
 
     def test_toggle_overlay_hides_visible_overlay_from_explicit_flag(self) -> None:
         app = SimpleNamespace(

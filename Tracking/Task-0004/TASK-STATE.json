@@ -14,11 +14,11 @@
     "regression": "blocked"
   },
   "blockers": [
-    "Final reopened closeout still needs live readback that the latest UI pass is correct: budget editor on the top content strip, no visible ingest line, dotted blue `BUDGET` threshold, and no inactive placeholder tabs."
+    "Final reopened closeout still needs live readback that the `Jobs` tab now reflects the clarified declared-jobs contract: declared jobs from `.codex/Orchestration/Jobs`, declared-job details, and explicit refresh-driven diff."
   ],
   "next_expected_artifacts": [
     "Testing/PASS-0002-AUDIT.md",
     "HANDOFF.md"
   ],
-  "updated_at": "2026-04-04T14:01:00-04:00"
+  "updated_at": "2026-04-04T14:19:00-04:00"
 }

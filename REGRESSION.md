@@ -44,7 +44,7 @@ Expected result:
 
 Goal:
 
-Confirm the real desktop app can switch from the default `Usage` surface to the `Jobs` surface through the real tab click path, then explicitly refresh managed-job state without disruptive side effects.
+Confirm the real desktop app can switch from the default `Usage` surface to the `Jobs` surface through the real tab click path, show declared jobs immediately from durable declared state, then explicitly refresh the actual-vs-declared diff without disruptive side effects.
 
 Steps:
 
@@ -54,18 +54,22 @@ Steps:
 4. Trigger the real overlay path.
 5. Click the `Jobs` tab in the running overlay.
 6. Verify the tab switch completes immediately and does not trigger jobs refresh or reconcile work on its own.
-7. Click `Refresh` in the `Jobs` surface and observe the jobs state load to completion.
-8. Capture an artifact from the running app surface that shows:
+7. Verify the `Jobs` surface immediately shows declared jobs from `.codex/Orchestration/Jobs/declared-jobs.json`.
+8. Open `Details` for one job and verify it shows the declared job payload rather than the observed Windows state.
+9. Click `Refresh` in the `Jobs` surface and observe the jobs state diff load to completion.
+10. Capture an artifact from the running app surface that shows:
    - the `Jobs` tab as the active surface
    - job summary counts
    - per-job status rows
-9. Exit cleanly.
+11. Exit cleanly.
 
 Expected result:
 
 - the tab switch completes without hitching the overlay
 - no extra console or app windows are spawned by the interaction
 - clicking `Jobs` alone does not trigger refresh or reconcile work
+- declared jobs are visible before refresh from the durable declared-jobs file under `.codex/Orchestration/Jobs`
+- `Details` shows the declared job payload
 - the `Jobs` surface renders declared jobs, in-sync count, needs-attention count, and per-job rows
 - visible copy remains human-facing
 

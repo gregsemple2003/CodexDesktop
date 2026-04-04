@@ -1,0 +1,9 @@
+active_tab=jobs
+Jobs state refreshed from local Windows state.
+hotkey_triggered=True
+overlay_fallback=False
+jobs_registry=C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.json
+jobs_declared=04
+jobs_in_sync=04
+jobs_needs_attention=00
+jobs_last_reconciled=2:17 PM

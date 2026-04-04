@@ -10,8 +10,10 @@ The original closure was invalidated by the live `Jobs` interaction regression a
 
 The current candidate baseline includes:
 
-- managed jobs registry bootstrap under `C:\Users\gregs\.codex\Orchestration\codex-jobs-registry.json`
+- managed declared-jobs state under `C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.json`
+- sibling declared-jobs schema under `C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.schema.json`
 - `Jobs` tab clicks that only switch surfaces
+- `Jobs` tab default content driven from declared jobs instead of an immediate refresh
 - explicit `Refresh` and `Force Reconcile` actions for jobs-state work
 - hidden child PowerShell windows for explicit jobs actions
 - a separate primary-nav strip with tab-owned controls below it
@@ -36,6 +38,10 @@ Current evidence:
 - [PASS-0002-REG-001-0005/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0005/overlay-summary.txt)
 - [PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png)
 - [PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt)
+- [PASS-0002-REG-001-0007/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0007/desktop-overlay.png)
+- [PASS-0002-REG-001-0007/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0007/overlay-summary.txt)
+- [PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png)
+- [PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt)
 
 ## Next Step
 

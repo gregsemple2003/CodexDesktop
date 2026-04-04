@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .paths import default_jobs_registry_path
+from .paths import default_jobs_registry_path, default_jobs_schema_path, legacy_jobs_registry_path
 from .startup import startup_command, startup_script_path
 
 REGISTRY_SCHEMA_VERSION = 1
@@ -24,6 +24,35 @@ JOB_STATUS_MISSING = "missing"
 DESIRED_STATE_DISABLED = "disabled"
 DESIRED_STATE_ENABLED = "enabled"
 POWERSHELL_CREATION_FLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
+def jobs_registry_schema_payload() -> dict[str, Any]:
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Declared Codex Jobs",
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["schema_version", "updated_at", "jobs"],
+        "properties": {
+            "schema_version": {"const": REGISTRY_SCHEMA_VERSION},
+            "updated_at": {"type": "string"},
+            "jobs": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": True,
+                    "required": ["job_id", "label", "kind", "desired_state", "definition"],
+                    "properties": {
+                        "job_id": {"type": "string"},
+                        "label": {"type": "string"},
+                        "kind": {"enum": [JOB_KIND_SCHEDULED_TASK, JOB_KIND_STARTUP_LAUNCHER]},
+                        "desired_state": {"enum": [DESIRED_STATE_ENABLED, DESIRED_STATE_DISABLED]},
+                        "definition": {"type": "object"},
+                    },
+                },
+            },
+        },
+    }
 
 
 @dataclass(slots=True)
@@ -90,6 +119,10 @@ def _run_powershell_json(script: str) -> list[dict[str, Any]]:
     raise ValueError("PowerShell JSON payload must be an object or array")
 
 
+def schema_path_for_registry(registry_path: Path) -> Path:
+    return registry_path.with_name(f"{registry_path.stem}.schema.json")
+
+
 def jobs_registry_payload(jobs: list[dict[str, Any]], updated_at: str | None = None) -> dict[str, Any]:
     return {
         "schema_version": REGISTRY_SCHEMA_VERSION,
@@ -106,6 +139,19 @@ def load_jobs_registry(
     return json.loads(registry_path.read_text(encoding="utf-8"))
 
 
+def save_jobs_registry_schema(
+    path: Path | None = None,
+    codex_root: Path | None = None,
+) -> Path:
+    schema_path = path or default_jobs_schema_path(codex_root)
+    schema_path.parent.mkdir(parents=True, exist_ok=True)
+    schema_path.write_text(
+        json.dumps(jobs_registry_schema_payload(), indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return schema_path
+
+
 def save_jobs_registry(
     registry: dict[str, Any],
     path: Path | None = None,
@@ -113,6 +159,7 @@ def save_jobs_registry(
 ) -> Path:
     registry_path = path or default_jobs_registry_path(codex_root)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
+    save_jobs_registry_schema(schema_path_for_registry(registry_path))
     registry_path.write_text(
         json.dumps(registry, indent=2) + "\n",
         encoding="utf-8",
@@ -199,8 +246,14 @@ def ensure_jobs_registry(
     codex_root: Path | None = None,
 ) -> dict[str, Any]:
     registry_path = path or default_jobs_registry_path(codex_root)
+    save_jobs_registry_schema(schema_path_for_registry(registry_path))
     if registry_path.exists():
         return load_jobs_registry(registry_path)
+    legacy_path = legacy_jobs_registry_path(codex_root)
+    if legacy_path.exists():
+        registry = load_jobs_registry(legacy_path)
+        save_jobs_registry(registry, path=registry_path)
+        return registry
     return bootstrap_jobs_registry(registry_path)
 
 
@@ -373,6 +426,7 @@ def reconcile_job(job: dict[str, Any], observation: JobObservation | None = None
         "observed_label": observed_label,
         "status": status,
         "reason": reason,
+        "definition": dict(definition),
         "details": dict(observed.details),
     }
 

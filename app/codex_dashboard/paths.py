@@ -15,8 +15,20 @@ def orchestration_root(codex_root: Path | None = None) -> Path:
     return (codex_root or default_codex_root()) / "Orchestration"
 
 
-def default_jobs_registry_path(codex_root: Path | None = None) -> Path:
+def jobs_root(codex_root: Path | None = None) -> Path:
+    return orchestration_root(codex_root) / "Jobs"
+
+
+def legacy_jobs_registry_path(codex_root: Path | None = None) -> Path:
     return orchestration_root(codex_root) / "codex-jobs-registry.json"
+
+
+def default_jobs_registry_path(codex_root: Path | None = None) -> Path:
+    return jobs_root(codex_root) / "declared-jobs.json"
+
+
+def default_jobs_schema_path(codex_root: Path | None = None) -> Path:
+    return jobs_root(codex_root) / "declared-jobs.schema.json"
 
 
 def app_data_root() -> Path:

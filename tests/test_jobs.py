@@ -25,6 +25,7 @@ from app.codex_dashboard.jobs import (
     reconcile_job,
     set_job_desired_state,
 )
+from app.codex_dashboard.paths import default_jobs_schema_path, legacy_jobs_registry_path
 
 
 class JobsTests(unittest.TestCase):
@@ -41,7 +42,7 @@ class JobsTests(unittest.TestCase):
 
         self.assertEqual(
             registry_path,
-            self.codex_root / "Orchestration" / "codex-jobs-registry.json",
+            self.codex_root / "Orchestration" / "Jobs" / "declared-jobs.json",
         )
 
     def test_bootstrap_jobs_registry_creates_startup_and_scheduled_entries(self) -> None:
@@ -72,6 +73,7 @@ class JobsTests(unittest.TestCase):
 
         registry_path = default_jobs_registry_path(self.codex_root)
         self.assertTrue(registry_path.exists())
+        self.assertTrue(default_jobs_schema_path(self.codex_root).exists())
         self.assertEqual(registry["schema_version"], 1)
         self.assertEqual(len(registry["jobs"]), 2)
         self.assertEqual(registry["jobs"][0]["kind"], JOB_KIND_STARTUP_LAUNCHER)
@@ -90,6 +92,20 @@ class JobsTests(unittest.TestCase):
 
         bootstrap.assert_not_called()
         self.assertEqual(registry["jobs"], [])
+
+    def test_ensure_jobs_registry_migrates_legacy_registry_path(self) -> None:
+        legacy_path = legacy_jobs_registry_path(self.codex_root)
+        legacy_path.parent.mkdir(parents=True, exist_ok=True)
+        legacy_path.write_text(
+            '{"schema_version": 1, "updated_at": "2026-04-04T00:00:00-04:00", "jobs": []}\n',
+            encoding="utf-8",
+        )
+
+        registry = ensure_jobs_registry(codex_root=self.codex_root)
+
+        self.assertEqual(registry["jobs"], [])
+        self.assertTrue(default_jobs_registry_path(self.codex_root).exists())
+        self.assertTrue(default_jobs_schema_path(self.codex_root).exists())
 
     def test_reconcile_job_reports_missing_startup_launcher(self) -> None:
         job = {
@@ -155,6 +171,30 @@ class JobsTests(unittest.TestCase):
         )
 
         self.assertEqual(status["status"], JOB_STATUS_DISABLED)
+
+    def test_reconcile_job_includes_managed_definition(self) -> None:
+        job = {
+            "job_id": "codex-dashboard-startup",
+            "label": "CodexDashboard overlay at sign-in",
+            "kind": JOB_KIND_STARTUP_LAUNCHER,
+            "desired_state": DESIRED_STATE_ENABLED,
+            "definition": {
+                "script_path": str(self.root / "Startup" / "CodexDashboard.cmd"),
+                "command_text": "@echo off\r\nexpected\r\n",
+            },
+        }
+
+        status = reconcile_job(
+            job,
+            JobObservation(
+                True,
+                True,
+                "@echo off\nexpected",
+                details={"script_path": job["definition"]["script_path"]},
+            ),
+        )
+
+        self.assertEqual(status["definition"], job["definition"])
 
     def test_apply_job_writes_startup_launcher_idempotently(self) -> None:
         startup_script = self.root / "Startup" / "CodexDashboard.cmd"
