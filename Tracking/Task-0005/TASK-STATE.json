@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "task_id": "Task-0005",
+  "status": "in_progress",
+  "phase": "planning",
+  "plan_approved": false,
+  "current_pass": null,
+  "last_completed_pass": null,
+  "current_gate": "planning",
+  "latest_audit_verdict": "unknown",
+  "validation": {
+    "build": "not_run",
+    "unit_tests": "not_run",
+    "regression": "not_run"
+  },
+  "blockers": [],
+  "next_expected_artifacts": [
+    "PLAN.md"
+  ],
+  "updated_at": "2026-04-06T20:16:57.7150872-04:00"
+}
