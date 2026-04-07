@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/httpapi"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/temporalbackend"
 )
 
 func main() {
@@ -19,9 +21,25 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
+	backend, err := temporalbackend.New(cfg)
+	if err != nil {
+		log.Fatalf("init temporal backend: %v", err)
+	}
+	defer func() {
+		_ = backend.Close()
+	}()
+
+	service := controlplane.NewService(cfg.JobsRoot, backend)
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	_, err = service.Reconcile(startupCtx)
+	startupCancel()
+	if err != nil {
+		log.Fatalf("startup reconcile: %v", err)
+	}
+
 	server := &http.Server{
 		Addr:              cfg.BindAddress,
-		Handler:           httpapi.NewMux(cfg),
+		Handler:           httpapi.NewMux(cfg, service),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

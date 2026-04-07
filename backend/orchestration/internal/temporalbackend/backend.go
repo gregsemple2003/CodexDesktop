@@ -1,0 +1,231 @@
+package temporalbackend
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	commonpb "go.temporal.io/api/common/v1"
+	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/converter"
+
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
+)
+
+const managedBy = "codex-orchestration"
+
+type Backend struct {
+	client client.Client
+}
+
+func New(cfg config.Config) (*Backend, error) {
+	temporalClient, err := client.Dial(client.Options{
+		HostPort:  cfg.TemporalAddress,
+		Namespace: cfg.Namespace,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("dial temporal: %w", err)
+	}
+
+	return &Backend{client: temporalClient}, nil
+}
+
+func (b *Backend) Close() error {
+	if b.client != nil {
+		b.client.Close()
+	}
+	return nil
+}
+
+func (b *Backend) ListManagedSchedules(ctx context.Context) ([]controlplane.RuntimeSchedule, error) {
+	iter, err := b.client.ScheduleClient().List(ctx, client.ScheduleListOptions{PageSize: 100})
+	if err != nil {
+		return nil, fmt.Errorf("list schedules: %w", err)
+	}
+
+	schedules := make([]controlplane.RuntimeSchedule, 0)
+	for iter.HasNext() {
+		entry, err := iter.Next()
+		if err != nil {
+			return nil, fmt.Errorf("iterate schedules: %w", err)
+		}
+		if !strings.HasPrefix(entry.ID, "codex-job--") {
+			continue
+		}
+
+		desc, err := b.client.ScheduleClient().GetHandle(ctx, entry.ID).Describe(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("describe schedule %s: %w", entry.ID, err)
+		}
+
+		schedule, err := scheduleFromDescription(entry.ID, desc)
+		if err != nil {
+			return nil, err
+		}
+		schedules = append(schedules, schedule)
+	}
+
+	return schedules, nil
+}
+
+func (b *Backend) CreateSchedule(ctx context.Context, desired controlplane.DesiredSchedule) error {
+	_, err := b.client.ScheduleClient().Create(ctx, buildScheduleOptions(desired))
+	if err != nil {
+		return fmt.Errorf("create schedule %s: %w", desired.ScheduleID, err)
+	}
+	return nil
+}
+
+func (b *Backend) UpdateSchedule(ctx context.Context, desired controlplane.DesiredSchedule) error {
+	handle := b.client.ScheduleClient().GetHandle(ctx, desired.ScheduleID)
+	err := handle.Update(ctx, client.ScheduleUpdateOptions{
+		DoUpdate: func(client.ScheduleUpdateInput) (*client.ScheduleUpdate, error) {
+			schedule := buildSchedule(desired)
+			return &client.ScheduleUpdate{Schedule: &schedule}, nil
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("update schedule %s: %w", desired.ScheduleID, err)
+	}
+	return nil
+}
+
+func (b *Backend) DeleteSchedule(ctx context.Context, scheduleID string) error {
+	err := b.client.ScheduleClient().GetHandle(ctx, scheduleID).Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("delete schedule %s: %w", scheduleID, err)
+	}
+	return nil
+}
+
+func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {
+	return client.ScheduleOptions{
+		ID:      desired.ScheduleID,
+		Spec:    client.ScheduleSpec{CronExpressions: []string{desired.Cron}, TimeZoneName: desired.Timezone},
+		Action:  buildAction(desired),
+		Overlap: enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+		Note:    fmt.Sprintf("Managed by %s", managedBy),
+		Paused:  false,
+	}
+}
+
+func buildSchedule(desired controlplane.DesiredSchedule) client.Schedule {
+	return client.Schedule{
+		Spec:   &client.ScheduleSpec{CronExpressions: []string{desired.Cron}, TimeZoneName: desired.Timezone},
+		Action: buildAction(desired),
+		Policy: &client.SchedulePolicies{Overlap: enumspb.SCHEDULE_OVERLAP_POLICY_SKIP},
+		State:  &client.ScheduleState{Paused: false, Note: fmt.Sprintf("Managed by %s", managedBy)},
+	}
+}
+
+func buildAction(desired controlplane.DesiredSchedule) *client.ScheduleWorkflowAction {
+	return &client.ScheduleWorkflowAction{
+		ID:        desired.WorkflowID,
+		Workflow:  desired.WorkflowType,
+		TaskQueue: desired.TaskQueue,
+		Memo: map[string]interface{}{
+			"managed_by":       managedBy,
+			"job_id":           desired.JobID,
+			"trigger_index":    strconv.Itoa(desired.TriggerIndex),
+			"desired_cron":     desired.Cron,
+			"desired_timezone": desired.Timezone,
+			"workflow_type":    desired.WorkflowType,
+			"task_queue":       desired.TaskQueue,
+		},
+	}
+}
+
+func scheduleFromDescription(scheduleID string, desc *client.ScheduleDescription) (controlplane.RuntimeSchedule, error) {
+	runtime := controlplane.RuntimeSchedule{
+		ScheduleID: scheduleID,
+	}
+
+	if parsedJobID, parsedIndex, ok := controlplane.ParseManagedScheduleID(scheduleID); ok {
+		runtime.JobID = parsedJobID
+		runtime.TriggerIndex = parsedIndex
+	}
+
+	if desc.Schedule.Spec != nil {
+		runtime.CronExpressions = append([]string(nil), desc.Schedule.Spec.CronExpressions...)
+		runtime.TimeZoneName = desc.Schedule.Spec.TimeZoneName
+	}
+	if desc.Schedule.State != nil {
+		runtime.Note = desc.Schedule.State.Note
+		runtime.Paused = desc.Schedule.State.Paused
+	}
+	runtime.NextActionTimes = append([]time.Time(nil), desc.Info.NextActionTimes...)
+	runtime.RecentRuns = recentRuns(scheduleID, desc.Info.RecentActions)
+
+	action, ok := desc.Schedule.Action.(*client.ScheduleWorkflowAction)
+	if !ok {
+		return controlplane.RuntimeSchedule{}, fmt.Errorf("schedule %s uses an unsupported action type", scheduleID)
+	}
+
+	if workflowName, ok := action.Workflow.(string); ok {
+		runtime.WorkflowType = workflowName
+	}
+	runtime.TaskQueue = action.TaskQueue
+
+	runtime.ManagedCron = decodeMemoString(action.Memo, "desired_cron")
+	runtime.ManagedTimezone = decodeMemoString(action.Memo, "desired_timezone")
+
+	if managedJobID := decodeMemoString(action.Memo, "job_id"); managedJobID != "" {
+		runtime.JobID = managedJobID
+	}
+	if rawTriggerIndex := decodeMemoString(action.Memo, "trigger_index"); rawTriggerIndex != "" {
+		if parsedIndex, err := strconv.Atoi(rawTriggerIndex); err == nil {
+			runtime.TriggerIndex = parsedIndex
+		}
+	}
+	if workflowType := decodeMemoString(action.Memo, "workflow_type"); workflowType != "" {
+		runtime.WorkflowType = workflowType
+	}
+	if taskQueue := decodeMemoString(action.Memo, "task_queue"); taskQueue != "" {
+		runtime.TaskQueue = taskQueue
+	}
+
+	return runtime, nil
+}
+
+func recentRuns(scheduleID string, actions []client.ScheduleActionResult) []controlplane.RunRecord {
+	runs := make([]controlplane.RunRecord, 0, len(actions))
+	for _, action := range actions {
+		run := controlplane.RunRecord{
+			ScheduleID:   scheduleID,
+			ScheduleTime: action.ScheduleTime,
+			ActualTime:   action.ActualTime,
+		}
+		if action.StartWorkflowResult != nil {
+			run.WorkflowID = action.StartWorkflowResult.WorkflowID
+			run.FirstExecutionRunID = action.StartWorkflowResult.FirstExecutionRunID
+		}
+		runs = append(runs, run)
+	}
+	return runs
+}
+
+func decodeMemoString(values map[string]interface{}, key string) string {
+	if values == nil {
+		return ""
+	}
+	raw, exists := values[key]
+	if !exists {
+		return ""
+	}
+	payload, ok := raw.(*commonpb.Payload)
+	if !ok {
+		if stringValue, ok := raw.(string); ok {
+			return stringValue
+		}
+		return ""
+	}
+	var decoded string
+	if err := converter.GetDefaultDataConverter().FromPayload(payload, &decoded); err != nil {
+		return ""
+	}
+	return decoded
+}

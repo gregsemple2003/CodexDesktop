@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	BindAddress string
-	JobsRoot    string
-	Namespace   string
-	TaskQueue   string
+	BindAddress     string
+	JobsRoot        string
+	Namespace       string
+	TaskQueue       string
+	TemporalAddress string
 }
 
 func Load() (Config, error) {
@@ -20,10 +21,11 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		BindAddress: envOrDefault("CODEX_ORCHESTRATION_BIND_ADDRESS", "127.0.0.1:4318"),
-		JobsRoot:    envOrDefault("CODEX_ORCHESTRATION_JOBS_ROOT", filepath.Join(home, ".codex", "Orchestration", "Jobs")),
-		Namespace:   envOrDefault("CODEX_ORCHESTRATION_NAMESPACE", "default"),
-		TaskQueue:   envOrDefault("CODEX_ORCHESTRATION_TASK_QUEUE", "codex-orchestration"),
+		BindAddress:     envOrDefault("CODEX_ORCHESTRATION_BIND_ADDRESS", "127.0.0.1:4318"),
+		JobsRoot:        envOrDefault("CODEX_ORCHESTRATION_JOBS_ROOT", filepath.Join(home, ".codex", "Orchestration", "Jobs")),
+		Namespace:       envOrDefault("CODEX_ORCHESTRATION_NAMESPACE", "default"),
+		TaskQueue:       envOrDefault("CODEX_ORCHESTRATION_TASK_QUEUE", "codex-orchestration"),
+		TemporalAddress: envOrDefault("CODEX_ORCHESTRATION_TEMPORAL_ADDRESS", "127.0.0.1:7233"),
 	}
 
 	if cfg.JobsRoot == "" {

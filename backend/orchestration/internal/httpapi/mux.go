@@ -1,25 +1,198 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 )
 
-func NewMux(cfg config.Config) *http.ServeMux {
+func NewMux(cfg config.Config, service *controlplane.Service) *http.ServeMux {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		handleHealth(w, r, cfg, service)
+	})
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		handleHealth(w, r, cfg, service)
+	})
+	mux.HandleFunc("/jobs", func(w http.ResponseWriter, r *http.Request) {
+		handleJobsList(w, r, "/jobs", service)
+	})
+	mux.HandleFunc("/api/v1/jobs", func(w http.ResponseWriter, r *http.Request) {
+		handleJobsList(w, r, "/api/v1/jobs", service)
+	})
+	mux.HandleFunc("/jobs/", func(w http.ResponseWriter, r *http.Request) {
+		handleJobDetail(w, r, "/jobs/", service)
+	})
+	mux.HandleFunc("/api/v1/jobs/", func(w http.ResponseWriter, r *http.Request) {
+		handleJobAPIRoute(w, r, service)
+	})
+	mux.HandleFunc("/runs", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"status":    "ok",
-			"jobs_root": cfg.JobsRoot,
-			"namespace": cfg.Namespace,
-			"task_queue": cfg.TaskQueue,
-		})
+		jobID := strings.TrimSpace(r.URL.Query().Get("job_id"))
+		if jobID == "" {
+			writeJSONError(w, http.StatusBadRequest, errors.New("job_id query parameter is required"))
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 15*time.Second)
+		defer cancel()
+		runs, err := service.Runs(ctx, jobID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadGateway, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"job_id": jobID, "runs": runs})
+	})
+	mux.HandleFunc("/sync", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		report, err := service.Reconcile(ctx)
+		if err != nil {
+			writeJSONError(w, http.StatusBadGateway, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, report)
 	})
 	return mux
+}
+
+func handleJobsList(w http.ResponseWriter, r *http.Request, exactPath string, service *controlplane.Service) {
+	if r.URL.Path != exactPath {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	state, err := service.Snapshot(ctx)
+	if err != nil {
+		writeJSONError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"jobs": state.Jobs, "last_sync": state.LastSync, "generated_at": state.GeneratedAt})
+}
+
+func handleJobDetail(w http.ResponseWriter, r *http.Request, prefix string, service *controlplane.Service) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	jobID := strings.TrimPrefix(r.URL.Path, prefix)
+	if jobID == "" || strings.Contains(jobID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	job, err := service.Job(ctx, jobID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSONError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+func handleJobAPIRoute(w http.ResponseWriter, r *http.Request, service *controlplane.Service) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	trimmed := strings.TrimPrefix(r.URL.Path, "/api/v1/jobs/")
+	if trimmed == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if strings.HasSuffix(trimmed, "/runs") {
+		jobID := strings.TrimSuffix(trimmed, "/runs")
+		jobID = strings.TrimSuffix(jobID, "/")
+		if jobID == "" || strings.Contains(jobID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 15*time.Second)
+		defer cancel()
+		runs, err := service.Runs(ctx, jobID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadGateway, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"job_id": jobID, "runs": runs})
+		return
+	}
+
+	handleJobDetail(w, r, "/api/v1/jobs/", service)
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request, cfg config.Config, service *controlplane.Service) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	state, err := service.Snapshot(ctx)
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]any{
+			"status":           "degraded",
+			"jobs_root":        cfg.JobsRoot,
+			"namespace":        cfg.Namespace,
+			"task_queue":       cfg.TaskQueue,
+			"temporal_address": cfg.TemporalAddress,
+			"error":            err.Error(),
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":           "ok",
+		"jobs_root":        cfg.JobsRoot,
+		"namespace":        cfg.Namespace,
+		"task_queue":       cfg.TaskQueue,
+		"temporal_address": cfg.TemporalAddress,
+		"last_sync":        state.LastSync,
+		"job_count":        len(state.Jobs),
+		"generated_at":     state.GeneratedAt,
+	})
+}
+
+func contextWithTimeout(r *http.Request, timeout time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(r.Context(), timeout)
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeJSONError(w http.ResponseWriter, status int, err error) {
+	writeJSON(w, status, map[string]string{"error": err.Error()})
 }

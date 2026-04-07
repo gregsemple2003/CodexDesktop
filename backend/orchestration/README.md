@@ -2,28 +2,33 @@
 
 This directory is the Go control-plane home for `Task-0005`.
 
-PASS-0000 establishes:
+`PASS-0001` now establishes:
 
 - the v1 job-spec contract under `C:\Users\gregs\.codex\Orchestration\Jobs`
-- a minimal Go service skeleton under `backend/orchestration/`
+- a Go control-plane service under `backend/orchestration/`
 - a repo-local Temporal plus Postgres dev stack definition
-- honest operator notes about the current missing local toolchain
+- startup reconcile plus explicit sync against Temporal schedules
+- read APIs for health, job list, job detail, and recent runs
 
 ## Current Scope
 
-The scaffold here is intentionally narrow. It does not reconcile or execute jobs yet.
+The current backend slice is intentionally narrow. It reconciles desired `schedule` triggers into Temporal and exposes readback for the dashboard, but it does not execute real `manual` or `webhook` runs yet.
 
-The first backend slice only proves:
+The current backend slice proves:
 
 - config loading
 - spec-file discovery and validation shape
-- HTTP server skeleton and health endpoint
+- startup reconcile against the tracked `.codex` job specs
+- explicit `POST /sync` against the same reconcile path
+- read APIs:
+  - `GET /health`
+  - `GET /jobs`
+  - `GET /jobs/{job_id}`
+  - `GET /runs?job_id=<job_id>`
 - local dev-stack layout for Temporal plus Postgres
 
 Future passes add:
 
-- startup reconcile and explicit sync
-- read APIs for the Tk dashboard
 - durable run workflows
 - `schedule`, `manual`, and `webhook` trigger execution
 - the real `codex exec` activity path
@@ -58,21 +63,19 @@ Stop the stack:
 docker compose -f dev\docker-compose.temporal-postgres.yml down
 ```
 
-## Toolchain Status On This Host
-
-Verified during `PASS-0000` on April 6, 2026:
-
-- `codex`: available
-- `go`: missing from `PATH`
-- `docker`: missing from `PATH`
-- `temporal`: missing from `PATH`
-
-That means this pass can land the scaffold and operator docs, but it cannot honestly claim a locally executed Go build or a live Temporal runtime on this host until those tools are installed.
-
-## Suggested Bootstrap Once Tooling Exists
+## Suggested Bootstrap
 
 ```powershell
 cd C:\Agent\CodexDashboard\backend\orchestration
 go test ./...
 go run .\cmd\controlplane
+```
+
+Supporting live checks:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:4318/health | Select-Object -ExpandProperty Content
+Invoke-WebRequest http://127.0.0.1:4318/jobs | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/sync | Select-Object -ExpandProperty Content
+temporal schedule list --address 127.0.0.1:7233
 ```

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0000` is complete. `PASS-0001` is active again after the local `go`, `docker`, and `temporal` toolchain became available in this session.
+`PASS-0001` is complete. `PASS-0002` is now active.
 
 ## Current Baseline
 
@@ -29,6 +29,18 @@ The agreed direction for this task is:
 - new `.codex/Orchestration/Jobs/specs/*.json` starter desired-state specs
 - Python-side spec loading and validation helpers with unit coverage
 
+`PASS-0001` delivered:
+
+- startup reconcile from tracked `.codex` job specs into Temporal schedule ids
+- explicit `POST /sync` through the same reconcile path used at startup
+- backend read APIs for:
+  - `GET /health`
+  - `GET /jobs`
+  - `GET /jobs/{job_id}`
+  - `GET /runs?job_id=<job_id>`
+- focused Go tests for compile or diff behavior and HTTP routes
+- live proof against the repo-local Temporal plus Postgres stack, including `temporal schedule list`
+
 Research output captured so far:
 
 - [RESEARCH-PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH-PLAN.md)
@@ -38,12 +50,12 @@ Research output captured so far:
 
 ## Next Step
 
-Continue `PASS-0001`:
+Continue `PASS-0002`:
 
-- load and validate job specs from Git through the backend path
-- compile schedule triggers into Temporal-facing desired runtime state
-- add startup reconcile and explicit sync without restart
-- expose backend read APIs for health, job list, job detail, recent runs, and sync
+- add the first real workflow and worker path for `codex.exec.job`
+- route `manual` and `webhook` backend entrypoints into that same durable run path
+- prove at least one real `codex exec` executor path end to end
+- preserve job id plus desired-state identity and Temporal runtime ids for auditability
 
 ## Watchouts
 
@@ -51,7 +63,8 @@ Continue `PASS-0001`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- this shell needed a PATH refresh after the human installed the toolchain, but `go`, `docker`, `docker compose`, and `temporal` now resolve successfully
+- the local compose stack and control-plane process are currently usable on this host for continued backend work
+- `manual` and `webhook` are visible in read models now, but they do not execute yet
 
 ## References
 
@@ -60,3 +73,4 @@ Continue `PASS-0001`:
 - [RESEARCH.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH.md)
 - [Cron System with JSON.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Research/Cron%20System%20with%20JSON.md)
 - [PASS-0000-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0000-AUDIT.md)
+- [PASS-0001-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0001-AUDIT.md)
