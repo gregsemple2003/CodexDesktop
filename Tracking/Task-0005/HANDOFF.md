@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete. `PASS-0002` is now active.
+`PASS-0001` is complete. `PASS-0002` implementation is in place, but the pass is waiting on explicit human approval for a real paid `codex exec` proof run.
 
 ## Current Baseline
 
@@ -34,12 +34,26 @@ The agreed direction for this task is:
 - startup reconcile from tracked `.codex` job specs into Temporal schedule ids
 - explicit `POST /sync` through the same reconcile path used at startup
 - backend read APIs for:
-  - `GET /health`
-  - `GET /jobs`
-  - `GET /jobs/{job_id}`
-  - `GET /runs?job_id=<job_id>`
+  - `GET /healthz`
+  - `GET /api/v1/jobs`
+  - `GET /api/v1/jobs/{job_id}`
+  - `GET /api/v1/jobs/{job_id}/runs`
 - focused Go tests for compile or diff behavior and HTTP routes
 - live proof against the repo-local Temporal plus Postgres stack, including `temporal schedule list`
+
+`PASS-0002` now has implementation-ready code for:
+
+- a worker-hosted `codex.exec.job` workflow and activity registration inside the control-plane process
+- `schedule` actions updated to start that same workflow type with frozen desired-state identity
+- `POST /api/v1/jobs/{job_id}/run` for `manual`
+- `POST /api/v1/webhooks/{path}` for `webhook`
+- `codex exec` command assembly with a configurable executable path and per-run artifact files under the local runs root
+- unit coverage for trigger routing and command assembly
+
+What is still missing before `PASS-0002` can close honestly:
+
+- one explicit human approval to run a real paid `codex exec` job through the worker
+- live proof that at least one trigger path reaches a real Codex execution and records Temporal ids plus desired spec hash
 
 Research output captured so far:
 
@@ -52,10 +66,10 @@ Research output captured so far:
 
 Continue `PASS-0002`:
 
-- add the first real workflow and worker path for `codex.exec.job`
-- route `manual` and `webhook` backend entrypoints into that same durable run path
-- prove at least one real `codex exec` executor path end to end
-- preserve job id plus desired-state identity and Temporal runtime ids for auditability
+1. Get explicit human approval for one paid `codex exec` validation run.
+2. Start the backend with the local Temporal stack and worker active.
+3. Drive one real `manual` or `webhook` run through the backend and capture the resulting Temporal ids, spec hash, and Codex artifacts.
+4. Close `PASS-0002`, then continue into `PASS-0003`.
 
 ## Watchouts
 
@@ -63,8 +77,9 @@ Continue `PASS-0002`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- the local compose stack and control-plane process are currently usable on this host for continued backend work
-- `manual` and `webhook` are visible in read models now, but they do not execute yet
+- the local compose stack is usable on this host; task-owned control-plane validation processes were cleaned up after proof runs
+- `manual` and `webhook` now route into the durable workflow path, but a real Codex execution has not been approved or proven yet
+- `CODEX_ORCHESTRATION_CODEX_EXECUTABLE` may be needed on hosts where `codex.exe` is not already on `PATH`
 
 ## References
 

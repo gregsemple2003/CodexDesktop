@@ -13,6 +13,7 @@ import (
 
 type fakeBackend struct {
 	schedules map[string]RuntimeSchedule
+	started   []JobRunRequest
 }
 
 func newFakeBackend() *fakeBackend {
@@ -44,6 +45,19 @@ func (b *fakeBackend) DeleteSchedule(_ context.Context, scheduleID string) error
 
 func (b *fakeBackend) Close() error {
 	return nil
+}
+
+func (b *fakeBackend) StartJobRun(_ context.Context, request JobRunRequest) (StartedRun, error) {
+	b.started = append(b.started, request)
+	return StartedRun{
+		JobID:           request.JobID,
+		TriggerType:     request.TriggerType,
+		TriggerPath:     request.TriggerPath,
+		DesiredSpecHash: request.DesiredSpecHash,
+		RequestedAt:     request.RequestedAt,
+		WorkflowID:      "workflow-id",
+		RunID:           "run-id",
+	}, nil
 }
 
 func TestReconcileCreatesSchedulesAndReportsInSync(t *testing.T) {
@@ -188,6 +202,86 @@ func TestSnapshotFlagsDisabledJobWithRuntimeSchedule(t *testing.T) {
 	}
 }
 
+func TestRunNowStartsManualWorkflowForManualJobs(t *testing.T) {
+	root := writeJobsRoot(t, []jobs.Spec{
+		{
+			APIVersion:   jobs.APIVersion,
+			JobID:        "codex-daily-agentic-swe-digest",
+			Label:        "Agentic SWE Digest",
+			Description:  "Daily digest",
+			DesiredState: jobs.DesiredStateEnabled,
+			Triggers: []jobs.Trigger{
+				{Type: jobs.TriggerTypeSchedule, Cron: "0 4 * * *", Timezone: "America/Toronto"},
+				{Type: jobs.TriggerTypeManual},
+			},
+			Executor: jobs.Executor{
+				Type:       jobs.ExecutorTypeCodexExec,
+				Cwd:        `C:\Users\gregs\.codex`,
+				Entrypoint: "agentic-swe-digest",
+			},
+			Runtime: jobs.RuntimeConfig{
+				WorkflowType: "codex.exec.job",
+				TaskQueue:    "codex-orchestration",
+			},
+		},
+	})
+
+	backend := newFakeBackend()
+	service := NewService(root, backend)
+	started, err := service.RunNow(context.Background(), "codex-daily-agentic-swe-digest")
+	if err != nil {
+		t.Fatalf("run now: %v", err)
+	}
+
+	if started.TriggerType != jobs.TriggerTypeManual {
+		t.Fatalf("trigger type = %q, want manual", started.TriggerType)
+	}
+	if len(backend.started) != 1 || backend.started[0].TriggerType != jobs.TriggerTypeManual {
+		t.Fatalf("unexpected started requests: %+v", backend.started)
+	}
+	if backend.started[0].DesiredSpecHash == "" {
+		t.Fatal("expected desired spec hash to be populated")
+	}
+}
+
+func TestTriggerWebhookStartsWebhookWorkflowForMatchingPath(t *testing.T) {
+	root := writeJobsRoot(t, []jobs.Spec{
+		{
+			APIVersion:   jobs.APIVersion,
+			JobID:        "codex-daily-physical-agents-digest",
+			Label:        "Physical Agents Digest",
+			Description:  "Daily digest",
+			DesiredState: jobs.DesiredStateEnabled,
+			Triggers: []jobs.Trigger{
+				{Type: jobs.TriggerTypeWebhook, Path: "digests/physical-agents"},
+			},
+			Executor: jobs.Executor{
+				Type:       jobs.ExecutorTypeCodexExec,
+				Cwd:        `C:\Users\gregs\.codex`,
+				Entrypoint: "physical-agents-digest",
+			},
+			Runtime: jobs.RuntimeConfig{
+				WorkflowType: "codex.exec.job",
+				TaskQueue:    "codex-orchestration",
+			},
+		},
+	})
+
+	backend := newFakeBackend()
+	service := NewService(root, backend)
+	started, err := service.TriggerWebhook(context.Background(), "digests/physical-agents")
+	if err != nil {
+		t.Fatalf("trigger webhook: %v", err)
+	}
+
+	if started.TriggerType != jobs.TriggerTypeWebhook {
+		t.Fatalf("trigger type = %q, want webhook", started.TriggerType)
+	}
+	if len(backend.started) != 1 || backend.started[0].TriggerPath != "digests/physical-agents" {
+		t.Fatalf("unexpected started requests: %+v", backend.started)
+	}
+}
+
 func runtimeFromDesired(desired DesiredSchedule) RuntimeSchedule {
 	return RuntimeSchedule{
 		ScheduleID:      desired.ScheduleID,
@@ -197,6 +291,7 @@ func runtimeFromDesired(desired DesiredSchedule) RuntimeSchedule {
 		TimeZoneName:    desired.Timezone,
 		ManagedCron:     desired.Cron,
 		ManagedTimezone: desired.Timezone,
+		ManagedSpecHash: desired.SpecHash,
 		WorkflowType:    desired.WorkflowType,
 		TaskQueue:       desired.TaskQueue,
 		RecentRuns: []RunRecord{

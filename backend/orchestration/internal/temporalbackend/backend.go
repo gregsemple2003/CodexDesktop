@@ -7,13 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/converter"
+	"go.temporal.io/sdk/worker"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobexec"
 )
 
 const managedBy = "codex-orchestration"
@@ -102,6 +105,36 @@ func (b *Backend) DeleteSchedule(ctx context.Context, scheduleID string) error {
 	return nil
 }
 
+func (b *Backend) StartJobRun(ctx context.Context, request controlplane.JobRunRequest) (controlplane.StartedRun, error) {
+	workflowID := fmt.Sprintf("job/%s/%s/%s", request.JobID, request.TriggerType, uuid.NewString())
+	workflowRun, err := b.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:        workflowID,
+		TaskQueue: request.Spec.Runtime.TaskQueue,
+	}, request.Spec.Runtime.WorkflowType, request)
+	if err != nil {
+		return controlplane.StartedRun{}, fmt.Errorf("start workflow %s: %w", workflowID, err)
+	}
+
+	return controlplane.StartedRun{
+		JobID:           request.JobID,
+		TriggerType:     request.TriggerType,
+		TriggerPath:     request.TriggerPath,
+		DesiredSpecHash: request.DesiredSpecHash,
+		RequestedAt:     request.RequestedAt,
+		WorkflowID:      workflowRun.GetID(),
+		RunID:           workflowRun.GetRunID(),
+	}, nil
+}
+
+func (b *Backend) StartWorker(cfg config.Config) (worker.Worker, error) {
+	w := worker.New(b.client, cfg.TaskQueue, worker.Options{})
+	jobexec.Register(w, cfg)
+	if err := w.Start(); err != nil {
+		return nil, fmt.Errorf("start worker: %w", err)
+	}
+	return w, nil
+}
+
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {
 	return client.ScheduleOptions{
 		ID:      desired.ScheduleID,
@@ -126,15 +159,17 @@ func buildAction(desired controlplane.DesiredSchedule) *client.ScheduleWorkflowA
 	return &client.ScheduleWorkflowAction{
 		ID:        desired.WorkflowID,
 		Workflow:  desired.WorkflowType,
+		Args:      []interface{}{scheduleRunRequest(desired)},
 		TaskQueue: desired.TaskQueue,
 		Memo: map[string]interface{}{
-			"managed_by":       managedBy,
-			"job_id":           desired.JobID,
-			"trigger_index":    strconv.Itoa(desired.TriggerIndex),
-			"desired_cron":     desired.Cron,
-			"desired_timezone": desired.Timezone,
-			"workflow_type":    desired.WorkflowType,
-			"task_queue":       desired.TaskQueue,
+			"managed_by":        managedBy,
+			"job_id":            desired.JobID,
+			"trigger_index":     strconv.Itoa(desired.TriggerIndex),
+			"desired_cron":      desired.Cron,
+			"desired_timezone":  desired.Timezone,
+			"desired_spec_hash": desired.SpecHash,
+			"workflow_type":     desired.WorkflowType,
+			"task_queue":        desired.TaskQueue,
 		},
 	}
 }
@@ -172,6 +207,7 @@ func scheduleFromDescription(scheduleID string, desc *client.ScheduleDescription
 
 	runtime.ManagedCron = decodeMemoString(action.Memo, "desired_cron")
 	runtime.ManagedTimezone = decodeMemoString(action.Memo, "desired_timezone")
+	runtime.ManagedSpecHash = decodeMemoString(action.Memo, "desired_spec_hash")
 
 	if managedJobID := decodeMemoString(action.Memo, "job_id"); managedJobID != "" {
 		runtime.JobID = managedJobID
@@ -228,4 +264,15 @@ func decodeMemoString(values map[string]interface{}, key string) string {
 		return ""
 	}
 	return decoded
+}
+
+func scheduleRunRequest(desired controlplane.DesiredSchedule) controlplane.JobRunRequest {
+	return controlplane.JobRunRequest{
+		JobID:           desired.JobID,
+		TriggerType:     "schedule",
+		TriggerIndex:    desired.TriggerIndex,
+		DesiredSpecHash: desired.SpecHash,
+		RequestedAt:     time.Now().UTC(),
+		Spec:            desired.Spec,
+	}
 }

@@ -32,6 +32,12 @@ func NewMux(cfg config.Config, service *controlplane.Service) *http.ServeMux {
 	mux.HandleFunc("/api/v1/jobs/", func(w http.ResponseWriter, r *http.Request) {
 		handleJobAPIRoute(w, r, service)
 	})
+	mux.HandleFunc("/webhooks/", func(w http.ResponseWriter, r *http.Request) {
+		handleWebhookRoute(w, r, "/webhooks/", service)
+	})
+	mux.HandleFunc("/api/v1/webhooks/", func(w http.ResponseWriter, r *http.Request) {
+		handleWebhookRoute(w, r, "/api/v1/webhooks/", service)
+	})
 	mux.HandleFunc("/runs", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -116,7 +122,7 @@ func handleJobDetail(w http.ResponseWriter, r *http.Request, prefix string, serv
 }
 
 func handleJobAPIRoute(w http.ResponseWriter, r *http.Request, service *controlplane.Service) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -128,6 +134,10 @@ func handleJobAPIRoute(w http.ResponseWriter, r *http.Request, service *controlp
 	}
 
 	if strings.HasSuffix(trimmed, "/runs") {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		jobID := strings.TrimSuffix(trimmed, "/runs")
 		jobID = strings.TrimSuffix(jobID, "/")
 		if jobID == "" || strings.Contains(jobID, "/") {
@@ -149,7 +159,64 @@ func handleJobAPIRoute(w http.ResponseWriter, r *http.Request, service *controlp
 		return
 	}
 
+	if strings.HasSuffix(trimmed, "/run") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		jobID := strings.TrimSuffix(trimmed, "/run")
+		jobID = strings.TrimSuffix(jobID, "/")
+		if jobID == "" || strings.Contains(jobID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		started, err := service.RunNow(ctx, jobID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, started)
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 	handleJobDetail(w, r, "/api/v1/jobs/", service)
+}
+
+func handleWebhookRoute(w http.ResponseWriter, r *http.Request, prefix string, service *controlplane.Service) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	webhookPath := strings.TrimPrefix(r.URL.Path, prefix)
+	webhookPath = strings.Trim(webhookPath, "/")
+	if webhookPath == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	ctx, cancel := contextWithTimeout(r, 30*time.Second)
+	defer cancel()
+	started, err := service.TriggerWebhook(ctx, webhookPath)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSONError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, started)
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request, cfg config.Config, service *controlplane.Service) {

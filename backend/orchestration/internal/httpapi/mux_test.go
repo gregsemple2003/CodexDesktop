@@ -16,6 +16,7 @@ import (
 
 type fakeBackend struct {
 	schedules map[string]controlplane.RuntimeSchedule
+	started   []controlplane.JobRunRequest
 }
 
 func newFakeBackend() *fakeBackend {
@@ -39,6 +40,7 @@ func (b *fakeBackend) CreateSchedule(_ context.Context, desired controlplane.Des
 		TimeZoneName:    desired.Timezone,
 		ManagedCron:     desired.Cron,
 		ManagedTimezone: desired.Timezone,
+		ManagedSpecHash: desired.SpecHash,
 		WorkflowType:    desired.WorkflowType,
 		TaskQueue:       desired.TaskQueue,
 	}
@@ -56,6 +58,19 @@ func (b *fakeBackend) DeleteSchedule(_ context.Context, scheduleID string) error
 
 func (b *fakeBackend) Close() error {
 	return nil
+}
+
+func (b *fakeBackend) StartJobRun(_ context.Context, request controlplane.JobRunRequest) (controlplane.StartedRun, error) {
+	b.started = append(b.started, request)
+	return controlplane.StartedRun{
+		JobID:           request.JobID,
+		TriggerType:     request.TriggerType,
+		TriggerPath:     request.TriggerPath,
+		DesiredSpecHash: request.DesiredSpecHash,
+		RequestedAt:     request.RequestedAt,
+		WorkflowID:      "workflow-id",
+		RunID:           "run-id",
+	}, nil
 }
 
 func TestMuxExposesHealthJobsAndSync(t *testing.T) {
@@ -148,6 +163,20 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(runsAPIResponse, runsAPIRequest)
 	if runsAPIResponse.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/jobs/{id}/runs status = %d, want 200", runsAPIResponse.Code)
+	}
+
+	runNowRequest := httptest.NewRequest(http.MethodPost, "/api/v1/jobs/codex-daily-ue-determinism-digest/run", nil)
+	runNowResponse := httptest.NewRecorder()
+	mux.ServeHTTP(runNowResponse, runNowRequest)
+	if runNowResponse.Code != http.StatusAccepted {
+		t.Fatalf("POST /api/v1/jobs/{id}/run status = %d, want 202", runNowResponse.Code)
+	}
+
+	webhookRequest := httptest.NewRequest(http.MethodPost, "/api/v1/webhooks/digests/ue-determinism", nil)
+	webhookResponse := httptest.NewRecorder()
+	mux.ServeHTTP(webhookResponse, webhookRequest)
+	if webhookResponse.Code != http.StatusAccepted {
+		t.Fatalf("POST /api/v1/webhooks/{path} status = %d, want 202", webhookResponse.Code)
 	}
 }
 

@@ -29,6 +29,12 @@ func main() {
 		_ = backend.Close()
 	}()
 
+	worker, err := backend.StartWorker(cfg)
+	if err != nil {
+		log.Fatalf("start temporal worker: %v", err)
+	}
+	defer worker.Stop()
+
 	service := controlplane.NewService(cfg.JobsRoot, backend)
 	startupCtx, startupCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	_, err = service.Reconcile(startupCtx)

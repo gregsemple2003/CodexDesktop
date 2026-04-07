@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task_id": "Task-0005",
-  "status": "in_progress",
+  "status": "blocked",
   "phase": "implementation",
   "plan_approved": true,
   "current_pass": "PASS-0002",
@@ -13,10 +13,12 @@
     "unit_tests": "passing",
     "regression": "not_run"
   },
-  "blockers": [],
+  "blockers": [
+    "PASS-0002 needs explicit human approval for at least one real paid codex exec validation run."
+  ],
   "next_expected_artifacts": [
     "HANDOFF.md",
     "Testing/PASS-0002-AUDIT.md"
   ],
-  "updated_at": "2026-04-06T21:50:39.0478321-04:00"
+  "updated_at": "2026-04-06T22:10:02.1483139-04:00"
 }

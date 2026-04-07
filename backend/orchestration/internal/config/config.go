@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"sort"
 )
 
 type Config struct {
@@ -12,6 +14,8 @@ type Config struct {
 	Namespace       string
 	TaskQueue       string
 	TemporalAddress string
+	CodexExecutable string
+	RunsRoot        string
 }
 
 func Load() (Config, error) {
@@ -26,6 +30,8 @@ func Load() (Config, error) {
 		Namespace:       envOrDefault("CODEX_ORCHESTRATION_NAMESPACE", "default"),
 		TaskQueue:       envOrDefault("CODEX_ORCHESTRATION_TASK_QUEUE", "codex-orchestration"),
 		TemporalAddress: envOrDefault("CODEX_ORCHESTRATION_TEMPORAL_ADDRESS", "127.0.0.1:7233"),
+		CodexExecutable: resolveCodexExecutable(home),
+		RunsRoot:        envOrDefault("CODEX_ORCHESTRATION_RUNS_ROOT", defaultRunsRoot(home)),
 	}
 
 	if cfg.JobsRoot == "" {
@@ -40,4 +46,37 @@ func envOrDefault(key string, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func defaultRunsRoot(home string) string {
+	if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
+		return filepath.Join(localAppData, "CodexDashboard", "orchestration-runs")
+	}
+	return filepath.Join(home, "AppData", "Local", "CodexDashboard", "orchestration-runs")
+}
+
+func resolveCodexExecutable(home string) string {
+	if configured := os.Getenv("CODEX_ORCHESTRATION_CODEX_EXECUTABLE"); configured != "" {
+		return configured
+	}
+
+	if path, err := exec.LookPath("codex"); err == nil {
+		return path
+	}
+
+	candidates := []string{}
+	globs := []string{
+		filepath.Join(home, ".vscode-oss", "extensions", "openai.chatgpt-*", "bin", "windows-x86_64", "codex.exe"),
+		filepath.Join(home, ".vscode", "extensions", "openai.chatgpt-*", "bin", "windows-x86_64", "codex.exe"),
+	}
+	for _, pattern := range globs {
+		matches, _ := filepath.Glob(pattern)
+		candidates = append(candidates, matches...)
+	}
+	if len(candidates) == 0 {
+		return "codex"
+	}
+
+	sort.Strings(candidates)
+	return candidates[len(candidates)-1]
 }

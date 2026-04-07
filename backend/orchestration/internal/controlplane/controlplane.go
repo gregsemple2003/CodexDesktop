@@ -21,6 +21,7 @@ type Backend interface {
 	CreateSchedule(ctx context.Context, desired DesiredSchedule) error
 	UpdateSchedule(ctx context.Context, desired DesiredSchedule) error
 	DeleteSchedule(ctx context.Context, scheduleID string) error
+	StartJobRun(ctx context.Context, request JobRunRequest) (StartedRun, error)
 	Close() error
 }
 
@@ -92,6 +93,45 @@ type RunRecord struct {
 	FirstExecutionRunID string    `json:"first_execution_run_id,omitempty"`
 }
 
+type JobRunRequest struct {
+	JobID           string    `json:"job_id"`
+	TriggerType     string    `json:"trigger_type"`
+	TriggerIndex    int       `json:"trigger_index,omitempty"`
+	TriggerPath     string    `json:"trigger_path,omitempty"`
+	DesiredSpecHash string    `json:"desired_spec_hash"`
+	RequestedAt     time.Time `json:"requested_at"`
+	WorkflowID      string    `json:"workflow_id,omitempty"`
+	RunID           string    `json:"run_id,omitempty"`
+	Spec            jobs.Spec `json:"spec"`
+}
+
+type StartedRun struct {
+	JobID           string    `json:"job_id"`
+	TriggerType     string    `json:"trigger_type"`
+	TriggerPath     string    `json:"trigger_path,omitempty"`
+	DesiredSpecHash string    `json:"desired_spec_hash"`
+	RequestedAt     time.Time `json:"requested_at"`
+	WorkflowID      string    `json:"workflow_id"`
+	RunID           string    `json:"run_id"`
+}
+
+type JobRunResult struct {
+	JobID            string    `json:"job_id"`
+	TriggerType      string    `json:"trigger_type"`
+	DesiredSpecHash  string    `json:"desired_spec_hash"`
+	RequestedAt      time.Time `json:"requested_at"`
+	WorkflowID       string    `json:"workflow_id"`
+	RunID            string    `json:"run_id"`
+	StartedAt        time.Time `json:"started_at"`
+	CompletedAt      time.Time `json:"completed_at"`
+	ExitCode         int       `json:"exit_code"`
+	EventLogPath     string    `json:"event_log_path,omitempty"`
+	FinalMessagePath string    `json:"final_message_path,omitempty"`
+	FinalMessage     string    `json:"final_message,omitempty"`
+	StderrPath       string    `json:"stderr_path,omitempty"`
+	Command          []string  `json:"command,omitempty"`
+}
+
 type DesiredSchedule struct {
 	ScheduleID   string
 	JobID        string
@@ -102,6 +142,8 @@ type DesiredSchedule struct {
 	WorkflowType string
 	TaskQueue    string
 	WorkflowID   string
+	SpecHash     string
+	Spec         jobs.Spec
 }
 
 type RuntimeSchedule struct {
@@ -112,6 +154,7 @@ type RuntimeSchedule struct {
 	TimeZoneName    string
 	ManagedCron     string
 	ManagedTimezone string
+	ManagedSpecHash string
 	WorkflowType    string
 	TaskQueue       string
 	Paused          bool
@@ -122,6 +165,7 @@ type RuntimeSchedule struct {
 
 type compiledJob struct {
 	Spec      jobs.Spec
+	SpecHash  string
 	Schedules []DesiredSchedule
 }
 
@@ -256,6 +300,63 @@ func (s *Service) Runs(ctx context.Context, jobID string) ([]RunRecord, error) {
 	return append([]RunRecord{}, job.RecentRuns...), nil
 }
 
+func (s *Service) RunNow(ctx context.Context, jobID string) (StartedRun, error) {
+	compiled, err := s.loadCompiledJobs()
+	if err != nil {
+		return StartedRun{}, err
+	}
+
+	for _, job := range compiled {
+		if job.Spec.JobID != jobID {
+			continue
+		}
+		if !jobHasTriggerType(job.Spec, jobs.TriggerTypeManual) {
+			return StartedRun{}, fmt.Errorf("job %q does not support manual runs", jobID)
+		}
+		return s.backend.StartJobRun(ctx, JobRunRequest{
+			JobID:           job.Spec.JobID,
+			TriggerType:     jobs.TriggerTypeManual,
+			DesiredSpecHash: job.SpecHash,
+			RequestedAt:     time.Now().UTC(),
+			Spec:            job.Spec,
+		})
+	}
+
+	return StartedRun{}, fmt.Errorf("job %q not found", jobID)
+}
+
+func (s *Service) TriggerWebhook(ctx context.Context, webhookPath string) (StartedRun, error) {
+	compiled, err := s.loadCompiledJobs()
+	if err != nil {
+		return StartedRun{}, err
+	}
+
+	var match *compiledJob
+	for _, job := range compiled {
+		for _, trigger := range job.Spec.Triggers {
+			if trigger.Type == jobs.TriggerTypeWebhook && trigger.Path == webhookPath {
+				if match != nil {
+					return StartedRun{}, fmt.Errorf("webhook path %q matches multiple jobs", webhookPath)
+				}
+				candidate := job
+				match = &candidate
+			}
+		}
+	}
+	if match == nil {
+		return StartedRun{}, fmt.Errorf("webhook path %q not found", webhookPath)
+	}
+
+	return s.backend.StartJobRun(ctx, JobRunRequest{
+		JobID:           match.Spec.JobID,
+		TriggerType:     jobs.TriggerTypeWebhook,
+		TriggerPath:     webhookPath,
+		DesiredSpecHash: match.SpecHash,
+		RequestedAt:     time.Now().UTC(),
+		Spec:            match.Spec,
+	})
+}
+
 func (s *Service) loadCompiledJobs() ([]compiledJob, error) {
 	specs, err := jobs.LoadSpecs(s.jobsRoot)
 	if err != nil {
@@ -270,8 +371,14 @@ func (s *Service) loadCompiledJobs() ([]compiledJob, error) {
 }
 
 func compileJob(spec jobs.Spec) compiledJob {
+	specHash, err := jobs.HashSpec(spec)
+	if err != nil {
+		specHash = ""
+	}
+
 	job := compiledJob{
 		Spec:      spec,
+		SpecHash:  specHash,
 		Schedules: make([]DesiredSchedule, 0),
 	}
 
@@ -290,6 +397,8 @@ func compileJob(spec jobs.Spec) compiledJob {
 			WorkflowType: spec.Runtime.WorkflowType,
 			TaskQueue:    spec.Runtime.TaskQueue,
 			WorkflowID:   fmt.Sprintf("%s/schedule/%02d", spec.JobID, scheduleIndex),
+			SpecHash:     specHash,
+			Spec:         spec,
 		})
 		scheduleIndex++
 	}
@@ -468,6 +577,9 @@ func diffSchedule(desired DesiredSchedule, runtime RuntimeSchedule) []string {
 	if runtimeTimezone != desired.Timezone {
 		drift = append(drift, "timezone")
 	}
+	if runtime.ManagedSpecHash != desired.SpecHash {
+		drift = append(drift, "spec_hash")
+	}
 
 	if runtime.WorkflowType != desired.WorkflowType {
 		drift = append(drift, "workflow_type")
@@ -543,4 +655,13 @@ func (s *Service) syncMeta() SyncMeta {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.lastSync
+}
+
+func jobHasTriggerType(spec jobs.Spec, triggerType string) bool {
+	for _, trigger := range spec.Triggers {
+		if trigger.Type == triggerType {
+			return true
+		}
+	}
+	return false
 }
