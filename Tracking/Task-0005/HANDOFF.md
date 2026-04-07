@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0000` is complete. `PASS-0001` is selected, but honest progress is currently blocked on missing local `go`, `docker`, and `temporal` tooling needed to build and exercise the live Temporal reconcile slice.
+`PASS-0000` is complete. `PASS-0001` is active again after the local `go`, `docker`, and `temporal` toolchain became available in this session.
 
 ## Current Baseline
 
@@ -38,7 +38,7 @@ Research output captured so far:
 
 ## Next Step
 
-Resolve the local backend toolchain, then resume `PASS-0001`:
+Continue `PASS-0001`:
 
 - load and validate job specs from Git through the backend path
 - compile schedule triggers into Temporal-facing desired runtime state
@@ -51,7 +51,7 @@ Resolve the local backend toolchain, then resume `PASS-0001`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- local `go`, `docker`, and `temporal` binaries are not currently on `PATH`, so live backend runtime proof is still tooling-blocked on this host
+- this shell needed a PATH refresh after the human installed the toolchain, but `go`, `docker`, `docker compose`, and `temporal` now resolve successfully
 
 ## References
 
