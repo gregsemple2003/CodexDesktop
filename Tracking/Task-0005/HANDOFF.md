@@ -92,6 +92,7 @@ The agreed direction for this task is:
   - `Stop-ValidationLane.ps1`
 - a dashboard backend URL override through `CODEX_DASHBOARD_JOBS_BACKEND_URL`
 - updated repo-local docs so future proof work uses the validation lane instead of disturbing the service lane
+- clarified the live Jobs action labels and copy so the human-facing dashboard now says `Refresh Status` and `Apply Desired State` instead of relying on repo docs to explain the distinction
 
 Research output captured so far:
 

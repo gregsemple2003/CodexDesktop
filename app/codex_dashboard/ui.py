@@ -278,7 +278,9 @@ class DashboardApp:
             "jobs": [],
         }
         self.jobs_detail_job_id: str | None = None
-        self.jobs_status_message = "Press Refresh to read orchestration backend state."
+        self.jobs_status_message = (
+            "Refresh rereads backend state. Apply Desired State updates Temporal to match Git job specs."
+        )
         self.debug_log_path = self.config_path.parent / "dashboard-debug.log"
         self._append_debug_log("dashboard_started")
 
@@ -743,21 +745,30 @@ class DashboardApp:
 
         action_row = ttk.Frame(self.jobs_body, style="Shell.TFrame", padding=(10, 10))
         action_row.pack(fill="x", pady=(0, 12))
+        action_copy = ttk.Frame(action_row, style="Shell.TFrame")
+        action_copy.pack(side="left", fill="x", expand=True)
         ttk.Label(
-            action_row,
+            action_copy,
             text="SOURCE: ORCHESTRATION BACKEND",
             style="Tiny.TLabel",
-        ).pack(side="left")
+        ).pack(anchor="w")
+        ttk.Label(
+            action_copy,
+            text="Refresh rereads status. Apply Desired State updates Temporal to match Git job specs.",
+            style="Status.TLabel",
+            wraplength=420,
+            justify="left",
+        ).pack(anchor="w", pady=(4, 0))
         self.jobs_refresh_button = ttk.Button(
             action_row,
-            text="REFRESH",
+            text="REFRESH STATUS",
             style="Quiet.TButton",
             command=self.refresh_jobs_data,
         )
         self.jobs_refresh_button.pack(side="right", padx=(8, 0))
         self.jobs_sync_button = ttk.Button(
             action_row,
-            text="SYNC NOW",
+            text="APPLY DESIRED STATE",
             style="Accent.TButton",
             command=lambda: self.refresh_jobs_data(apply_changes=True),
         )
