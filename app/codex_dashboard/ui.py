@@ -29,7 +29,7 @@ from .investigation import (
     write_bucket_investigation,
 )
 from .jobs_backend import (
-    DEFAULT_JOBS_BACKEND_URL,
+    configured_jobs_backend_url,
     fetch_jobs_snapshot,
     jobs_backend_error_snapshot,
     start_job_run,
@@ -270,7 +270,7 @@ class DashboardApp:
         self.latest_session_context_markers: dict[str, list[object]] = {}
         self.latest_repo_legend: list[tuple[str, str]] = []
         self.latest_repo_totals: list[dict[str, int]] = []
-        self.jobs_backend_url = DEFAULT_JOBS_BACKEND_URL
+        self.jobs_backend_url = configured_jobs_backend_url()
         self.jobs_snapshot: dict[str, object] = {
             "generated_at": None,
             "last_reconciled_at": None,

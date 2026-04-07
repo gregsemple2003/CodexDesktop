@@ -118,9 +118,38 @@ Turn the existing Tk `Jobs` surface into a backend client that shows real desire
 - bounded control actions work through the backend
 - repo-root regression requirements are updated honestly for the new surface
 
+## PASS-0004 Service Lane And Validation Separation
+
+### Objective
+
+Align the task with the intended local operating model:
+
+- a persistent service lane that stays up for real scheduled work
+- a separate validation lane that can be started and torn down without disturbing scheduled jobs
+
+### Implementation Notes
+
+- parameterize the repo-local Temporal compose stack so different lanes can run on different ports
+- add service-lane scripts that install, start, stop, and report the always-on backend
+- keep the default dashboard backend URL pointed at the service lane while allowing validation and regression to override it explicitly
+- update repo and task docs so future testing uses the validation lane instead of the always-on lane
+
+### Verification
+
+- prove the service lane can be installed and queried live on the default ports
+- prove the validation lane can be started on separate ports while the service lane remains up
+- capture durable task evidence for the new service-lane baseline and the updated testing story
+
+### Exit Bar
+
+- the local machine has a real always-on service lane for scheduled jobs
+- validation work can use a separate runtime lane without taking down the service lane
+- repo docs and task artifacts describe the two-lane model honestly
+- the task closure wording matches the real delivered operating model
+
 ## Task-Level Regression After Planned Passes
 
-After the planned passes close, run the repo-root desktop regression lane that honestly covers the backend-backed Jobs surface. Supporting backend smoke does not replace that real app-surface proof.
+After the planned passes close, run the repo-root desktop regression lane that honestly covers the backend-backed Jobs surface. Supporting backend smoke does not replace that real app-surface proof. When the service lane exists, regression should use the separate validation lane unless the task explicitly targets the service-lane install or uptime flow.
 
 ## Watchouts
 

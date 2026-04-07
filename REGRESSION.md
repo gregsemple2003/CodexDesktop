@@ -50,20 +50,21 @@ Steps:
 
 1. Launch the real app from repo root.
 2. Point it at the real `C:\Users\gregs\.codex` tree or a fixture tree with real `token_count` events.
-3. Start the local orchestration backend and keep it reachable at the configured dashboard backend URL.
-4. Allow at least one ingest cycle to complete.
-5. Trigger the real overlay path.
-6. Click the `Jobs` tab in the running overlay.
-7. Verify the tab switch completes immediately and does not trigger `Sync now` work on its own.
-8. Verify the `Jobs` surface shows backend-derived job rows with trigger labels, desired/runtime state, and drift status.
-9. Open `Details` for one job and verify it shows the backend job payload, including trigger and executor data.
-10. Verify `Run now` is visible for manual-capable jobs and disabled for jobs without a manual trigger.
-11. Click `Sync now` in the `Jobs` surface and observe the backend-backed state reload to completion.
-12. Capture an artifact from the running app surface that shows:
+3. Start the separate validation-lane orchestration backend and keep it reachable for the app without disturbing the always-on service lane.
+4. Set `CODEX_DASHBOARD_JOBS_BACKEND_URL=http://127.0.0.1:14318` for the app process that will be used for the regression run.
+5. Allow at least one ingest cycle to complete.
+6. Trigger the real overlay path.
+7. Click the `Jobs` tab in the running overlay.
+8. Verify the tab switch completes immediately and does not trigger `Sync now` work on its own.
+9. Verify the `Jobs` surface shows backend-derived job rows with trigger labels, desired/runtime state, and drift status.
+10. Open `Details` for one job and verify it shows the backend job payload, including trigger and executor data.
+11. Verify `Run now` is visible for manual-capable jobs and disabled for jobs without a manual trigger.
+12. Click `Sync now` in the `Jobs` surface and observe the backend-backed state reload to completion.
+13. Capture an artifact from the running app surface that shows:
    - the `Jobs` tab as the active surface
    - job summary counts
    - per-job status rows
-13. Exit cleanly.
+14. Exit cleanly.
 
 Expected result:
 
@@ -75,6 +76,7 @@ Expected result:
 - `Sync now` completes through the backend without crashing or spawning stray windows
 - `Run now` availability matches whether a job actually supports manual triggering
 - visible copy remains human-facing
+- the validation lane can be exercised without taking down the default service lane
 
 ## Supporting Smoke
 

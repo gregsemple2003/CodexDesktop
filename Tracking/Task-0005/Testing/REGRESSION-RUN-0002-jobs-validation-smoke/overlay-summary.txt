@@ -1,0 +1,9 @@
+active_tab=jobs
+Jobs sync completed. 0 schedule changes.
+hotkey_triggered=True
+overlay_fallback=False
+jobs_backend=http://127.0.0.1:14318
+jobs_declared=03
+jobs_in_sync=03
+jobs_needs_attention=00
+jobs_last_reconciled=12:38 PM

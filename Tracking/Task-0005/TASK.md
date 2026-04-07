@@ -15,12 +15,16 @@ That is not the right foundation for the durable scheduler and orchestration dir
 - a local Temporal + Postgres runtime for durable schedules and executions
 - dashboard integration that shows desired-vs-runtime correctness without owning scheduling logic
 
+For this task, `long-running backend` means more than a proved binary or a cleanly documented stack. The human-facing outcome is a service lane that remains up on the local computer for real scheduled jobs, plus a separate disposable validation lane so unit, smoke, and regression work do not disturb the always-on scheduler.
+
 The v1 closure bar is a jobs system with `schedule`, `manual`, and `webhook` triggers. Future agent-oriented primitives should only be included now when they materially improve that v1 shape instead of widening the task.
 
 ## Goals
 
 - Introduce a separate Go service for jobs and orchestration control.
 - Self-host Temporal plus Postgres as the runtime durability layer for local-first development.
+- Leave the local machine with a usable always-on service lane rather than a proof-only backend that has been torn down.
+- Separate the always-on service lane from the disposable validation lane used for tests and regression.
 - Keep Git-tracked JSON under `C:\Users\gregs\.codex\Orchestration\Jobs\` as the source of truth for desired job specs.
 - Reconcile desired job state into Temporal schedules and workflows on service startup.
 - Provide a non-restart sync path so Git changes can be reconciled explicitly while the service is already running.
@@ -53,10 +57,13 @@ The v1 closure bar is a jobs system with `schedule`, `manual`, and `webhook` tri
 - Local-first deployment is acceptable for v1, but webhook support must be honest about host reachability and operator prerequisites.
 - Temporal durability and deterministic workflow replay are intentional architectural bets because this system is expected to grow toward broader orchestration later.
 - The first slice should prefer a small number of well-defined job JSON shapes over a prematurely general DSL.
+- The service lane should keep running without the dashboard process and should not be the same runtime lane used for disposable test work.
 
 ## Expected Resolution
 
 - A long-running Go control-plane service and worker can run independently of the dashboard process.
+- The default local service lane is installed and left running for real scheduled work, not only during proof sessions.
+- Validation and regression can use a separate lane with different ports so test work does not disturb the service lane.
 - The service validates job specs from `C:\Users\gregs\.codex\Orchestration\Jobs\`, reconciles them into Temporal at startup, and exposes explicit sync without requiring restart.
 - Temporal owns schedules, workflow histories, run state, retries, and runtime coordination. Git remains the human-edited desired state.
 - v1 jobs can be triggered by schedule, manual request, or webhook.
@@ -87,6 +94,8 @@ Keep Git-tracked job specs and schemas under `C:\Users\gregs\.codex\Orchestratio
   - `manual`
   - `webhook`
 - A local self-hosted Temporal plus Postgres dev stack is documented and runnable for this repo's workflow.
+- The repo defines a concrete service-lane workflow that leaves the local scheduler running after task closure.
+- The repo defines a separate validation-lane workflow so test and regression work do not disturb the service lane.
 - A Go service can load and validate desired job specs and reconcile them into Temporal schedules or workflows on startup.
 - The same service exposes an explicit sync path so Git changes do not require a service restart to reconcile.
 - Schedule, manual, and webhook trigger paths can each start durable runs through Temporal.

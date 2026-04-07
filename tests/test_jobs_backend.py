@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
 import unittest
+from unittest import mock
 
 from app.codex_dashboard.jobs_backend import (
+    configured_jobs_backend_url,
     jobs_backend_error_snapshot,
     map_state_view_to_jobs_snapshot,
     trigger_label,
@@ -10,6 +13,17 @@ from app.codex_dashboard.jobs_backend import (
 
 
 class JobsBackendTests(unittest.TestCase):
+    def test_configured_jobs_backend_url_uses_environment_override(self) -> None:
+        with mock.patch.dict(
+            os.environ,
+            {"CODEX_DASHBOARD_JOBS_BACKEND_URL": "http://127.0.0.1:14318"},
+            clear=False,
+        ):
+            self.assertEqual(
+                configured_jobs_backend_url(),
+                "http://127.0.0.1:14318",
+            )
+
     def test_trigger_label_combines_supported_trigger_types(self) -> None:
         self.assertEqual(
             trigger_label(
@@ -68,4 +82,3 @@ class JobsBackendTests(unittest.TestCase):
         self.assertEqual(snapshot["summary"], {"blocked": 1})
         self.assertEqual(snapshot["jobs"][0]["status"], "blocked")
         self.assertEqual(snapshot["jobs"][0]["observed_label"], "Blocked")
-

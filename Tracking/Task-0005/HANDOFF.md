@@ -8,10 +8,11 @@ Completed closure evidence:
 
 - `PASS-0002` proved one real durable `codex exec` run end to end for `codex-daily-agentic-swe-digest`, including a completed Temporal workflow, per-run artifacts, a regenerated report under `.codex\reports`, and a successful Gmail digest send
 - `PASS-0003` replaced the Tk `Jobs` tab's local Windows reconciliation path with the backend-backed control-plane view and bounded `Sync now` / `Run now` controls
-- repo-root regression coverage now reflects the backend-backed `Jobs` surface, and [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md) passed against the real app surface
-- task-owned runtime cleanup is done:
-  - control-plane listener on `127.0.0.1:4318` stopped
-  - repo-local Temporal plus Postgres compose stack stopped and removed
+- `PASS-0004` corrected the human-facing operating model by installing a persistent local service lane and separating disposable validation work onto different ports
+- repo-root regression coverage now reflects the backend-backed `Jobs` surface, with [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md) covering the original Jobs surface and [REGRESSION-RUN-0002.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0002.md) proving validation-lane targeting while the service lane stayed up
+- current runtime baseline:
+  - service lane scheduled task `CodexDashboard-Orchestration-ServiceLane` is installed and should be left running on `127.0.0.1:4318` and `127.0.0.1:7233`
+  - validation lane is disposable and should normally be stopped when not actively used for proof work
 
 ## Current Baseline
 
@@ -29,6 +30,8 @@ The agreed direction for this task is:
 - the task should stay narrow and avoid widening into a full agent framework in its first slice
 - the existing `declared-jobs.json` Windows registry is useful migration input, but it is not the long-term desired-state format for this task
 - the Tk `Jobs` surface should survive as a backend client, not as a local Windows reconciler
+- the human-facing outcome includes a usable always-on service lane, not only a proved backend stack
+- validation and regression should use a separate disposable lane instead of taking down the service lane
 
 `PASS-0000` delivered:
 
@@ -76,6 +79,20 @@ The agreed direction for this task is:
 - live overlay PNG capture for smoke and regression artifacts
 - updated repo-root regression wording for the backend-backed `Jobs` lane
 
+`PASS-0004` delivered:
+
+- parameterized compose ports so the repo-local Temporal/Postgres stack can run in separate lanes
+- service-lane scripts under `backend/orchestration/scripts/`:
+  - `Install-ServiceLane.ps1`
+  - `Start-ServiceLane.ps1`
+  - `Stop-ServiceLane.ps1`
+  - `Get-ServiceLaneStatus.ps1`
+- validation-lane scripts under `backend/orchestration/scripts/`:
+  - `Start-ValidationLane.ps1`
+  - `Stop-ValidationLane.ps1`
+- a dashboard backend URL override through `CODEX_DASHBOARD_JOBS_BACKEND_URL`
+- updated repo-local docs so future proof work uses the validation lane instead of disturbing the service lane
+
 Research output captured so far:
 
 - [RESEARCH-PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH-PLAN.md)
@@ -87,7 +104,7 @@ Research output captured so far:
 
 No further task work is required for `Task-0005`.
 
-If follow-up work is desired later, the clearest separate task would be hardening the successful Windows executor path away from `--dangerously-bypass-approvals-and-sandbox`.
+If follow-up work is desired later, the clearest separate task would be hardening the successful Windows executor path away from `--dangerously-bypass-approvals-and-sandbox`, or moving the service lane from the current interactive-user boundary to a more durable host-level runner when that tradeoff is worth the extra complexity.
 
 ## Watchouts
 
@@ -96,9 +113,12 @@ If follow-up work is desired later, the clearest separate task would be hardenin
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
 - the original startup over-release and `CreateProcessAsUserW failed: 1920` failure are now historical evidence in [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md), not the active blocker
+- the service lane is intentionally the default human-facing runtime and should not be taken down for ordinary unit, smoke, or regression work
+- use the validation lane for disposable proof work and point the app at it with `CODEX_DASHBOARD_JOBS_BACKEND_URL=http://127.0.0.1:14318`
 - the successful Windows executor path currently depends on `--dangerously-bypass-approvals-and-sandbox`
 - the real digest proof touched user `.codex` runtime state under `reports\` and `gmail-digest-email\`; treat those as operator/runtime artifacts rather than dashboard product files
 - `go`, `docker`, and `temporal` are available on this host, but this shell still needed explicit executable resolution when `PATH` was stale
+- the current service-lane Scheduled Task runs at user logon under the interactive user because that is where `.codex` state and the logged-in `codex` CLI session live
 
 ## References
 
@@ -110,5 +130,7 @@ If follow-up work is desired later, the clearest separate task would be hardenin
 - [PASS-0001-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0001-AUDIT.md)
 - [PASS-0002-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0002-AUDIT.md)
 - [PASS-0003-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0003-AUDIT.md)
+- [PASS-0004-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0004-AUDIT.md)
 - [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md)
+- [REGRESSION-RUN-0002.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0002.md)
 - [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md)

@@ -1,17 +1,26 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from datetime import datetime
 from typing import Any
 from urllib import error, parse, request
 
 DEFAULT_JOBS_BACKEND_URL = "http://127.0.0.1:4318"
+JOBS_BACKEND_URL_ENV = "CODEX_DASHBOARD_JOBS_BACKEND_URL"
 REQUEST_TIMEOUT_SECONDS = 10.0
 
 
 class JobsBackendError(RuntimeError):
     pass
+
+
+def configured_jobs_backend_url() -> str:
+    configured = os.environ.get(JOBS_BACKEND_URL_ENV, "").strip()
+    if configured:
+        return configured
+    return DEFAULT_JOBS_BACKEND_URL
 
 
 def fetch_jobs_snapshot(base_url: str = DEFAULT_JOBS_BACKEND_URL) -> dict[str, object]:
