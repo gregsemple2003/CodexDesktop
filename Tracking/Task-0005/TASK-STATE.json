@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task_id": "Task-0005",
-  "status": "in_progress",
+  "status": "blocked",
   "phase": "implementation",
   "plan_approved": true,
   "current_pass": "PASS-0001",
@@ -13,10 +13,12 @@
     "unit_tests": "passing",
     "regression": "not_run"
   },
-  "blockers": [],
+  "blockers": [
+    "PASS-0001 live reconcile and API proof is blocked until go, docker, and temporal are available on PATH."
+  ],
   "next_expected_artifacts": [
     "HANDOFF.md",
     "Testing/PASS-0001-AUDIT.md"
   ],
-  "updated_at": "2026-04-06T20:56:04.7018151-04:00"
+  "updated_at": "2026-04-06T20:57:17.9278006-04:00"
 }

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0000` is complete. The backend-first orchestration foundation now exists, and the task remains in implementation for `PASS-0001`.
+`PASS-0000` is complete. `PASS-0001` is selected, but honest progress is currently blocked on missing local `go`, `docker`, and `temporal` tooling needed to build and exercise the live Temporal reconcile slice.
 
 ## Current Baseline
 
@@ -38,7 +38,7 @@ Research output captured so far:
 
 ## Next Step
 
-Start `PASS-0001`:
+Resolve the local backend toolchain, then resume `PASS-0001`:
 
 - load and validate job specs from Git through the backend path
 - compile schedule triggers into Temporal-facing desired runtime state
