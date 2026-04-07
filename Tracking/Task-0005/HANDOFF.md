@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete. `PASS-0002` is active again after a bounded runtime fence fix: the first live proof attempt released all three tracked schedules at startup and hit `CreateProcessAsUserW failed: 1920`, and the control-plane now carries an explicit short schedule catchup window so existing schedules will be updated away from that unsafe startup behavior on the next reconcile.
+`PASS-0002` is complete with caveats. The bounded final retry proved one real durable `codex exec` run end to end for `codex-daily-agentic-swe-digest`, including a completed Temporal workflow, per-run artifacts, a regenerated report under `.codex\reports`, and a successful Gmail digest send. `PASS-0003` is now the active pass.
 
 ## Current Baseline
 
@@ -41,7 +41,7 @@ The agreed direction for this task is:
 - focused Go tests for compile or diff behavior and HTTP routes
 - live proof against the repo-local Temporal plus Postgres stack, including `temporal schedule list`
 
-`PASS-0002` now has implementation-ready code for:
+`PASS-0002` delivered:
 
 - a worker-hosted `codex.exec.job` workflow and activity registration inside the control-plane process
 - `schedule` actions updated to start that same workflow type with frozen desired-state identity
@@ -49,12 +49,13 @@ The agreed direction for this task is:
 - `POST /api/v1/webhooks/{path}` for `webhook`
 - `codex exec` command assembly with a configurable executable path and per-run artifact files under the local runs root
 - unit coverage for trigger routing and command assembly
-
-What is still missing before `PASS-0002` can close honestly:
-
-- a bounded live proof that reaches exactly one intended real Codex execution
-- end-to-end evidence that the chosen trigger path records Temporal ids plus desired spec hash
-- confirmation of whether the Windows Codex runtime failure `CreateProcessAsUserW failed: 1920` still occurs after the bounded retry
+- a short schedule catchup window so startup reconcile stays bounded during proof work
+- a successful bounded live manual proof:
+  - workflow id: `job/codex-daily-agentic-swe-digest/manual/18a81bff-3355-418e-8559-224407f7f586`
+  - run id: `019d686c-3c82-7a12-81f2-50d60cd5ffd5`
+  - desired spec hash: `38a97b5d67aa3cf10a8231b972e1f3404fe29c28be37bac1e54e2ce378524b62`
+  - artifact root: `C:\Users\gregs\AppData\Local\CodexDashboard\orchestration-runs\pass-0002-final-retry-20260407-104944\codex-daily-agentic-swe-digest\job_codex-daily-agentic-swe-digest_manual_18a81bff-3355-418e-8559-224407f7f586\`
+  - final outcome: report regenerated and Gmail digest sent successfully at `2026-04-07T10:58:44-04:00`
 
 Research output captured so far:
 
@@ -65,12 +66,12 @@ Research output captured so far:
 
 ## Next Step
 
-Continue `PASS-0002`:
+Start `PASS-0003`:
 
-1. Start the control-plane against the local Temporal stack so reconcile updates the managed schedules onto the new short catchup window.
-2. Verify the startup path no longer releases the three overdue digest runs.
-3. Drive one bounded real manual run and capture the resulting Temporal ids, spec hash, and Codex artifacts.
-4. If the run still fails with `CreateProcessAsUserW failed: 1920`, preserve that executor failure as the honest PASS-0002 blocker; otherwise close `PASS-0002` and continue into `PASS-0003`.
+1. Replace the Tk `Jobs` tab's local Windows reconciliation path with backend API consumption.
+2. Show backend-backed desired-vs-runtime state, recent runs, next run, and last error without making the dashboard the scheduler host.
+3. Wire bounded `Sync now` and `Run now` actions through the backend.
+4. Update repo-root `REGRESSION.md` for the backend-backed Jobs lane and then run the real desktop regression lane honestly.
 
 ## Watchouts
 
@@ -78,11 +79,10 @@ Continue `PASS-0002`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- the contained proof launch on `2026-04-07` showed that starting the worker-backed control-plane can release all three overdue daily digest schedules at once unless the schedule path is fenced
-- the fence fix is now in code and covered by backend tests; existing schedules will pick it up on the next reconcile because catchup window drift is now part of desired-vs-runtime comparison
-- the resulting real Codex runs wrote artifacts under `C:\Users\gregs\AppData\Local\CodexDashboard\orchestration-runs\...` and failed with `CreateProcessAsUserW failed: 1920`
-- `go`, `docker`, and `temporal` are available on this host, but this shell needed PATH refresh or explicit executable resolution
-- `manual` and `webhook` already route into the durable workflow path; the remaining task is bounded live proof plus honest handling of the Windows Codex sandbox behavior
+- the original startup over-release and `CreateProcessAsUserW failed: 1920` failure are now historical evidence in [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md), not the active blocker
+- the successful Windows executor path currently depends on `--dangerously-bypass-approvals-and-sandbox`
+- the real digest proof touched user `.codex` runtime state under `reports\` and `gmail-digest-email\`; treat those as operator/runtime artifacts rather than dashboard product files
+- `go`, `docker`, and `temporal` are available on this host, but this shell still needs explicit executable resolution when `PATH` is stale
 
 ## References
 

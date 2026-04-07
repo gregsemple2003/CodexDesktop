@@ -47,8 +47,9 @@ func TestBuildCommandPlanUsesCodexExecAndArtifacts(t *testing.T) {
 	if len(plan.Args) < 8 || plan.Args[0] != "exec" {
 		t.Fatalf("unexpected command args: %v", plan.Args)
 	}
-	if !strings.Contains(strings.Join(plan.Args, " "), "--full-auto") {
-		t.Fatalf("expected --full-auto in command args: %v", plan.Args)
+	argsText := strings.Join(plan.Args, " ")
+	if !strings.Contains(argsText, "--dangerously-bypass-approvals-and-sandbox") {
+		t.Fatalf("expected dangerous bypass flag in command args: %v", plan.Args)
 	}
 	if !strings.Contains(strings.Join(plan.Args, " "), "agentic-swe-digest") {
 		t.Fatalf("expected prompt to mention entrypoint: %v", plan.Args)

@@ -74,7 +74,7 @@ func BuildCommandPlan(cfg config.Config, request controlplane.JobRunRequest) (Co
 
 	args := []string{
 		"exec",
-		"--full-auto",
+		"--dangerously-bypass-approvals-and-sandbox",
 		"--skip-git-repo-check",
 		"--json",
 		"-C", request.Spec.Executor.Cwd,
