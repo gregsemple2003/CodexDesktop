@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0005` research is complete and the task is now at the planning gate pending explicit human approval of [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/PLAN.md).
+`Task-0005` planning is approved and the task has entered implementation. The next execution step is `PASS-0000`.
 
 ## Current Baseline
 
@@ -30,9 +30,7 @@ Research output captured so far:
 
 ## Next Step
 
-Wait for explicit human approval of [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/PLAN.md).
-
-After approval, start `PASS-0000`:
+Start `PASS-0000`:
 
 - establish the v1 job-spec layout under `.codex/Orchestration/Jobs`
 - scaffold `backend/orchestration/`
