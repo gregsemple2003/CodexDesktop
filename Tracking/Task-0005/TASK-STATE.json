@@ -6,19 +6,21 @@
   "plan_approved": true,
   "current_pass": "PASS-0002",
   "last_completed_pass": "PASS-0001",
-  "current_gate": "implementation",
-  "latest_audit_verdict": "ready",
+  "current_gate": "debugging",
+  "latest_audit_verdict": "not_ready",
   "validation": {
     "build": "passing",
     "unit_tests": "passing",
     "regression": "not_run"
   },
   "blockers": [
-    "PASS-0002 needs explicit human approval for at least one real paid codex exec validation run."
+    "Starting the worker-backed control-plane released three overdue schedule-triggered Codex runs immediately on startup, so PASS-0002 cannot be retried safely until the schedule path is fenced.",
+    "The real Codex executions launched by that proof attempt failed inside the Windows sandbox with CreateProcessAsUserW failed: 1920."
   ],
   "next_expected_artifacts": [
+    "BUG-0001.md",
     "HANDOFF.md",
     "Testing/PASS-0002-AUDIT.md"
   ],
-  "updated_at": "2026-04-06T22:10:02.1483139-04:00"
+  "updated_at": "2026-04-07T10:34:23.2330696-04:00"
 }

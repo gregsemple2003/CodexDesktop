@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete. `PASS-0002` implementation is in place, but the pass is waiting on explicit human approval for a real paid `codex exec` proof run.
+`PASS-0001` is complete. `PASS-0002` is currently blocked in a debugging checkpoint after the first live proof attempt released all three tracked schedules at startup and the resulting real Codex runs failed inside the Windows sandbox with `CreateProcessAsUserW failed: 1920`.
 
 ## Current Baseline
 
@@ -52,8 +52,8 @@ The agreed direction for this task is:
 
 What is still missing before `PASS-0002` can close honestly:
 
-- one explicit human approval to run a real paid `codex exec` job through the worker
-- live proof that at least one trigger path reaches a real Codex execution and records Temporal ids plus desired spec hash
+- a bounded live proof that reaches exactly one intended real Codex execution
+- end-to-end evidence that the chosen trigger path records Temporal ids plus desired spec hash
 
 Research output captured so far:
 
@@ -64,12 +64,11 @@ Research output captured so far:
 
 ## Next Step
 
-Continue `PASS-0002`:
+Continue `PASS-0002` from the blocked/debug checkpoint:
 
-1. Get explicit human approval for one paid `codex exec` validation run.
-2. Start the backend with the local Temporal stack and worker active.
-3. Drive one real `manual` or `webhook` run through the backend and capture the resulting Temporal ids, spec hash, and Codex artifacts.
-4. Close `PASS-0002`, then continue into `PASS-0003`.
+1. Fence the startup schedule path so a proof launch cannot silently release all overdue tracked schedules.
+2. Retry with one bounded live run.
+3. If the run still fails with `CreateProcessAsUserW failed: 1920`, preserve that executor failure as the honest PASS-0002 blocker; otherwise close `PASS-0002` and continue into `PASS-0003`.
 
 ## Watchouts
 
@@ -77,9 +76,10 @@ Continue `PASS-0002`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- the local compose stack is usable on this host; task-owned control-plane validation processes were cleaned up after proof runs
-- `manual` and `webhook` now route into the durable workflow path, but a real Codex execution has not been approved or proven yet
-- `CODEX_ORCHESTRATION_CODEX_EXECUTABLE` may be needed on hosts where `codex.exe` is not already on `PATH`
+- the contained proof launch on `2026-04-07` showed that starting the worker-backed control-plane can release all three overdue daily digest schedules at once unless the schedule path is fenced
+- the resulting real Codex runs wrote artifacts under `C:\Users\gregs\AppData\Local\CodexDashboard\orchestration-runs\...` and failed with `CreateProcessAsUserW failed: 1920`
+- `go`, `docker`, and `temporal` are available on this host, but this shell needed PATH refresh or explicit executable resolution
+- `manual` and `webhook` already route into the durable workflow path; the remaining task is bounded live proof plus honest handling of the Windows Codex sandbox behavior
 
 ## References
 
@@ -89,3 +89,4 @@ Continue `PASS-0002`:
 - [Cron System with JSON.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Research/Cron%20System%20with%20JSON.md)
 - [PASS-0000-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0000-AUDIT.md)
 - [PASS-0001-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0001-AUDIT.md)
+- [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md)
