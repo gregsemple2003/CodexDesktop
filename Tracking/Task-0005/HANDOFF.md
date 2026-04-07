@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`PASS-0001` is complete. `PASS-0002` is currently blocked in a debugging checkpoint after the first live proof attempt released all three tracked schedules at startup and the resulting real Codex runs failed inside the Windows sandbox with `CreateProcessAsUserW failed: 1920`.
+`PASS-0001` is complete. `PASS-0002` is active again after a bounded runtime fence fix: the first live proof attempt released all three tracked schedules at startup and hit `CreateProcessAsUserW failed: 1920`, and the control-plane now carries an explicit short schedule catchup window so existing schedules will be updated away from that unsafe startup behavior on the next reconcile.
 
 ## Current Baseline
 
@@ -54,6 +54,7 @@ What is still missing before `PASS-0002` can close honestly:
 
 - a bounded live proof that reaches exactly one intended real Codex execution
 - end-to-end evidence that the chosen trigger path records Temporal ids plus desired spec hash
+- confirmation of whether the Windows Codex runtime failure `CreateProcessAsUserW failed: 1920` still occurs after the bounded retry
 
 Research output captured so far:
 
@@ -64,11 +65,12 @@ Research output captured so far:
 
 ## Next Step
 
-Continue `PASS-0002` from the blocked/debug checkpoint:
+Continue `PASS-0002`:
 
-1. Fence the startup schedule path so a proof launch cannot silently release all overdue tracked schedules.
-2. Retry with one bounded live run.
-3. If the run still fails with `CreateProcessAsUserW failed: 1920`, preserve that executor failure as the honest PASS-0002 blocker; otherwise close `PASS-0002` and continue into `PASS-0003`.
+1. Start the control-plane against the local Temporal stack so reconcile updates the managed schedules onto the new short catchup window.
+2. Verify the startup path no longer releases the three overdue digest runs.
+3. Drive one bounded real manual run and capture the resulting Temporal ids, spec hash, and Codex artifacts.
+4. If the run still fails with `CreateProcessAsUserW failed: 1920`, preserve that executor failure as the honest PASS-0002 blocker; otherwise close `PASS-0002` and continue into `PASS-0003`.
 
 ## Watchouts
 
@@ -77,6 +79,7 @@ Continue `PASS-0002` from the blocked/debug checkpoint:
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
 - the contained proof launch on `2026-04-07` showed that starting the worker-backed control-plane can release all three overdue daily digest schedules at once unless the schedule path is fenced
+- the fence fix is now in code and covered by backend tests; existing schedules will pick it up on the next reconcile because catchup window drift is now part of desired-vs-runtime comparison
 - the resulting real Codex runs wrote artifacts under `C:\Users\gregs\AppData\Local\CodexDashboard\orchestration-runs\...` and failed with `CreateProcessAsUserW failed: 1920`
 - `go`, `docker`, and `temporal` are available on this host, but this shell needed PATH refresh or explicit executable resolution
 - `manual` and `webhook` already route into the durable workflow path; the remaining task is bounded live proof plus honest handling of the Windows Codex sandbox behavior

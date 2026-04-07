@@ -14,6 +14,9 @@ import (
 
 const (
 	managedSchedulePrefix = "codex-job--"
+	// Keep the managed catchup window short so a restart does not release
+	// hours-old schedule work, while still tolerating brief control-plane restarts.
+	ManagedScheduleCatchupWindow = time.Minute
 )
 
 type Backend interface {
@@ -133,17 +136,18 @@ type JobRunResult struct {
 }
 
 type DesiredSchedule struct {
-	ScheduleID   string
-	JobID        string
-	TriggerIndex int
-	Enabled      bool
-	Cron         string
-	Timezone     string
-	WorkflowType string
-	TaskQueue    string
-	WorkflowID   string
-	SpecHash     string
-	Spec         jobs.Spec
+	ScheduleID    string
+	JobID         string
+	TriggerIndex  int
+	Enabled       bool
+	Cron          string
+	Timezone      string
+	CatchupWindow time.Duration
+	WorkflowType  string
+	TaskQueue     string
+	WorkflowID    string
+	SpecHash      string
+	Spec          jobs.Spec
 }
 
 type RuntimeSchedule struct {
@@ -155,6 +159,7 @@ type RuntimeSchedule struct {
 	ManagedCron     string
 	ManagedTimezone string
 	ManagedSpecHash string
+	CatchupWindow   time.Duration
 	WorkflowType    string
 	TaskQueue       string
 	Paused          bool
@@ -388,17 +393,18 @@ func compileJob(spec jobs.Spec) compiledJob {
 			continue
 		}
 		job.Schedules = append(job.Schedules, DesiredSchedule{
-			ScheduleID:   ManagedScheduleID(spec.JobID, scheduleIndex),
-			JobID:        spec.JobID,
-			TriggerIndex: scheduleIndex,
-			Enabled:      spec.DesiredState == jobs.DesiredStateEnabled,
-			Cron:         trigger.Cron,
-			Timezone:     trigger.Timezone,
-			WorkflowType: spec.Runtime.WorkflowType,
-			TaskQueue:    spec.Runtime.TaskQueue,
-			WorkflowID:   fmt.Sprintf("%s/schedule/%02d", spec.JobID, scheduleIndex),
-			SpecHash:     specHash,
-			Spec:         spec,
+			ScheduleID:    ManagedScheduleID(spec.JobID, scheduleIndex),
+			JobID:         spec.JobID,
+			TriggerIndex:  scheduleIndex,
+			Enabled:       spec.DesiredState == jobs.DesiredStateEnabled,
+			Cron:          trigger.Cron,
+			Timezone:      trigger.Timezone,
+			CatchupWindow: ManagedScheduleCatchupWindow,
+			WorkflowType:  spec.Runtime.WorkflowType,
+			TaskQueue:     spec.Runtime.TaskQueue,
+			WorkflowID:    fmt.Sprintf("%s/schedule/%02d", spec.JobID, scheduleIndex),
+			SpecHash:      specHash,
+			Spec:          spec,
 		})
 		scheduleIndex++
 	}
@@ -579,6 +585,9 @@ func diffSchedule(desired DesiredSchedule, runtime RuntimeSchedule) []string {
 	}
 	if runtime.ManagedSpecHash != desired.SpecHash {
 		drift = append(drift, "spec_hash")
+	}
+	if runtime.CatchupWindow != desired.CatchupWindow {
+		drift = append(drift, "catchup_window")
 	}
 
 	if runtime.WorkflowType != desired.WorkflowType {

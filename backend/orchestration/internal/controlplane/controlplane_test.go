@@ -202,6 +202,64 @@ func TestSnapshotFlagsDisabledJobWithRuntimeSchedule(t *testing.T) {
 	}
 }
 
+func TestReconcileUpdatesScheduleWhenCatchupWindowDrifts(t *testing.T) {
+	root := writeJobsRoot(t, []jobs.Spec{
+		{
+			APIVersion:   jobs.APIVersion,
+			JobID:        "codex-daily-agentic-swe-digest",
+			Label:        "Agentic SWE Digest",
+			Description:  "Daily digest",
+			DesiredState: jobs.DesiredStateEnabled,
+			Triggers: []jobs.Trigger{
+				{Type: jobs.TriggerTypeSchedule, Cron: "0 4 * * *", Timezone: "America/Toronto"},
+				{Type: jobs.TriggerTypeManual},
+			},
+			Executor: jobs.Executor{
+				Type:       jobs.ExecutorTypeCodexExec,
+				Cwd:        `C:\Users\gregs\.codex`,
+				Entrypoint: "agentic-swe-digest",
+			},
+			Runtime: jobs.RuntimeConfig{
+				WorkflowType: "codex.exec.job",
+				TaskQueue:    "codex-orchestration",
+			},
+		},
+	})
+
+	backend := newFakeBackend()
+	service := NewService(root, backend)
+
+	compiled, err := service.loadCompiledJobs()
+	if err != nil {
+		t.Fatalf("load compiled jobs: %v", err)
+	}
+	backend.schedules[compiled[0].Schedules[0].ScheduleID] = runtimeFromDesired(compiled[0].Schedules[0])
+	backend.schedules[compiled[0].Schedules[0].ScheduleID] = RuntimeSchedule{
+		ScheduleID:      compiled[0].Schedules[0].ScheduleID,
+		JobID:           compiled[0].Schedules[0].JobID,
+		TriggerIndex:    compiled[0].Schedules[0].TriggerIndex,
+		CronExpressions: []string{compiled[0].Schedules[0].Cron},
+		TimeZoneName:    compiled[0].Schedules[0].Timezone,
+		ManagedCron:     compiled[0].Schedules[0].Cron,
+		ManagedTimezone: compiled[0].Schedules[0].Timezone,
+		ManagedSpecHash: compiled[0].Schedules[0].SpecHash,
+		WorkflowType:    compiled[0].Schedules[0].WorkflowType,
+		TaskQueue:       compiled[0].Schedules[0].TaskQueue,
+	}
+
+	report, err := service.Reconcile(context.Background())
+	if err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	if len(report.Updated) != 1 || report.Updated[0] != compiled[0].Schedules[0].ScheduleID {
+		t.Fatalf("updated schedules = %v, want %s", report.Updated, compiled[0].Schedules[0].ScheduleID)
+	}
+	if backend.schedules[compiled[0].Schedules[0].ScheduleID].CatchupWindow != ManagedScheduleCatchupWindow {
+		t.Fatalf("catchup window = %v, want %v", backend.schedules[compiled[0].Schedules[0].ScheduleID].CatchupWindow, ManagedScheduleCatchupWindow)
+	}
+}
+
 func TestRunNowStartsManualWorkflowForManualJobs(t *testing.T) {
 	root := writeJobsRoot(t, []jobs.Spec{
 		{
@@ -292,6 +350,7 @@ func runtimeFromDesired(desired DesiredSchedule) RuntimeSchedule {
 		ManagedCron:     desired.Cron,
 		ManagedTimezone: desired.Timezone,
 		ManagedSpecHash: desired.SpecHash,
+		CatchupWindow:   desired.CatchupWindow,
 		WorkflowType:    desired.WorkflowType,
 		TaskQueue:       desired.TaskQueue,
 		RecentRuns: []RunRecord{

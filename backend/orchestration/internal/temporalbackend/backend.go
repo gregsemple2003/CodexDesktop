@@ -137,12 +137,13 @@ func (b *Backend) StartWorker(cfg config.Config) (worker.Worker, error) {
 
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {
 	return client.ScheduleOptions{
-		ID:      desired.ScheduleID,
-		Spec:    client.ScheduleSpec{CronExpressions: []string{desired.Cron}, TimeZoneName: desired.Timezone},
-		Action:  buildAction(desired),
-		Overlap: enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
-		Note:    fmt.Sprintf("Managed by %s", managedBy),
-		Paused:  false,
+		ID:            desired.ScheduleID,
+		Spec:          client.ScheduleSpec{CronExpressions: []string{desired.Cron}, TimeZoneName: desired.Timezone},
+		Action:        buildAction(desired),
+		Overlap:       enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+		CatchupWindow: desired.CatchupWindow,
+		Note:          fmt.Sprintf("Managed by %s", managedBy),
+		Paused:        false,
 	}
 }
 
@@ -150,8 +151,11 @@ func buildSchedule(desired controlplane.DesiredSchedule) client.Schedule {
 	return client.Schedule{
 		Spec:   &client.ScheduleSpec{CronExpressions: []string{desired.Cron}, TimeZoneName: desired.Timezone},
 		Action: buildAction(desired),
-		Policy: &client.SchedulePolicies{Overlap: enumspb.SCHEDULE_OVERLAP_POLICY_SKIP},
-		State:  &client.ScheduleState{Paused: false, Note: fmt.Sprintf("Managed by %s", managedBy)},
+		Policy: &client.SchedulePolicies{
+			Overlap:       enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+			CatchupWindow: desired.CatchupWindow,
+		},
+		State: &client.ScheduleState{Paused: false, Note: fmt.Sprintf("Managed by %s", managedBy)},
 	}
 }
 
@@ -191,6 +195,9 @@ func scheduleFromDescription(scheduleID string, desc *client.ScheduleDescription
 	if desc.Schedule.State != nil {
 		runtime.Note = desc.Schedule.State.Note
 		runtime.Paused = desc.Schedule.State.Paused
+	}
+	if desc.Schedule.Policy != nil {
+		runtime.CatchupWindow = desc.Schedule.Policy.CatchupWindow
 	}
 	runtime.NextActionTimes = append([]time.Time(nil), desc.Info.NextActionTimes...)
 	runtime.RecentRuns = recentRuns(scheduleID, desc.Info.RecentActions)
