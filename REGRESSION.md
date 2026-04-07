@@ -44,33 +44,36 @@ Expected result:
 
 Goal:
 
-Confirm the real desktop app can switch from the default `Usage` surface to the `Jobs` surface through the real tab click path, show declared jobs immediately from durable declared state, then explicitly refresh the actual-vs-declared diff without disruptive side effects.
+Confirm the real desktop app can switch from the default `Usage` surface to the backend-backed `Jobs` surface, show desired-vs-runtime job state from the orchestration backend, and invoke the bounded `Sync now` control without disruptive side effects.
 
 Steps:
 
 1. Launch the real app from repo root.
 2. Point it at the real `C:\Users\gregs\.codex` tree or a fixture tree with real `token_count` events.
-3. Allow at least one ingest cycle to complete.
-4. Trigger the real overlay path.
-5. Click the `Jobs` tab in the running overlay.
-6. Verify the tab switch completes immediately and does not trigger jobs refresh or reconcile work on its own.
-7. Verify the `Jobs` surface immediately shows declared jobs from `.codex/Orchestration/Jobs/declared-jobs.json`.
-8. Open `Details` for one job and verify it shows the declared job payload rather than the observed Windows state.
-9. Click `Refresh` in the `Jobs` surface and observe the jobs state diff load to completion.
-10. Capture an artifact from the running app surface that shows:
+3. Start the local orchestration backend and keep it reachable at the configured dashboard backend URL.
+4. Allow at least one ingest cycle to complete.
+5. Trigger the real overlay path.
+6. Click the `Jobs` tab in the running overlay.
+7. Verify the tab switch completes immediately and does not trigger `Sync now` work on its own.
+8. Verify the `Jobs` surface shows backend-derived job rows with trigger labels, desired/runtime state, and drift status.
+9. Open `Details` for one job and verify it shows the backend job payload, including trigger and executor data.
+10. Verify `Run now` is visible for manual-capable jobs and disabled for jobs without a manual trigger.
+11. Click `Sync now` in the `Jobs` surface and observe the backend-backed state reload to completion.
+12. Capture an artifact from the running app surface that shows:
    - the `Jobs` tab as the active surface
    - job summary counts
    - per-job status rows
-11. Exit cleanly.
+13. Exit cleanly.
 
 Expected result:
 
 - the tab switch completes without hitching the overlay
 - no extra console or app windows are spawned by the interaction
-- clicking `Jobs` alone does not trigger refresh or reconcile work
-- declared jobs are visible before refresh from the durable declared-jobs file under `.codex/Orchestration/Jobs`
-- `Details` shows the declared job payload
-- the `Jobs` surface renders declared jobs, in-sync count, needs-attention count, and per-job rows
+- clicking `Jobs` alone does not trigger `Sync now`
+- the `Jobs` surface renders backend-derived jobs, in-sync count, needs-attention count, and per-job rows
+- `Details` shows the backend job payload rather than a local Windows task snapshot
+- `Sync now` completes through the backend without crashing or spawning stray windows
+- `Run now` availability matches whether a job actually supports manual triggering
 - visible copy remains human-facing
 
 ## Supporting Smoke

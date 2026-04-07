@@ -2,7 +2,16 @@
 
 ## Current Status
 
-`PASS-0002` is complete with caveats. The bounded final retry proved one real durable `codex exec` run end to end for `codex-daily-agentic-swe-digest`, including a completed Temporal workflow, per-run artifacts, a regenerated report under `.codex\reports`, and a successful Gmail digest send. `PASS-0003` is now the active pass.
+`Task-0005` is complete with caveats.
+
+Completed closure evidence:
+
+- `PASS-0002` proved one real durable `codex exec` run end to end for `codex-daily-agentic-swe-digest`, including a completed Temporal workflow, per-run artifacts, a regenerated report under `.codex\reports`, and a successful Gmail digest send
+- `PASS-0003` replaced the Tk `Jobs` tab's local Windows reconciliation path with the backend-backed control-plane view and bounded `Sync now` / `Run now` controls
+- repo-root regression coverage now reflects the backend-backed `Jobs` surface, and [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md) passed against the real app surface
+- task-owned runtime cleanup is done:
+  - control-plane listener on `127.0.0.1:4318` stopped
+  - repo-local Temporal plus Postgres compose stack stopped and removed
 
 ## Current Baseline
 
@@ -57,6 +66,16 @@ The agreed direction for this task is:
   - artifact root: `C:\Users\gregs\AppData\Local\CodexDashboard\orchestration-runs\pass-0002-final-retry-20260407-104944\codex-daily-agentic-swe-digest\job_codex-daily-agentic-swe-digest_manual_18a81bff-3355-418e-8559-224407f7f586\`
   - final outcome: report regenerated and Gmail digest sent successfully at `2026-04-07T10:58:44-04:00`
 
+`PASS-0003` delivered:
+
+- a backend client layer for the Tk `Jobs` surface under [jobs_backend.py](/c:/Agent/CodexDashboard/app/codex_dashboard/jobs_backend.py)
+- `Jobs` rows now sourced from backend state with trigger labels, desired/runtime state, drift status, and recent-run context
+- bounded backend controls on the live UI:
+  - `Sync now`
+  - `Run now` when the job supports `manual`
+- live overlay PNG capture for smoke and regression artifacts
+- updated repo-root regression wording for the backend-backed `Jobs` lane
+
 Research output captured so far:
 
 - [RESEARCH-PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH-PLAN.md)
@@ -66,12 +85,9 @@ Research output captured so far:
 
 ## Next Step
 
-Start `PASS-0003`:
+No further task work is required for `Task-0005`.
 
-1. Replace the Tk `Jobs` tab's local Windows reconciliation path with backend API consumption.
-2. Show backend-backed desired-vs-runtime state, recent runs, next run, and last error without making the dashboard the scheduler host.
-3. Wire bounded `Sync now` and `Run now` actions through the backend.
-4. Update repo-root `REGRESSION.md` for the backend-backed Jobs lane and then run the real desktop regression lane honestly.
+If follow-up work is desired later, the clearest separate task would be hardening the successful Windows executor path away from `--dangerously-bypass-approvals-and-sandbox`.
 
 ## Watchouts
 
@@ -82,7 +98,7 @@ Start `PASS-0003`:
 - the original startup over-release and `CreateProcessAsUserW failed: 1920` failure are now historical evidence in [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md), not the active blocker
 - the successful Windows executor path currently depends on `--dangerously-bypass-approvals-and-sandbox`
 - the real digest proof touched user `.codex` runtime state under `reports\` and `gmail-digest-email\`; treat those as operator/runtime artifacts rather than dashboard product files
-- `go`, `docker`, and `temporal` are available on this host, but this shell still needs explicit executable resolution when `PATH` is stale
+- `go`, `docker`, and `temporal` are available on this host, but this shell still needed explicit executable resolution when `PATH` was stale
 
 ## References
 
@@ -92,4 +108,7 @@ Start `PASS-0003`:
 - [Cron System with JSON.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Research/Cron%20System%20with%20JSON.md)
 - [PASS-0000-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0000-AUDIT.md)
 - [PASS-0001-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0001-AUDIT.md)
+- [PASS-0002-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0002-AUDIT.md)
+- [PASS-0003-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0003-AUDIT.md)
+- [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md)
 - [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md)

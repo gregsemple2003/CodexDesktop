@@ -28,16 +28,12 @@ from .investigation import (
     report_path_for_brief,
     write_bucket_investigation,
 )
-from .jobs import (
-    DESIRED_STATE_ENABLED,
-    JOB_STATUS_BLOCKED,
-    JOB_STATUS_DISABLED,
-    JOB_STATUS_DRIFTED,
-    JOB_STATUS_MISSING,
-    apply_registry,
-    default_jobs_registry_path,
-    ensure_jobs_registry,
-    reconcile_registry,
+from .jobs_backend import (
+    DEFAULT_JOBS_BACKEND_URL,
+    fetch_jobs_snapshot,
+    jobs_backend_error_snapshot,
+    start_job_run,
+    sync_jobs_snapshot,
 )
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
@@ -215,12 +211,33 @@ def format_jobs_timestamp(raw_value: str | None) -> str:
     return parsed.astimezone().strftime("%I:%M %p").lstrip("0")
 
 
-def jobs_mechanism_label(kind: str) -> str:
-    if kind == "scheduled_task":
-        return "Scheduled Task"
-    if kind == "startup_launcher":
-        return "Startup launcher"
-    return kind.replace("_", " ").title()
+def write_overlay_capture(window: tk.Toplevel, output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    x = window.winfo_rootx()
+    y = window.winfo_rooty()
+    width = window.winfo_width()
+    height = window.winfo_height()
+    if width <= 0 or height <= 0:
+        raise ValueError("overlay capture requires a visible window with non-zero size")
+
+    escaped_output = str(output_path).replace("'", "''")
+    script = f"""
+Add-Type -AssemblyName System.Drawing
+$bounds = New-Object System.Drawing.Rectangle({x}, {y}, {width}, {height})
+$bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+$graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+$bitmap.Save('{escaped_output}', [System.Drawing.Imaging.ImageFormat]::Png)
+$graphics.Dispose()
+$bitmap.Dispose()
+"""
+    kwargs: dict[str, object] = {"check": True}
+    if hasattr(subprocess, "CREATE_NO_WINDOW"):
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+    subprocess.run(
+        ["powershell", "-NoProfile", "-Command", script],
+        **kwargs,
+    )
 
 
 class DashboardApp:
@@ -253,15 +270,15 @@ class DashboardApp:
         self.latest_session_context_markers: dict[str, list[object]] = {}
         self.latest_repo_legend: list[tuple[str, str]] = []
         self.latest_repo_totals: list[dict[str, int]] = []
-        self.jobs_registry_path = default_jobs_registry_path(Path(self.config.codex_root))
-        self.jobs_registry = {"jobs": []}
+        self.jobs_backend_url = DEFAULT_JOBS_BACKEND_URL
         self.jobs_snapshot: dict[str, object] = {
+            "generated_at": None,
             "last_reconciled_at": None,
             "summary": {},
             "jobs": [],
         }
         self.jobs_detail_job_id: str | None = None
-        self.jobs_status_message = "Press Refresh to inspect local Windows state."
+        self.jobs_status_message = "Press Refresh to read orchestration backend state."
         self.debug_log_path = self.config_path.parent / "dashboard-debug.log"
         self._append_debug_log("dashboard_started")
 
@@ -728,21 +745,23 @@ class DashboardApp:
         action_row.pack(fill="x", pady=(0, 12))
         ttk.Label(
             action_row,
-            text="FILTER: ALL_TYPES",
+            text="SOURCE: ORCHESTRATION BACKEND",
             style="Tiny.TLabel",
         ).pack(side="left")
-        ttk.Button(
+        self.jobs_refresh_button = ttk.Button(
             action_row,
             text="REFRESH",
             style="Quiet.TButton",
             command=self.refresh_jobs_data,
-        ).pack(side="right", padx=(8, 0))
-        ttk.Button(
+        )
+        self.jobs_refresh_button.pack(side="right", padx=(8, 0))
+        self.jobs_sync_button = ttk.Button(
             action_row,
-            text="FORCE RECONCILE",
+            text="SYNC NOW",
             style="Accent.TButton",
             command=lambda: self.refresh_jobs_data(apply_changes=True),
-        ).pack(side="right")
+        )
+        self.jobs_sync_button.pack(side="right")
 
         self.jobs_scroll_shell = ttk.Frame(self.jobs_body, style="BodyPanel.TFrame")
         self.jobs_scroll_shell.pack(fill="both", expand=True)
@@ -800,10 +819,10 @@ class DashboardApp:
         header_row.pack(fill="x", pady=(0, 8))
         for text, width in (
             ("Job", 34),
-            ("Mechanism", 16),
-            ("Desired / observed", 20),
+            ("Triggers", 16),
+            ("Desired / runtime", 20),
             ("Drift status", 18),
-            ("Actions", 10),
+            ("Actions", 18),
         ):
             label = ttk.Label(header_row, text=text, style="Tiny.TLabel", width=width)
             label.pack(side="left")
@@ -854,32 +873,21 @@ class DashboardApp:
 
     def refresh_jobs_data(self, apply_changes: bool = False) -> None:
         try:
-            self.jobs_registry = ensure_jobs_registry(codex_root=Path(self.config.codex_root))
             if apply_changes:
-                self.jobs_snapshot = apply_registry(self.jobs_registry)
-                self.jobs_status_message = "Jobs reconcile completed for supported drift."
+                self.jobs_snapshot, report = sync_jobs_snapshot(self.jobs_backend_url)
+                change_count = sum(
+                    len(report.get(field, []))
+                    for field in ("created_schedule_ids", "updated_schedule_ids", "deleted_schedule_ids")
+                    if isinstance(report.get(field), list)
+                )
+                self.jobs_status_message = f"Jobs sync completed. {change_count} schedule changes."
             else:
-                self.jobs_snapshot = reconcile_registry(self.jobs_registry)
-                self.jobs_status_message = "Jobs state refreshed from local Windows state."
+                self.jobs_snapshot = fetch_jobs_snapshot(self.jobs_backend_url)
+                self.jobs_status_message = "Jobs state refreshed from orchestration backend."
             if self.active_tab == "jobs":
                 self.status_label.configure(text=self.jobs_status_message)
         except Exception as exc:
-            self.jobs_snapshot = {
-                "last_reconciled_at": None,
-                "summary": {"blocked": 1},
-                "jobs": [
-                    {
-                        "job_id": "jobs-backend-blocked",
-                        "label": "Jobs backend",
-                        "mechanism_label": "Registry",
-                        "desired_label": "Enabled",
-                        "observed_label": "Blocked",
-                        "status": "blocked",
-                        "reason": str(exc),
-                        "details": {"error": str(exc)},
-                    }
-                ],
-            }
+            self.jobs_snapshot = jobs_backend_error_snapshot(str(exc))
             self.jobs_status_message = f"Jobs error: {exc}"
             self.status_label.configure(text=self.jobs_status_message)
         self._render_jobs_snapshot()
@@ -889,54 +897,12 @@ class DashboardApp:
         if existing_jobs:
             return
         try:
-            self.jobs_registry = ensure_jobs_registry(codex_root=Path(self.config.codex_root))
-            self.jobs_snapshot = self._declared_jobs_snapshot()
+            self.jobs_snapshot = fetch_jobs_snapshot(self.jobs_backend_url)
+            self.jobs_status_message = "Jobs state loaded from orchestration backend."
         except Exception as exc:
-            self.jobs_snapshot = {
-                "last_reconciled_at": None,
-                "summary": {"blocked": 1},
-                "jobs": [
-                    {
-                        "job_id": "jobs-backend-blocked",
-                        "label": "Jobs backend",
-                        "mechanism_label": "Registry",
-                        "desired_label": "Enabled",
-                        "observed_label": "Blocked",
-                        "status": "blocked",
-                        "reason": str(exc),
-                        "definition": {},
-                        "details": {"error": str(exc)},
-                    }
-                ],
-            }
+            self.jobs_snapshot = jobs_backend_error_snapshot(str(exc))
             self.jobs_status_message = f"Jobs error: {exc}"
         self._render_jobs_snapshot()
-
-    def _declared_jobs_snapshot(self) -> dict[str, object]:
-        jobs: list[dict[str, object]] = []
-        for job in self.jobs_registry.get("jobs", []):
-            desired_state = str(job.get("desired_state", DESIRED_STATE_ENABLED))
-            desired_label = "Enabled" if desired_state == DESIRED_STATE_ENABLED else "Disabled"
-            jobs.append(
-                {
-                    "job_id": str(job.get("job_id", "unknown-job")),
-                    "label": str(job.get("label", "Unnamed job")),
-                    "kind": str(job.get("kind", "")),
-                    "mechanism_label": jobs_mechanism_label(str(job.get("kind", ""))),
-                    "desired_state": desired_state,
-                    "desired_label": desired_label,
-                    "observed_label": "Unknown",
-                    "status": "unknown",
-                    "reason": "State has not been checked yet. Press Refresh to inspect Windows state.",
-                    "definition": dict(job.get("definition", {})),
-                    "details": {},
-                }
-            )
-        return {
-            "last_reconciled_at": None,
-            "summary": {},
-            "jobs": jobs,
-        }
 
     def _render_jobs_snapshot(self) -> None:
         snapshot = self.jobs_snapshot
@@ -1037,8 +1003,36 @@ class DashboardApp:
             command=lambda payload=job: self.toggle_job_details(payload),
             width=8,
         )
-        details_button.pack(side="right")
+        details_button.pack(side="right", padx=(8, 0))
         details_button.bind("<MouseWheel>", self._on_jobs_mousewheel)
+
+        run_now_button = ttk.Button(
+            row,
+            text="Run now",
+            style="Accent.TButton",
+            command=lambda payload=job: self.run_job_now(payload),
+            width=10,
+        )
+        if not bool(job.get("supports_run_now")):
+            run_now_button.state(["disabled"])
+        run_now_button.pack(side="right")
+        run_now_button.bind("<MouseWheel>", self._on_jobs_mousewheel)
+
+    def run_job_now(self, job: dict[str, object]) -> None:
+        try:
+            started = start_job_run(str(job.get("job_id", "")), self.jobs_backend_url)
+            workflow_id = str(started.get("workflow_id", "")).strip()
+            if workflow_id:
+                self.jobs_status_message = f"Run now started for {job.get('label', 'job')}: {workflow_id}"
+            else:
+                self.jobs_status_message = f"Run now started for {job.get('label', 'job')}."
+            self.jobs_snapshot = fetch_jobs_snapshot(self.jobs_backend_url)
+        except Exception as exc:
+            self.jobs_status_message = f"Run now failed: {exc}"
+            self.jobs_snapshot = jobs_backend_error_snapshot(str(exc))
+        if self.active_tab == "jobs":
+            self.status_label.configure(text=self.jobs_status_message)
+        self._render_jobs_snapshot()
 
     def toggle_job_details(self, job: dict[str, object]) -> None:
         if self.jobs_detail_job_id == job["job_id"]:
@@ -1049,17 +1043,11 @@ class DashboardApp:
         self._show_job_details(job)
 
     def _show_job_details(self, job: dict[str, object]) -> None:
-        declared_job = {
-            "job_id": job.get("job_id", ""),
-            "label": job.get("label", ""),
-            "kind": job.get("kind", ""),
-            "desired_state": job.get("desired_state", ""),
-            "definition": dict(job.get("definition", {})),
-        }
-        self.jobs_detail_title.configure(text=f"{job['label']} declared job")
+        backend_job = dict(job.get("definition", {}))
+        self.jobs_detail_title.configure(text=f"{job['label']} backend job")
         self.jobs_detail_text.configure(state="normal")
         self.jobs_detail_text.delete("1.0", "end")
-        self.jobs_detail_text.insert("1.0", json.dumps(declared_job, indent=2, sort_keys=True))
+        self.jobs_detail_text.insert("1.0", json.dumps(backend_job, indent=2, sort_keys=True))
         self.jobs_detail_text.configure(state="disabled")
         if not self.jobs_detail_shell.winfo_manager():
             self.jobs_detail_shell.pack(fill="x", pady=(0, 12), before=self.jobs_rows_shell)
@@ -1728,11 +1716,13 @@ class DashboardApp:
         if self.smoke_tab in {"usage", "jobs"}:
             self.select_tab(self.smoke_tab)
         if self.smoke_tab == "jobs":
-            self.refresh_jobs_data()
+            self.jobs_sync_button.invoke()
         if not self.overlay_visible:
             self.smoke_overlay_fallback = True
             self.show_overlay()
         self.overlay.update_idletasks()
+        self.overlay.update()
+        write_overlay_capture(self.overlay, artifact_dir / "overlay.png")
         if self.active_tab == "usage":
             self.canvas.postscript(
                 file=str(artifact_dir / "overlay-chart.ps"),
@@ -1765,7 +1755,7 @@ class DashboardApp:
         else:
             summary_lines.extend(
                 [
-                    f"jobs_registry={self.jobs_registry_path}",
+                    f"jobs_backend={self.jobs_backend_url}",
                     f"jobs_declared={self.jobs_declared_value.cget('text')}",
                     f"jobs_in_sync={self.jobs_synced_value.cget('text')}",
                     f"jobs_needs_attention={self.jobs_attention_value.cget('text')}",

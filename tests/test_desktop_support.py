@@ -29,6 +29,7 @@ from app.codex_dashboard.ui import (
     jobs_needs_attention_count,
     parse_budget_billions,
     rolling_average_tokens,
+    write_overlay_capture,
 )
 
 
@@ -188,30 +189,27 @@ class DesktopSupportTests(unittest.TestCase):
         app._render_active_tab.assert_called_once_with()
         app.refresh_jobs_data.assert_not_called()
 
-    def test_declared_jobs_snapshot_uses_unknown_observed_state(self) -> None:
+    def test_prime_jobs_snapshot_uses_backend_snapshot(self) -> None:
+        snapshot = {
+            "last_reconciled_at": "2026-04-07T14:49:45Z",
+            "summary": {"in_sync": 1},
+            "jobs": [{"job_id": "codex-daily-agentic-swe-digest"}],
+        }
         app = SimpleNamespace(
-            jobs_registry={
-                "jobs": [
-                    {
-                        "job_id": "codex-dashboard-startup",
-                        "label": "CodexDashboard overlay at sign-in",
-                        "kind": "startup_launcher",
-                        "desired_state": "enabled",
-                        "definition": {"script_path": "C:/Startup/CodexDashboard.cmd"},
-                    }
-                ]
-            }
+            jobs_snapshot={"jobs": []},
+            jobs_status_message="",
+            jobs_backend_url="http://127.0.0.1:4318",
+            _render_jobs_snapshot=mock.Mock(),
         )
 
-        snapshot = DashboardApp._declared_jobs_snapshot(app)
+        with mock.patch("app.codex_dashboard.ui.fetch_jobs_snapshot", return_value=snapshot):
+            DashboardApp._prime_jobs_snapshot(app)
 
-        self.assertEqual(snapshot["last_reconciled_at"], None)
-        self.assertEqual(len(snapshot["jobs"]), 1)
-        self.assertEqual(snapshot["jobs"][0]["desired_label"], "Enabled")
-        self.assertEqual(snapshot["jobs"][0]["observed_label"], "Unknown")
-        self.assertEqual(snapshot["jobs"][0]["status"], "unknown")
+        self.assertEqual(app.jobs_snapshot, snapshot)
+        self.assertEqual(app.jobs_status_message, "Jobs state loaded from orchestration backend.")
+        app._render_jobs_snapshot.assert_called_once_with()
 
-    def test_show_job_details_includes_definition_and_observed_sections(self) -> None:
+    def test_show_job_details_includes_backend_payload(self) -> None:
         jobs_detail_title = mock.Mock()
         jobs_detail_text = mock.Mock()
         jobs_detail_shell = mock.Mock()
@@ -228,21 +226,95 @@ class DesktopSupportTests(unittest.TestCase):
             {
                 "job_id": "codex-dashboard-startup",
                 "label": "CodexDashboard overlay at sign-in",
-                "kind": "startup_launcher",
+                "kind": "orchestration_backend",
                 "desired_state": "enabled",
                 "desired_label": "Enabled",
                 "observed_label": "Enabled",
                 "status": "in_sync",
-                "reason": "Job matches the managed definition.",
-                "definition": {"script_path": "C:/Startup/CodexDashboard.cmd"},
-                "details": {"command_text": "@echo off"},
+                "reason": "Backend state is current.",
+                "definition": {
+                    "executor": {"entrypoint": "agentic-swe-digest"},
+                    "recent_runs": [{"workflow_id": "job/example"}],
+                },
             },
         )
 
         inserted_text = jobs_detail_text.insert.call_args.args[1]
-        self.assertIn('"definition"', inserted_text)
-        self.assertNotIn("command_text", inserted_text)
+        self.assertIn('"executor"', inserted_text)
+        self.assertIn('"recent_runs"', inserted_text)
         jobs_detail_shell.pack.assert_called_once()
+
+    def test_refresh_jobs_data_syncs_backend_when_apply_changes(self) -> None:
+        app = SimpleNamespace(
+            jobs_snapshot={},
+            jobs_backend_url="http://127.0.0.1:4318",
+            jobs_status_message="",
+            active_tab="jobs",
+            status_label=mock.Mock(),
+            _render_jobs_snapshot=mock.Mock(),
+        )
+        snapshot = {
+            "last_reconciled_at": "2026-04-07T14:49:45Z",
+            "summary": {"in_sync": 1},
+            "jobs": [],
+        }
+        report = {"created_schedule_ids": ["schedule-a"], "updated_schedule_ids": [], "deleted_schedule_ids": []}
+
+        with mock.patch("app.codex_dashboard.ui.sync_jobs_snapshot", return_value=(snapshot, report)):
+            DashboardApp.refresh_jobs_data(app, apply_changes=True)
+
+        self.assertEqual(app.jobs_snapshot, snapshot)
+        self.assertEqual(app.jobs_status_message, "Jobs sync completed. 1 schedule changes.")
+        app.status_label.configure.assert_called_once_with(text="Jobs sync completed. 1 schedule changes.")
+        app._render_jobs_snapshot.assert_called_once_with()
+
+    def test_run_job_now_starts_manual_run_and_refreshes_snapshot(self) -> None:
+        app = SimpleNamespace(
+            jobs_backend_url="http://127.0.0.1:4318",
+            jobs_snapshot={},
+            jobs_status_message="",
+            active_tab="jobs",
+            status_label=mock.Mock(),
+            _render_jobs_snapshot=mock.Mock(),
+        )
+        refreshed_snapshot = {"summary": {"in_sync": 1}, "jobs": []}
+
+        with mock.patch(
+            "app.codex_dashboard.ui.start_job_run",
+            return_value={"workflow_id": "job/codex-daily-agentic-swe-digest/manual/example"},
+        ), mock.patch(
+            "app.codex_dashboard.ui.fetch_jobs_snapshot",
+            return_value=refreshed_snapshot,
+        ):
+            DashboardApp.run_job_now(
+                app,
+                {
+                    "job_id": "codex-daily-agentic-swe-digest",
+                    "label": "Codex Daily Agentic SWE Digest",
+                    "supports_run_now": True,
+                },
+            )
+
+        self.assertEqual(app.jobs_snapshot, refreshed_snapshot)
+        self.assertIn("Run now started for Codex Daily Agentic SWE Digest", app.jobs_status_message)
+        app.status_label.configure.assert_called_once()
+        app._render_jobs_snapshot.assert_called_once_with()
+
+    def test_write_overlay_capture_uses_window_bounds(self) -> None:
+        overlay = SimpleNamespace(
+            winfo_rootx=lambda: 40,
+            winfo_rooty=lambda: 60,
+            winfo_width=lambda: 980,
+            winfo_height=lambda: 660,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir, mock.patch("app.codex_dashboard.ui.subprocess.run") as run:
+            write_overlay_capture(overlay, Path(tmpdir) / "overlay.png")
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], ["powershell", "-NoProfile", "-Command"])
+        self.assertIn("Rectangle(40, 60, 980, 660)", command[3])
+        self.assertIn("overlay.png", command[3])
 
     def test_jobs_mousewheel_scrolls_canvas_when_jobs_tab_active(self) -> None:
         jobs_scroll_canvas = mock.Mock()
