@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0005` planning is approved and the task has entered implementation. The next execution step is `PASS-0000`.
+`PASS-0000` is complete. The backend-first orchestration foundation now exists, and the task remains in implementation for `PASS-0001`.
 
 ## Current Baseline
 
@@ -21,6 +21,14 @@ The agreed direction for this task is:
 - the existing `declared-jobs.json` Windows registry is useful migration input, but it is not the long-term desired-state format for this task
 - the Tk `Jobs` surface should survive as a backend client, not as a local Windows reconciler
 
+`PASS-0000` delivered:
+
+- `backend/orchestration/` Go scaffold with config, health endpoint, and spec-loader skeleton
+- repo-local Temporal plus Postgres dev-stack docs and compose file
+- new `.codex/Orchestration/Jobs/job-spec.schema.json`
+- new `.codex/Orchestration/Jobs/specs/*.json` starter desired-state specs
+- Python-side spec loading and validation helpers with unit coverage
+
 Research output captured so far:
 
 - [RESEARCH-PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH-PLAN.md)
@@ -30,12 +38,12 @@ Research output captured so far:
 
 ## Next Step
 
-Start `PASS-0000`:
+Start `PASS-0001`:
 
-- establish the v1 job-spec layout under `.codex/Orchestration/Jobs`
-- scaffold `backend/orchestration/`
-- document the repo-local Temporal plus Postgres dev stack
-- resolve or honestly record the missing `go`, `docker`, and `temporal` toolchain gap before claiming a runnable backend
+- load and validate job specs from Git through the backend path
+- compile schedule triggers into Temporal-facing desired runtime state
+- add startup reconcile and explicit sync without restart
+- expose backend read APIs for health, job list, job detail, recent runs, and sync
 
 ## Watchouts
 
@@ -43,7 +51,7 @@ Start `PASS-0000`:
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
-- local `go`, `docker`, and `temporal` binaries are not currently on `PATH`
+- local `go`, `docker`, and `temporal` binaries are not currently on `PATH`, so live backend runtime proof is still tooling-blocked on this host
 
 ## References
 
@@ -51,3 +59,4 @@ Start `PASS-0000`:
 - [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/PLAN.md)
 - [RESEARCH.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/RESEARCH.md)
 - [Cron System with JSON.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Research/Cron%20System%20with%20JSON.md)
+- [PASS-0000-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/PASS-0000-AUDIT.md)

@@ -31,6 +31,14 @@ def default_jobs_schema_path(codex_root: Path | None = None) -> Path:
     return jobs_root(codex_root) / "declared-jobs.schema.json"
 
 
+def job_specs_root(codex_root: Path | None = None) -> Path:
+    return jobs_root(codex_root) / "specs"
+
+
+def job_spec_schema_path(codex_root: Path | None = None) -> Path:
+    return jobs_root(codex_root) / "job-spec.schema.json"
+
+
 def app_data_root() -> Path:
     return Path.home() / "AppData" / "Local" / "CodexDashboard"
 
