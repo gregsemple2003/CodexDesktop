@@ -2,68 +2,44 @@
 
 ## Current Status
 
-`Task-0004` is reopened and in regression.
+`Task-0004` is cancelled as out of scope.
 
-The original closure was invalidated by the live `Jobs` interaction regression and the mockup-fidelity miss. The current repo state contains a candidate fix set with fresh supporting proof, but the task is not honestly closed again until the live overlay readback is positive.
+On `2026-04-06`, the user redirected jobs work away from the dashboard-first Windows jobs surface in this task and toward a separate backend control-plane approach under [Task-0005](/c:/Agent/CodexDashboard/Tracking/Task-0005/TASK.md).
 
-## Current Baseline
+This task did not reach an honest closure bar. The live `Jobs` regression readback remained unfinished, and the product direction changed before that closure work was completed.
 
-The current candidate baseline includes:
+## Cancellation Rationale
 
-- managed declared-jobs state under `C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.json`
-- sibling declared-jobs schema under `C:\Users\gregs\.codex\Orchestration\Jobs\declared-jobs.schema.json`
+- The task explored a useful first-pass dashboard Jobs surface.
+- It also proved some worthwhile seams around declared jobs, explicit refresh, and bounded reconciliation UI.
+- But the durable next move is now a Go plus Temporal backend with dashboard integration, not more iteration on this dashboard-first implementation path.
+
+## Preserved Baseline
+
+The current repo still contains useful reference material from this task, including:
+
+- managed declared-jobs state under `C:\Users\gregs\.codex\Orchestration\Jobs\`
 - `Jobs` tab clicks that only switch surfaces
-- `Jobs` tab default content driven from declared jobs instead of an immediate refresh
-- a dedicated scrollable `Jobs` content area so declared-job details and the jobs list can coexist on the real overlay
-- explicit `Refresh` and `Force Reconcile` actions for jobs-state work
+- explicit `Refresh` and `Force Reconcile` actions
 - hidden child PowerShell windows for explicit jobs actions
-- a separate primary-nav strip with tab-owned controls below it
-- a top `Usage` content strip with the budget editor right-justified on the same row as the interval controls
-- no visible last-ingest line on the `Usage` surface
-- no inactive `Logs` or `Terminal` placeholder tabs
-- stronger tab emphasis and a quieter header closer to the approved Stitch direction
-- a dotted blue `BUDGET` threshold treatment in the chart
+- a scrollable `Jobs` content area and supporting UI smoke evidence
 
-## Validation Status
+Treat those artifacts as reference material for future work, not as the required completion path now.
 
-Executed successfully:
+## Superseded Next Step
 
-- `python -m unittest discover -s tests -p "test_*.py" -v`
-- `python -m app.codex_dashboard --scan-once --print-summary`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-REG-001-0005`
-- `python -m app.codex_dashboard --smoke-artifact-dir Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006 --smoke-tab jobs`
+The previous live readback instruction for `REG-002` is superseded for this cancelled task.
 
-Current evidence:
+Do not reopen `Task-0004` just to finish the old dashboard-first route unless the product direction explicitly swings back to it.
 
-- [PASS-0002-REG-001-0005/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0005/desktop-overlay.png)
-- [PASS-0002-REG-001-0005/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0005/overlay-summary.txt)
-- [PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/desktop-overlay.png)
-- [PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0006/overlay-summary.txt)
-- [PASS-0002-REG-001-0007/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0007/desktop-overlay.png)
-- [PASS-0002-REG-001-0007/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-REG-001-0007/overlay-summary.txt)
-- [PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/desktop-overlay.png)
-- [PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0008/overlay-summary.txt)
-- [PASS-0002-JOBS-SMOKE-0009/desktop-overlay.png](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0009/desktop-overlay.png)
-- [PASS-0002-JOBS-SMOKE-0009/overlay-summary.txt](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-JOBS-SMOKE-0009/overlay-summary.txt)
-
-## Next Step
-
-Run the live reopened regression readback on the actual overlay:
-
-1. `Ctrl+Alt+Space`
-2. click `Jobs`
-3. confirm there is no hitch and no extra windows
-4. click `Refresh`
-5. confirm the rendered `Jobs` surface is close enough to the approved mockup direction
-
-If that readback is positive, update the reopened pass artifacts one more time and close the task honestly.
+Any further jobs or orchestration work should continue under [Task-0005](/c:/Agent/CodexDashboard/Tracking/Task-0005/TASK.md).
 
 ## Watchouts
 
-- keep `Jobs` refresh and reconcile off the tab click path
-- keep repo-local [REGRESSION.md](/c:/Agent/CodexDashboard/REGRESSION.md) aligned with the actual live interaction model
-- keep visible copy human-facing and keep raw Windows plumbing behind details
-- do not let future shell controls drift back into the primary nav strip
+- treat `Task-0004` artifacts as reference material, not as the new architecture source of truth
+- keep scheduler logic out of the dashboard process
+- keep Git desired state separate from runtime truth
+- update repo-root [REGRESSION.md](/c:/Agent/CodexDashboard/REGRESSION.md) when the new backend-backed job surface materially changes the real UI
 
 ## References
 
@@ -71,3 +47,4 @@ If that readback is positive, update the reopened pass artifacts one more time a
 - [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/PLAN.md)
 - [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/BUG-0001.md)
 - [PASS-0002-AUDIT.md](/c:/Agent/CodexDashboard/Tracking/Task-0004/Testing/PASS-0002-AUDIT.md)
+- [Task-0005 TASK.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/TASK.md)

@@ -9,6 +9,7 @@ from app.codex_dashboard.job_specs import (
     API_VERSION,
     DESIRED_STATE_ENABLED,
     EXECUTOR_TYPE_CODEX_EXEC,
+    EXECUTOR_TYPE_POWERSHELL_SCRIPT,
     TRIGGER_TYPE_MANUAL,
     TRIGGER_TYPE_SCHEDULE,
     TRIGGER_TYPE_WEBHOOK,
@@ -34,7 +35,7 @@ class JobSpecsV1Tests(unittest.TestCase):
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         return path
 
-    def sample_spec(self, job_id: str, trigger_type: str) -> dict:
+    def sample_spec(self, job_id: str, trigger_type: str, *, executor_type: str = EXECUTOR_TYPE_CODEX_EXEC) -> dict:
         trigger: dict[str, object]
         if trigger_type == TRIGGER_TYPE_SCHEDULE:
             trigger = {"type": trigger_type, "cron": "0 4 * * *", "timezone": "America/Toronto"}
@@ -42,6 +43,23 @@ class JobSpecsV1Tests(unittest.TestCase):
             trigger = {"type": trigger_type, "path": "digests/example"}
         else:
             trigger = {"type": trigger_type}
+        executor: dict[str, object]
+        if executor_type == EXECUTOR_TYPE_POWERSHELL_SCRIPT:
+            executor = {
+                "type": EXECUTOR_TYPE_POWERSHELL_SCRIPT,
+                "cwd": "C:\\Users\\gregs\\.codex",
+                "script_path": "C:\\Users\\gregs\\.codex\\scheduled-digests\\run-example-scheduled.ps1",
+                "args": [],
+                "manual_args": ["-ForceRun"],
+                "webhook_args": ["-ForceRun", "-IgnoreSuccessfulRunStamp"],
+            }
+        else:
+            executor = {
+                "type": EXECUTOR_TYPE_CODEX_EXEC,
+                "cwd": "C:\\Users\\gregs\\.codex",
+                "entrypoint": "example-skill",
+                "args": ["--days", "1"],
+            }
         return {
             "api_version": API_VERSION,
             "job_id": job_id,
@@ -49,12 +67,7 @@ class JobSpecsV1Tests(unittest.TestCase):
             "description": "Example job for unit validation.",
             "desired_state": DESIRED_STATE_ENABLED,
             "triggers": [trigger],
-            "executor": {
-                "type": EXECUTOR_TYPE_CODEX_EXEC,
-                "cwd": "C:\\Users\\gregs\\.codex",
-                "entrypoint": "example-skill",
-                "args": ["--days", "1"],
-            },
+            "executor": executor,
             "runtime": {
                 "workflow_type": "codex.exec.job",
                 "task_queue": "codex-orchestration",
@@ -78,6 +91,15 @@ class JobSpecsV1Tests(unittest.TestCase):
         ):
             spec = self.sample_spec(f"job-{index}", trigger_type)
             validate_job_spec(spec)
+
+    def test_validate_job_spec_accepts_powershell_script_executor(self) -> None:
+        validate_job_spec(
+            self.sample_spec(
+                "powershell-job",
+                TRIGGER_TYPE_MANUAL,
+                executor_type=EXECUTOR_TYPE_POWERSHELL_SCRIPT,
+            )
+        )
 
     def test_load_validated_job_specs_rejects_duplicate_job_ids(self) -> None:
         self.write_spec("one.json", self.sample_spec("duplicate-job", TRIGGER_TYPE_MANUAL))

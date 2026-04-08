@@ -20,10 +20,13 @@ type Trigger struct {
 }
 
 type Executor struct {
-	Type       string   `json:"type"`
-	Cwd        string   `json:"cwd"`
-	Entrypoint string   `json:"entrypoint"`
-	Args       []string `json:"args,omitempty"`
+	Type        string   `json:"type"`
+	Cwd         string   `json:"cwd"`
+	Entrypoint  string   `json:"entrypoint,omitempty"`
+	ScriptPath  string   `json:"script_path,omitempty"`
+	Args        []string `json:"args,omitempty"`
+	ManualArgs  []string `json:"manual_args,omitempty"`
+	WebhookArgs []string `json:"webhook_args,omitempty"`
 }
 
 type RuntimeConfig struct {

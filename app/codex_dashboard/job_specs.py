@@ -10,6 +10,7 @@ API_VERSION = "codex.jobs/v1"
 DESIRED_STATE_DISABLED = "disabled"
 DESIRED_STATE_ENABLED = "enabled"
 EXECUTOR_TYPE_CODEX_EXEC = "codex_exec"
+EXECUTOR_TYPE_POWERSHELL_SCRIPT = "powershell_script"
 TRIGGER_TYPE_MANUAL = "manual"
 TRIGGER_TYPE_SCHEDULE = "schedule"
 TRIGGER_TYPE_WEBHOOK = "webhook"
@@ -69,12 +70,20 @@ def validate_job_spec(spec: dict[str, Any]) -> None:
             raise ValueError(f"Unsupported trigger type: {trigger_type}")
 
     executor = spec["executor"]
-    if executor.get("type") != EXECUTOR_TYPE_CODEX_EXEC:
-        raise ValueError(f"Unsupported executor type: {executor.get('type')}")
-    if not executor.get("cwd") or not executor.get("entrypoint"):
-        raise ValueError("codex_exec executor requires cwd and entrypoint")
-    if not isinstance(executor.get("args", []), list):
-        raise ValueError("codex_exec executor args must be a list")
+    if not executor.get("cwd"):
+        raise ValueError("executor requires cwd")
+    for field_name in ("args", "manual_args", "webhook_args"):
+        if not isinstance(executor.get(field_name, []), list):
+            raise ValueError(f"executor {field_name} must be a list")
+    executor_type = executor.get("type")
+    if executor_type == EXECUTOR_TYPE_CODEX_EXEC:
+        if not executor.get("entrypoint"):
+            raise ValueError("codex_exec executor requires entrypoint")
+    elif executor_type == EXECUTOR_TYPE_POWERSHELL_SCRIPT:
+        if not executor.get("script_path"):
+            raise ValueError("powershell_script executor requires script_path")
+    else:
+        raise ValueError(f"Unsupported executor type: {executor_type}")
 
     runtime = spec["runtime"]
     if not runtime.get("workflow_type") or not runtime.get("task_queue"):

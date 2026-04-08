@@ -1,24 +1,19 @@
 {
   "schema_version": 1,
   "task_id": "Task-0004",
-  "status": "in_progress",
-  "phase": "regression",
+  "status": "cancelled",
+  "phase": "closure",
   "plan_approved": true,
-  "current_pass": "PASS-0002",
-  "last_completed_pass": "PASS-0002",
-  "current_gate": "regression",
+  "current_pass": null,
+  "last_completed_pass": "PASS-0001",
+  "current_gate": "none",
   "latest_audit_verdict": "ready_with_caveats",
   "validation": {
     "build": "not_applicable",
     "unit_tests": "passing",
     "regression": "blocked"
   },
-  "blockers": [
-    "Final reopened closeout still needs live readback that the `Jobs` surface now scrolls correctly on the real overlay while preserving the declared-jobs contract."
-  ],
-  "next_expected_artifacts": [
-    "Testing/PASS-0002-AUDIT.md",
-    "HANDOFF.md"
-  ],
-  "updated_at": "2026-04-04T14:30:00-04:00"
+  "blockers": [],
+  "next_expected_artifacts": [],
+  "updated_at": "2026-04-06T19:46:39.8425725-04:00"
 }

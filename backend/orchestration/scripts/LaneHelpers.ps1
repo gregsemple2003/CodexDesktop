@@ -121,6 +121,33 @@ function Get-GoExecutablePath {
     throw "Could not resolve go.exe."
 }
 
+function Get-PowerShellExecutablePath {
+    $candidates = @(
+        (Join-Path $PSHOME "pwsh.exe"),
+        (Join-Path $PSHOME "powershell.exe"),
+        "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    )
+
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    foreach ($commandName in @("pwsh.exe", "powershell.exe")) {
+        $command = Get-Command $commandName -ErrorAction SilentlyContinue
+        if ($null -ne $command -and -not [string]::IsNullOrWhiteSpace($command.Source)) {
+            return $command.Source
+        }
+    }
+
+    throw "Could not resolve a PowerShell executable for the scheduled task runner."
+}
+
 function Get-DockerExecutablePath {
     $command = Get-Command "docker.exe" -ErrorAction SilentlyContinue
     if ($null -ne $command) {
@@ -389,13 +416,20 @@ function Register-ServiceLaneTask {
         throw "The requested lane does not define a scheduled task."
     }
 
-    $powershellPath = Join-Path $PSHOME "powershell.exe"
+    $powershellPath = Get-PowerShellExecutablePath
     $currentUser = Get-CurrentInteractiveUser
     $actionArguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$($Config.RunnerScriptPath)`" -Lane service -Supervise"
     $action = New-ScheduledTaskAction -Execute $powershellPath -Argument $actionArguments
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
     $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel Limited
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
+    $settings = New-ScheduledTaskSettingsSet `
+        -AllowStartIfOnBatteries `
+        -DontStopIfGoingOnBatteries `
+        -StartWhenAvailable `
+        -MultipleInstances IgnoreNew `
+        -ExecutionTimeLimit ([TimeSpan]::Zero) `
+        -RestartCount 999 `
+        -RestartInterval (New-TimeSpan -Minutes 1)
 
     Register-ScheduledTask -TaskName $Config.TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description $Config.TaskDescription -Force | Out-Null
 }

@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 import unittest
 from unittest import mock
+from urllib import error
 
 from app.codex_dashboard.jobs_backend import (
+    JobsBackendError,
     configured_jobs_backend_url,
+    fetch_jobs_snapshot,
     jobs_backend_error_snapshot,
     map_state_view_to_jobs_snapshot,
     trigger_label,
@@ -82,3 +85,19 @@ class JobsBackendTests(unittest.TestCase):
         self.assertEqual(snapshot["summary"], {"blocked": 1})
         self.assertEqual(snapshot["jobs"][0]["status"], "blocked")
         self.assertEqual(snapshot["jobs"][0]["observed_label"], "Blocked")
+
+    def test_fetch_jobs_snapshot_reports_actionable_local_backend_error(self) -> None:
+        connection_error = error.URLError(
+            OSError(10061, "No connection could be made because the target machine actively refused it")
+        )
+        with mock.patch(
+            "app.codex_dashboard.jobs_backend.request.urlopen",
+            side_effect=connection_error,
+        ):
+            with self.assertRaises(JobsBackendError) as raised:
+                fetch_jobs_snapshot("http://127.0.0.1:4318")
+
+        message = str(raised.exception)
+        self.assertIn("the jobs backend is not reachable at http://127.0.0.1:4318", message)
+        self.assertIn("Start the orchestration service lane", message)
+        self.assertIn("CODEX_DASHBOARD_JOBS_BACKEND_URL", message)

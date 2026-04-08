@@ -220,7 +220,7 @@ def _request_json(method: str, url: str) -> dict[str, Any]:
         body = exc.read().decode("utf-8", errors="replace").strip()
         raise JobsBackendError(f"{method} {url} failed with HTTP {exc.code}: {body or exc.reason}") from exc
     except OSError as exc:
-        raise JobsBackendError(f"{method} {url} failed: {exc}") from exc
+        raise JobsBackendError(_format_request_os_error(method, url, exc)) from exc
 
     try:
         payload = json.loads(raw)
@@ -233,6 +233,51 @@ def _request_json(method: str, url: str) -> dict[str, Any]:
 
 def _join_url(base_url: str, path: str) -> str:
     return base_url.rstrip("/") + path
+
+
+def _format_request_os_error(method: str, url: str, exc: OSError) -> str:
+    detail = str(exc)
+    normalized = detail.lower()
+    origin = _request_origin(url)
+
+    if _is_connection_refused(detail):
+        return (
+            f"{method} {url} failed: the jobs backend is not reachable at {origin}. "
+            f"{_jobs_backend_recovery_hint(origin)}"
+        )
+    if "timed out" in normalized:
+        return f"{method} {url} failed: the jobs backend at {origin} timed out."
+    return f"{method} {url} failed: {exc}"
+
+
+def _request_origin(url: str) -> str:
+    parsed = parse.urlsplit(url)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return url
+
+
+def _is_connection_refused(detail: str) -> bool:
+    normalized = detail.lower()
+    return (
+        "10061" in detail
+        or "actively refused it" in normalized
+        or "connection refused" in normalized
+    )
+
+
+def _jobs_backend_recovery_hint(origin: str) -> str:
+    parsed = parse.urlsplit(origin)
+    host = (parsed.hostname or "").lower()
+    port = parsed.port
+    if host in {"127.0.0.1", "localhost", "::1"} and port == 4318:
+        return (
+            "Start the orchestration service lane or set "
+            f"{JOBS_BACKEND_URL_ENV} to a running backend."
+        )
+    if host in {"127.0.0.1", "localhost", "::1"}:
+        return f"Start the backend bound to {origin} or set {JOBS_BACKEND_URL_ENV} to a running backend."
+    return "Check that the configured jobs backend is running and reachable."
 
 
 def _dict_list(value: Any) -> list[dict[str, Any]]:

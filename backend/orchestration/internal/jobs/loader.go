@@ -10,13 +10,14 @@ import (
 )
 
 const (
-	APIVersion          = "codex.jobs/v1"
-	DesiredStateEnabled = "enabled"
-	DesiredStateDisabled = "disabled"
-	ExecutorTypeCodexExec = "codex_exec"
-	TriggerTypeSchedule = "schedule"
-	TriggerTypeManual   = "manual"
-	TriggerTypeWebhook  = "webhook"
+	APIVersion                   = "codex.jobs/v1"
+	DesiredStateEnabled          = "enabled"
+	DesiredStateDisabled         = "disabled"
+	ExecutorTypeCodexExec        = "codex_exec"
+	ExecutorTypePowerShellScript = "powershell_script"
+	TriggerTypeSchedule          = "schedule"
+	TriggerTypeManual            = "manual"
+	TriggerTypeWebhook           = "webhook"
 )
 
 func LoadSpecs(jobsRoot string) ([]Spec, error) {
@@ -99,14 +100,41 @@ func ValidateSpec(spec Spec) error {
 			return fmt.Errorf("unsupported trigger type %q", trigger.Type)
 		}
 	}
-	if spec.Executor.Type != ExecutorTypeCodexExec {
-		return fmt.Errorf("unsupported executor type %q", spec.Executor.Type)
+	if spec.Executor.Cwd == "" {
+		return fmt.Errorf("executor requires cwd")
 	}
-	if spec.Executor.Cwd == "" || spec.Executor.Entrypoint == "" {
-		return fmt.Errorf("executor requires cwd and entrypoint")
+	if err := validateStringSlice(spec.Executor.Args, "executor args"); err != nil {
+		return err
+	}
+	if err := validateStringSlice(spec.Executor.ManualArgs, "executor manual_args"); err != nil {
+		return err
+	}
+	if err := validateStringSlice(spec.Executor.WebhookArgs, "executor webhook_args"); err != nil {
+		return err
+	}
+	switch spec.Executor.Type {
+	case ExecutorTypeCodexExec:
+		if spec.Executor.Entrypoint == "" {
+			return fmt.Errorf("codex_exec executor requires entrypoint")
+		}
+	case ExecutorTypePowerShellScript:
+		if spec.Executor.ScriptPath == "" {
+			return fmt.Errorf("powershell_script executor requires script_path")
+		}
+	default:
+		return fmt.Errorf("unsupported executor type %q", spec.Executor.Type)
 	}
 	if spec.Runtime.WorkflowType == "" || spec.Runtime.TaskQueue == "" {
 		return fmt.Errorf("runtime requires workflow_type and task_queue")
+	}
+	return nil
+}
+
+func validateStringSlice(values []string, label string) error {
+	for _, value := range values {
+		if value == "" {
+			return fmt.Errorf("%s must not contain empty strings", label)
+		}
 	}
 	return nil
 }

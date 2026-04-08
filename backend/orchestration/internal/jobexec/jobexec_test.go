@@ -58,3 +58,50 @@ func TestBuildCommandPlanUsesCodexExecAndArtifacts(t *testing.T) {
 		t.Fatalf("expected workflow id in artifact paths: %+v", plan)
 	}
 }
+
+func TestBuildCommandPlanUsesPowershellScriptAndManualTriggerArgs(t *testing.T) {
+	request := controlplane.JobRunRequest{
+		JobID:           "codex-daily-agentic-swe-digest",
+		TriggerType:     jobs.TriggerTypeManual,
+		DesiredSpecHash: "spec-hash-123",
+		RequestedAt:     time.Date(2026, time.April, 6, 22, 0, 0, 0, time.UTC),
+		WorkflowID:      "workflow-id",
+		RunID:           "run-id",
+		Spec: jobs.Spec{
+			JobID: "codex-daily-agentic-swe-digest",
+			Executor: jobs.Executor{
+				Type:       jobs.ExecutorTypePowerShellScript,
+				Cwd:        `C:\Users\gregs\.codex`,
+				ScriptPath: `C:\Users\gregs\.codex\scheduled-digests\run-agentic-swe-digest-scheduled.ps1`,
+				Args:       []string{},
+				ManualArgs: []string{"-ForceRun", "-IgnoreSuccessfulRunStamp"},
+			},
+			Runtime: jobs.RuntimeConfig{
+				WorkflowType: "codex.exec.job",
+				TaskQueue:    "codex-orchestration",
+			},
+		},
+	}
+
+	plan, err := BuildCommandPlan(config.Config{
+		CodexExecutable: `C:\tools\codex.exe`,
+		RunsRoot:        `C:\temp\codex-runs`,
+	}, request)
+	if err != nil {
+		t.Fatalf("build command plan: %v", err)
+	}
+
+	if plan.Executable != "powershell.exe" {
+		t.Fatalf("executable = %q", plan.Executable)
+	}
+	argsText := strings.Join(plan.Args, " ")
+	if !strings.Contains(argsText, "-File C:\\Users\\gregs\\.codex\\scheduled-digests\\run-agentic-swe-digest-scheduled.ps1") {
+		t.Fatalf("expected script path in command args: %v", plan.Args)
+	}
+	if !strings.Contains(argsText, "-ForceRun") || !strings.Contains(argsText, "-IgnoreSuccessfulRunStamp") {
+		t.Fatalf("expected manual trigger args in command args: %v", plan.Args)
+	}
+	if plan.FinalMessagePath != "" {
+		t.Fatalf("powershell_script plan should not use final message path: %+v", plan)
+	}
+}

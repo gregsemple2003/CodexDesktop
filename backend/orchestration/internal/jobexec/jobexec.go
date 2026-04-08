@@ -17,6 +17,7 @@ import (
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobs"
 )
 
 const RunCodexExecActivityName = "codex.exec.activity"
@@ -69,27 +70,44 @@ func BuildCommandPlan(cfg config.Config, request controlplane.JobRunRequest) (Co
 
 	runRoot := filepath.Join(cfg.RunsRoot, sanitizePathSegment(request.JobID), sanitizePathSegment(request.WorkflowID))
 	eventLogPath := filepath.Join(runRoot, "events.jsonl")
-	finalMessagePath := filepath.Join(runRoot, "final-message.txt")
 	stderrPath := filepath.Join(runRoot, "stderr.txt")
-
-	args := []string{
-		"exec",
-		"--dangerously-bypass-approvals-and-sandbox",
-		"--skip-git-repo-check",
-		"--json",
-		"-C", request.Spec.Executor.Cwd,
-		"-o", finalMessagePath,
-		buildPrompt(request),
+	plan := CommandPlan{
+		RunRoot:      runRoot,
+		EventLogPath: eventLogPath,
+		StderrPath:   stderrPath,
 	}
 
-	return CommandPlan{
-		Executable:       cfg.CodexExecutable,
-		Args:             args,
-		RunRoot:          runRoot,
-		EventLogPath:     eventLogPath,
-		FinalMessagePath: finalMessagePath,
-		StderrPath:       stderrPath,
-	}, nil
+	switch request.Spec.Executor.Type {
+	case jobs.ExecutorTypeCodexExec:
+		finalMessagePath := filepath.Join(runRoot, "final-message.txt")
+		plan.Executable = cfg.CodexExecutable
+		plan.Args = []string{
+			"exec",
+			"--dangerously-bypass-approvals-and-sandbox",
+			"--skip-git-repo-check",
+			"--json",
+			"-C", request.Spec.Executor.Cwd,
+			"-o", finalMessagePath,
+			buildPrompt(request),
+		}
+		plan.FinalMessagePath = finalMessagePath
+	case jobs.ExecutorTypePowerShellScript:
+		if request.Spec.Executor.ScriptPath == "" {
+			return CommandPlan{}, fmt.Errorf("job %s powershell_script executor script_path is empty", request.JobID)
+		}
+		plan.Executable = "powershell.exe"
+		plan.Args = []string{
+			"-NoProfile",
+			"-ExecutionPolicy", "Bypass",
+			"-File", request.Spec.Executor.ScriptPath,
+		}
+		plan.Args = append(plan.Args, request.Spec.Executor.Args...)
+		plan.Args = append(plan.Args, triggerArgs(request)...)
+	default:
+		return CommandPlan{}, fmt.Errorf("job %s uses unsupported executor type %q", request.JobID, request.Spec.Executor.Type)
+	}
+
+	return plan, nil
 }
 
 func (a *codexExecActivity) Execute(ctx context.Context, request controlplane.JobRunRequest) (controlplane.JobRunResult, error) {
@@ -138,8 +156,10 @@ func (a *codexExecActivity) Execute(ctx context.Context, request controlplane.Jo
 		Command:          append([]string{plan.Executable}, plan.Args...),
 	}
 
-	if rawFinalMessage, err := os.ReadFile(plan.FinalMessagePath); err == nil {
-		result.FinalMessage = strings.TrimSpace(string(rawFinalMessage))
+	if plan.FinalMessagePath != "" {
+		if rawFinalMessage, err := os.ReadFile(plan.FinalMessagePath); err == nil {
+			result.FinalMessage = strings.TrimSpace(string(rawFinalMessage))
+		}
 	}
 
 	if runErr == nil {
@@ -170,6 +190,17 @@ func buildPrompt(request controlplane.JobRunRequest) string {
 	}
 	lines = append(lines, "Follow the entrypoint's normal behavior and finish with a concise summary of what happened and any operator follow-up required.")
 	return strings.Join(lines, "\n")
+}
+
+func triggerArgs(request controlplane.JobRunRequest) []string {
+	switch request.TriggerType {
+	case jobs.TriggerTypeManual:
+		return append([]string(nil), request.Spec.Executor.ManualArgs...)
+	case jobs.TriggerTypeWebhook:
+		return append([]string(nil), request.Spec.Executor.WebhookArgs...)
+	default:
+		return nil
+	}
 }
 
 func sanitizePathSegment(value string) string {
