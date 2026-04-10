@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0003",
+  "title": "Home safe-state planning was corrected so progress no longer implied time remaining",
+  "source_date": "2026-04-06",
+  "primary_family": "usability_state_truth",
+  "expected_state": "The Task-0022 planning baseline should have made the Home upload card treat `Safe on server` as a completed state with no progress bar, and any retained local copies should have appeared as separate muted text instead of looking like remaining transfer time.",
+  "actual_state": "At the plan gate, the Home upload-card baseline still needed explicit correction because a visible progress treatment could still make safe or already-finished uploads read like `how long until done`, and retained local copies could still masquerade as upload progress until the human clarified the rule.",
+  "human_costs": [
+    "the human had to restate the user-facing meaning of the Home card before planning could be approved",
+    "the planning baseline was not yet explicit enough about how safe state differs from active upload"
+  ],
+  "human_intervention": {
+    "kind": "tighten_contract",
+    "summary": "The human tightened the plan gate by stating that a Home progress bar is read as time remaining, so safe state must never show a bar and retained local copies must not look like transfer progress.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L251",
+      "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L252"
+    ]
+  },
+  "feedback_quotes": [
+    "if Home shows a progress bar, humans will read it as 'how long until done'.",
+    "Safe state should never show a bar.",
+    "Retained local copies after upload should be separate muted text, not progress."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L251",
+    "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L252"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "time-to-done path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The Home safe state should render as complete: no progress bar, no implied time remaining, and any retained local copies shown as separate muted text.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L251",
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L252"
+          ]
+        },
+        {
+          "principle_category": "truthfulness",
+          "target_state": "The Home card should not use a progress bar unless it truthfully reads as remaining time or active transfer progress to a human.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L251"
+          ]
+        }
+      ]
+    },
+    {
+      "chain_label": "active-upload-only path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "Progress treatment on Home should be reserved for sustained active upload, not for already-safe uploads or local-retention aftermath.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L252"
+          ]
+        },
+        {
+          "principle_category": "truthfulness",
+          "target_state": "Elapsed progress should only appear where that progress actually helps the human understand an active upload state.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T19-30-25-019d6522-1369-7692-bdba-b53998c88601.jsonl#L252"
+          ]
+        }
+      ]
+    }
+  ]
+}

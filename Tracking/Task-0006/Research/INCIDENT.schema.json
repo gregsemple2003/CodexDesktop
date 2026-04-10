@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gregs.codex.local/task-0006/incident.schema.json",
+  "title": "Task 0006 Human Course Correction Incident",
+  "description": "Concrete incident record for a human course correction over an AI-produced or AI-directed outcome.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "incident_kind",
+    "incident_id",
+    "title",
+    "source_date",
+    "primary_family",
+    "expected_state",
+    "actual_state",
+    "human_costs",
+    "human_intervention",
+    "feedback_quotes",
+    "evidence_refs",
+    "why_chains"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "incident_kind": {
+      "const": "human_course_correction"
+    },
+    "incident_id": {
+      "type": "string",
+      "pattern": "^INC-\\d{4}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "primary_family": {
+      "enum": [
+        "usability_state_truth",
+        "information_architecture",
+        "ui_semantics",
+        "human_world",
+        "workflow_orchestration",
+        "verification_proof",
+        "taste_style",
+        "other"
+      ]
+    },
+    "expected_state": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete event-level expected state for this incident. Describe what should have happened in this specific task, artifact, pass, or message."
+    },
+    "actual_state": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete event-level actual state for this incident. Describe what actually happened in this specific task, artifact, pass, or message. When the incident is about drift or an active course, include that ongoing course inside this field rather than splitting it into a separate trajectory field."
+    },
+    "human_costs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "human_intervention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "summary",
+        "evidence_refs"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "reject_outcome",
+            "collapse_branches",
+            "redirect_debugging",
+            "reframe_problem",
+            "tighten_contract",
+            "other"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "feedback_quotes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "$ref": "#/$defs/string_array"
+    },
+    "verbatim_transcript_windows": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Optional task-local mirror of the official reports-corpus field. When present, keep verbatim contiguous dialogue windows with date-time prefixes and role labels, and prefer originating human wording over relayed supervision text.",
+      "items": {
+        "$ref": "#/$defs/transcript_window"
+      }
+    },
+    "analysis": {
+      "$ref": "#/$defs/analysis_block"
+    },
+    "why_chains": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Sibling linear rationale paths for this incident. Use multiple chains when the human expressed multiple independent upstream whys. Do not serialize sibling reasons into one chain.",
+      "items": {
+        "$ref": "#/$defs/why_path"
+      }
+    }
+  },
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verbatim_dialogue_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "One verbatim dialogue turn with its original date-time prefix and Human:/Agent: label. Long turns may include embedded \\n line breaks for readability, but should remain one array element."
+      }
+    },
+    "analysis_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deeper_miss",
+        "correction"
+      ],
+      "description": "Optional human-readable second-pass note. Keep entries short enough to read comfortably in JSON without horizontal scrolling.",
+      "properties": {
+        "deeper_miss": {
+          "$ref": "#/$defs/string_array",
+          "description": "Short grounded lines that explain the deeper miss or causal stack beyond the surface complaint."
+        },
+        "correction": {
+          "$ref": "#/$defs/string_array",
+          "description": "Short grounded lines that explain how the incident was actually corrected."
+        }
+      }
+    },
+    "transcript_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window_label",
+        "source_ref",
+        "dialogue"
+      ],
+      "properties": {
+        "window_label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short label describing why this contiguous window matters for the incident."
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Primary transcript anchor for this window."
+        },
+        "dialogue": {
+          "$ref": "#/$defs/verbatim_dialogue_array"
+        }
+      }
+    },
+    "why_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chain_label",
+        "entries"
+      ],
+      "properties": {
+        "chain_label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short label that distinguishes this linear why path from sibling paths in the same incident."
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 2,
+          "description": "Ordered linear rationale path from a concrete incident target state to the highest-level human-stated reason for that path. Entry N+1 should answer why entry N mattered to the human.",
+          "items": {
+            "$ref": "#/$defs/why_entry"
+          }
+        }
+      }
+    },
+    "why_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principle_category",
+        "target_state",
+        "evidence_refs"
+      ],
+      "properties": {
+        "principle_category": {
+          "enum": [
+            "product_resolution",
+            "reviewability",
+            "evaluability",
+            "falsifiability",
+            "truthfulness",
+            "boundedness",
+            "diagnostic_scope",
+            "proxy_discipline",
+            "directness",
+            "consensus_building",
+            "human_dignity",
+            "operator_clarity",
+            "human_control",
+            "other"
+          ],
+          "description": "Controlled category used for later clustering across incidents. Use one of the schema values exactly. This is a constrained label, not a hierarchy claim."
+        },
+        "target_state": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The target state being expressed at this level of generalization. It should read as the answer to why the previous entry mattered to the human. Adjacent entries within the same chain should not merely restate the same why in different words."
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    }
+  }
+}

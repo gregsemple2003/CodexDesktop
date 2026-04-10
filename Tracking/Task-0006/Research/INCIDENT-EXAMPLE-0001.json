@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0001",
+  "title": "People task stayed unresolved until the human collapsed it to one concrete outcome",
+  "source_date": "2026-04-04",
+  "primary_family": "workflow_orchestration",
+  "expected_state": "The Task-0025 draft should already have said that the route title will be `People`, the primary CTA will be `Add person`, and the People surface will no longer show an onboarding button.",
+  "actual_state": "The Task-0025 draft still used conditional wording such as `if an onboarding-style action remains...`, so the route title, primary CTA, and onboarding removal were still unresolved, and the producer was still handing off a branchy task shape where multiple People-surface outcomes were alive until the human corrected it.",
+  "human_costs": [
+    "the task was too loose for the human to tell whether course correction was needed",
+    "the human had to finish the consensus work that should have happened before handoff"
+  ],
+  "human_intervention": {
+    "kind": "collapse_branches",
+    "summary": "The human rejected the unresolved task wording and supplied the concrete People-surface outcome that should have been in the task already.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L169",
+      "/c:/Agent/Crystallize/Tracking/Task-0025/TASK.md"
+    ]
+  },
+  "feedback_quotes": [
+    "That's a failure to build consensus; the product is still existing in a superposition of states.",
+    "That's concrete and something I can pick a side on.",
+    "I would say for any usability tasks we should collapse the waveform to a falsifiable or evaluat-able claim."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L149",
+    "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L169",
+    "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L220",
+    "/c:/Agent/Crystallize/Tracking/Task-0025/TASK.md"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "agreement-check path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The task should already state one concrete People-surface outcome: route title `People`, primary CTA `Add person`, and no onboarding button on that surface.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L169",
+            "/c:/Agent/Crystallize/Tracking/Task-0025/TASK.md"
+          ]
+        },
+        {
+          "principle_category": "reviewability",
+          "target_state": "The task should be precise enough that the human can tell whether they agree or disagree with the proposed outcome before implementation starts.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L149"
+          ]
+        }
+      ]
+    },
+    {
+      "chain_label": "usability-contract path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The task should already state one concrete People-surface outcome: route title `People`, primary CTA `Add person`, and no onboarding button on that surface.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L169",
+            "/c:/Agent/Crystallize/Tracking/Task-0025/TASK.md"
+          ]
+        },
+        {
+          "principle_category": "evaluability",
+          "target_state": "The task should be concrete enough that the human can pick a side on it instead of facing a superposition of plausible outcomes.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L169"
+          ]
+        },
+        {
+          "principle_category": "evaluability",
+          "target_state": "For usability tasks, the task should collapse to a falsifiable or evaluable claim about the expected user-facing resolution.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T01-52-00-019d570c-5a4e-7280-a118-6e17e120f60c.jsonl#L220"
+          ]
+        }
+      ]
+    }
+  ]
+}

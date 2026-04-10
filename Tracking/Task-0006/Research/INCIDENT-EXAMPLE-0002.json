@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0002",
+  "title": "Proof-view debugging was re-bounded to one discriminating check",
+  "source_date": "2026-04-04",
+  "primary_family": "verification_proof",
+  "expected_state": "In PASS-0001, the temporary proof view should have been used for one check only: if the pawn still was not visible there, the pass should stop adding helper work and promote the task to the real visibility or render defect path.",
+  "actual_state": "In PASS-0001, the workflow still left room to keep expanding proof-view helper work around the temporary view, so the active course was still drifting toward helper enrichment instead of using the proof view once to decide whether the real bug was camera framing or mesh visibility.",
+  "human_costs": [
+    "the pass stayed on proof-view helper expansion instead of closing the live diagnostic question",
+    "the human had to cap the helper path manually"
+  ],
+  "human_intervention": {
+    "kind": "redirect_debugging",
+    "summary": "The human explicitly bounded the proof view to one discriminating check and set the escalation rule for what to do if that proxy also failed.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L750",
+      "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L754",
+      "/c:/Agent/ThirdPerson/Tracking/Task-0002/HANDOFF.md"
+    ]
+  },
+  "feedback_quotes": [
+    "Keep the proof-view experiment bounded to a single discriminating check.",
+    "do not keep expanding automation helpers."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L750",
+    "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L754",
+    "/c:/Agent/ThirdPerson/Tracking/Task-0002/HANDOFF.md"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "bounded diagnostic path",
+      "entries": [
+        {
+          "principle_category": "diagnostic_scope",
+          "target_state": "The temporary proof view should only answer one immediate question: does it distinguish camera framing from a real visibility defect?",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L750"
+          ]
+        },
+        {
+          "principle_category": "boundedness",
+          "target_state": "The proof-view experiment should stay bounded to a single discriminating check.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/04/rollout-2026-04-04T11-18-43-019d5913-3060-70f1-a7d7-44a771efaef8.jsonl#L750"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -23,13 +23,22 @@ Use repo-root docs here only for CodexDashboard-specific truth such as:
 - implementation layout
 - run commands
 - regression lane definition
+- the durable intervention canon and eval home under `C:\Users\gregs\.codex\Orchestration\Reports\Interventions\`
 
 Keep task history and evidence under `Tracking/Task-<id>/`.
+The explicit exception is:
+
+- `C:\Users\gregs\.codex\Orchestration\Reports\Interventions\`
+  - durable cross-task intervention canon, red-line, and eval-design home
+
+Task bootstrap contracts, day-pass artifacts, and pass history should still start under the owning task until promoted.
 
 ## Implementation Layout
 
 - `app/codex_dashboard/`
   - Python package for config, storage, ingest, aggregation, and later UI
+- `C:\Users\gregs\.codex\Orchestration\Reports\Interventions\`
+  - durable shared intervention canon, red-line rules, and test design
 - `tests/`
   - focused unit coverage
 - `Tracking/Task-0001/`

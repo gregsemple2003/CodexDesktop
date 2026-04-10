@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0006",
+  "title": "Restart responsibility was corrected because the human had no restart control",
+  "source_date": "2026-04-07",
+  "primary_family": "human_world",
+  "expected_state": "If the dashboard needed a restart for the new behavior to be live, the agent should have restarted it as part of the task outcome instead of leaving that step for the human.",
+  "actual_state": "The task flow still left restart responsibility on the human side even though the human had no restart button or direct affordance for that action, so the produced outcome depended on a control the human did not actually have.",
+  "human_costs": [
+    "the human had to point out that the required next step depended on a control they did not have",
+    "the agent left the final activation step outside the human's actual affordances"
+  ],
+  "human_intervention": {
+    "kind": "reject_outcome",
+    "summary": "The human rejected the implied handoff and stated that the agent should perform the restart because the human did not have a restart button.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L3061"
+    ]
+  },
+  "feedback_quotes": [
+    "You restart it; you should know I don't have a restart button."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L3061"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "missing-control path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "Required restart work should be performed by the agent when that restart is necessary to realize the intended dashboard outcome.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L3061"
+          ]
+        },
+        {
+          "principle_category": "human_control",
+          "target_state": "The outcome should not depend on the human performing a step when the surface gives them no restart control to do it.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L3061"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Task 0006 Outbound Message Review Row",
+  "description": "Canonical row contract for Task 0006 daily outbound-message review capture. CSV storage should use the same field names; array-valued fields are serialized as semicolon-delimited lists. Keep the human_interest_categories enum in sync with Daily/README.md. Default to existing enum values. Only add a new category when the current set cannot express the signal honestly without distortion. If a new category clears that gate, update both files together and call out the new value explicitly in handoff or review rather than inventing free-form CSV values.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "humanInterestCategory": {
+      "type": "string",
+      "description": "Schema-constrained semantic category for what the message teaches about the human's interests, meanings, limits, or ownership boundaries. CSV rows must use only these enum values, serialized as semicolon-delimited tokens when more than one applies. Default to the nearest honest existing value. Additions are allowed only when the nearest existing categories would misstate or distort the signal. Keep this enum synchronized with Daily/README.md and explicitly call out any additions during review or handoff.",
+      "enum": [
+        "meat_brain_constraint",
+        "friction_tolerance",
+        "human_term_meaning",
+        "operator_ownership_boundary",
+        "other"
+      ]
+    }
+  },
+  "required": [
+    "date",
+    "session_id",
+    "thread_name",
+    "cwd",
+    "transcript_path",
+    "line_number",
+    "line_ref",
+    "timestamp",
+    "human_model_sureness",
+    "human_priority",
+    "human_model_candidate",
+    "message_role",
+    "human_interest_categories",
+    "surfacing_reasons",
+    "message_excerpt",
+    "message_text",
+    "prior_assistant_excerpt",
+    "next_assistant_excerpt",
+    "review_notes"
+  ],
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "thread_name": {
+      "type": "string"
+    },
+    "cwd": {
+      "type": "string"
+    },
+    "transcript_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "line_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "line_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "human_model_sureness": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 0.99,
+      "description": "Bootstrap heuristic for how likely the row teaches something durable about the human model. This is a surfacing aid, not truth."
+    },
+    "human_priority": {
+      "type": "string",
+      "description": "Coarse review priority derived from human_model_sureness. This replaces the older bucket language.",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "background"
+      ]
+    },
+    "human_model_candidate": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "message_role": {
+      "type": "string",
+      "description": "Best current role judgment for the message. Use unclear when the boundary has not been reviewed yet.",
+      "enum": [
+        "corrective",
+        "non_corrective",
+        "mixed",
+        "unclear"
+      ]
+    },
+    "human_interest_categories": {
+      "type": "array",
+      "description": "Semantic human-interest categories only. In CSV form, store as semicolon-delimited enum values. Do not put heuristic scoring reasons here.",
+      "items": {
+        "$ref": "#/$defs/humanInterestCategory"
+      },
+      "uniqueItems": true
+    },
+    "surfacing_reasons": {
+      "type": "array",
+      "description": "Heuristic reasons why the row surfaced, such as phrase matches, shape bonuses, or emotional-intensity hints. In CSV form, store as semicolon-delimited strings.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "message_excerpt": {
+      "type": "string"
+    },
+    "message_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prior_assistant_excerpt": {
+      "type": "string"
+    },
+    "next_assistant_excerpt": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
+    }
+  }
+}

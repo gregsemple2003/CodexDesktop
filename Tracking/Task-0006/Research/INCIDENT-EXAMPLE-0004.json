@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0004",
+  "title": "Task-0005 closure was corrected because the backend was not actually left running",
+  "source_date": "2026-04-07",
+  "primary_family": "human_world",
+  "expected_state": "Task-0005 should have ended with the separate long-running backend actually running in a usable unattended lane, so the outcome matched what a human would interpret as done.",
+  "actual_state": "Task-0005 artifacts described a separate long-running backend as the next honest move, but the task still ended without the actual backend running, so the produced outcome only proved the shape in theory and left the real-world service lane absent until the human stepped in.",
+  "human_costs": [
+    "the human had to challenge the meaning of `done` after the task had already been framed as complete enough",
+    "the human had to restate that they were not trying to be the backend operator"
+  ],
+  "human_intervention": {
+    "kind": "reframe_problem",
+    "summary": "The human rejected the closure bar and reframed the task around an actually running unattended backend instead of a merely documented or theoretically valid long-running shape.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637",
+      "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2666"
+    ]
+  },
+  "feedback_quotes": [
+    "this is not what a human would interpret as done",
+    "without the thing you just built actually running then we can't use it",
+    "I'm not trying to be an operator here, that's your job."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637",
+    "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2666"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "done-in-the-real-world path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "Task closure should leave the backend actually running in a usable unattended service lane, not merely described as the next move.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637"
+          ]
+        },
+        {
+          "principle_category": "truthfulness",
+          "target_state": "A task marked effectively done should match what a human would interpret as done in the real world.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637"
+          ]
+        }
+      ]
+    },
+    {
+      "chain_label": "not-the-operator path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The backend lane should be left running by the agent instead of requiring the human to perform the final bring-up work.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637"
+          ]
+        },
+        {
+          "principle_category": "operator_clarity",
+          "target_state": "The human should not be treated as the operator for the unattended backend lane when the agent owns the task outcome.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/06/rollout-2026-04-06T20-36-54-019d655e-f1c5-7463-af8a-779567b8955a.jsonl#L2637"
+          ]
+        }
+      ]
+    }
+  ]
+}

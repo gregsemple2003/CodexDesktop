@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "incident_kind": "human_course_correction",
+  "incident_id": "INC-0007",
+  "title": "Debugging guidance was corrected to trace from the named disagreement variable and prune redundant predicates",
+  "source_date": "2026-04-03",
+  "primary_family": "workflow_orchestration",
+  "expected_state": "The debugging guidance should have traced root cause directly from the `interpolated frames` message back to what caused that specific message, and the prompt should have been pruned so lower-level predicates derivable from higher-level ones did not accumulate redundantly.",
+  "actual_state": "The guidance still allowed looser inference instead of tracing specifically from the named `interpolated frames` disagreement variable, and it still carried enough lower-level predicates that the human had to correct the method to keep instruction following from getting heavier and less sharp.",
+  "human_costs": [
+    "the human had to restate the desired debugging method at a more exact variable-provenance level",
+    "the human had to defend against prompt bloat from redundant lower-level constraints"
+  ],
+  "human_intervention": {
+    "kind": "tighten_contract",
+    "summary": "The human tightened the debugging contract by requiring explicit tracing from the `interpolated frames` message and by asking for derivable lower-level predicates to be deleted so the prompt stayed sharper.",
+    "evidence_refs": [
+      "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1394",
+      "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1404"
+    ]
+  },
+  "feedback_quotes": [
+    "trace root cause from the interpolated frames message to what's causing _that_ specifically",
+    "delete any lower-level predicates that seem derivable from higher-level predicates",
+    "I'm concerned that instruction following is going to pessimize by adding to many constraints."
+  ],
+  "evidence_refs": [
+    "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1394",
+    "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1404",
+    "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1408"
+  ],
+  "why_chains": [
+    {
+      "chain_label": "variable-provenance path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The debugging method should trace from the named `interpolated frames` message back to the code path that specifically causes that message.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1394"
+          ]
+        },
+        {
+          "principle_category": "directness",
+          "target_state": "The debugging contract should follow the concrete disagreement variable directly instead of skipping to a looser inference from code read alone.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1394"
+          ]
+        }
+      ]
+    },
+    {
+      "chain_label": "constraint-pruning path",
+      "entries": [
+        {
+          "principle_category": "product_resolution",
+          "target_state": "The prompt should delete lower-level predicates that are already derivable from higher-level rules instead of stacking them redundantly.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1404"
+          ]
+        },
+        {
+          "principle_category": "boundedness",
+          "target_state": "Instruction guidance should stay sharp rather than getting heavier and less reliable from too many overlapping constraints.",
+          "evidence_refs": [
+            "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1404",
+            "/c:/Users/gregs/.codex/sessions/2026/04/03/rollout-2026-04-03T11-35-01-019d53fb-c3db-7e61-8adf-a4ff171c0de9.jsonl#L1408"
+          ]
+        }
+      ]
+    }
+  ]
+}
