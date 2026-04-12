@@ -28,3 +28,5 @@ python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 The overlay UI and desktop integration land in later passes. The current pass establishes the ingest core, persistence, repo docs, and unit coverage.
+
+> Temporary note for diff-color inspection.
