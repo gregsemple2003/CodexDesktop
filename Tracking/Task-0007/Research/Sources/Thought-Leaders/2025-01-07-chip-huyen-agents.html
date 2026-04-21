@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Agents</title>
+  <meta name="description" content="Intelligent agents are considered by many to be the ultimate goal of AI. The classic book by Stuart Russell and Peter Norvig, Artificial Intelligence: A Mode...">
+  
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="canonical" href="https://huyenchip.com/2025/01/07/agents.html">
+  <link rel="alternate" type="application/rss+xml" title="Chip Huyen" href="/feed.xml">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MRNJDX3023"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-MRNJDX3023');
+  </script>
+
+  
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-103070243-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+  
+
+  <!-- for mathjax support -->
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    TeX: { equationNumbers: { autoNumber: "AMS" } }
+    });
+  </script>
+  <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+  <!--  -->
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script type="text/javascript" src="https://pixel-v0.wl.r.appspot.com/static/pixel.js"></script>
+<script type="text/javascript">
+    let ccid = "huyenchip.com";
+    cc(ccid);
+</script> -->
+  <!-- SEO tags -->
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Agents | Chip Huyen</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Agents" />
+<meta name="author" content="Chip Huyen" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Intelligent agents are considered by many to be the ultimate goal of AI. The classic book by Stuart Russell and Peter Norvig, Artificial Intelligence: A Modern Approach (Prentice Hall, 1995), defines the field of AI research as “the study and design of rational agents.”" />
+<meta property="og:description" content="Intelligent agents are considered by many to be the ultimate goal of AI. The classic book by Stuart Russell and Peter Norvig, Artificial Intelligence: A Modern Approach (Prentice Hall, 1995), defines the field of AI research as “the study and design of rational agents.”" />
+<link rel="canonical" href="https://huyenchip.com/2025/01/07/agents.html" />
+<meta property="og:url" content="https://huyenchip.com/2025/01/07/agents.html" />
+<meta property="og:site_name" content="Chip Huyen" />
+<meta property="og:image" content="https://huyenchip.com/assets/pics/agents/2-agent-pattern.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-01-07T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://huyenchip.com/assets/pics/agents/2-agent-pattern.png" />
+<meta property="twitter:title" content="Agents" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Chip Huyen"},"dateModified":"2025-01-07T00:00:00+00:00","datePublished":"2025-01-07T00:00:00+00:00","description":"Intelligent agents are considered by many to be the ultimate goal of AI. The classic book by Stuart Russell and Peter Norvig, Artificial Intelligence: A Modern Approach (Prentice Hall, 1995), defines the field of AI research as “the study and design of rational agents.”","headline":"Agents","image":"https://huyenchip.com/assets/pics/agents/2-agent-pattern.png","mainEntityOfPage":{"@type":"WebPage","@id":"https://huyenchip.com/2025/01/07/agents.html"},"url":"https://huyenchip.com/2025/01/07/agents.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+<meta name="cf-2fa-verify" content="YpmKnmQEEb22PZui8RFD">
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/">Chip Huyen</a>
+
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+              <a class="page-link" href="/blog/">Blog</a>
+            
+          
+            
+              <a class="page-link" href="/books/">Books</a>
+            
+          
+            
+              <a class="page-link" href="/events/">Events</a>
+            
+          
+            
+              <div class="dropdown">
+                <a class="dropbtn">AI Guide<i class="fas fa-chevron-down"></i></a>
+                <ul class="dropdown-content">
+                  
+                    <li><a href="/mlops/">AI Roadmap</a></li>
+                  
+                    <li><a href="https://goodailist.com">Good AI List</a></li>
+                  
+                    <li><a href="https://huyenchip.com/ml-interviews-book/">ML Interviews</a></li>
+                  
+                </ul>
+              </div>
+            
+          
+            
+              <a class="page-link" href="/list-100/">List 100</a>
+            
+          
+            
+              <a class="page-link" href="https://instagram.com/chipslib">Chip's Lib</a>
+            
+          
+            
+              <a class="page-link" href="https://huyenchip.com/vn/">VN</a>
+            
+          
+        </div>
+
+        <!-- this is the original working code -->
+        <!-- <div class="trigger">
+          
+            <a class="page-link" href="/blog/">Blog</a>
+          
+            <a class="page-link" href="/books/">Books</a>
+          
+            <a class="page-link" href="/events/">Events</a>
+          
+            <a class="page-link" href="">AI Guide</a>
+          
+            <a class="page-link" href="/list-100/">List 100</a>
+          
+            <a class="page-link" href="https://instagram.com/chipslib">Chip's Lib</a>
+          
+            <a class="page-link" href="https://huyenchip.com/vn/">VN</a>
+          
+        </div> -->
+
+        <!-- No idea what it is -->
+        <!-- <div class="trigger">
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+            <a class="page-link" href="/stories/anything-i-want.html">Anything I want</a>
+            
+          
+            
+            
+            <a class="page-link" href="/archive/">Archive</a>
+            
+          
+            
+            
+            <a class="page-link" href="/blog/">Blog</a>
+            
+          
+            
+            
+            <a class="page-link" href="/books/">Books</a>
+            
+          
+            
+            
+            <a class="page-link" href="/communication/">Contact me</a>
+            
+          
+            
+            
+            <a class="page-link" href="/creators/">Creators&#39; Collective</a>
+            
+          
+            
+            
+            <a class="page-link" href="/entanglements/">Entanglements That Never End</a>
+            
+          
+            
+            
+            <a class="page-link" href="/events/">Events</a>
+            
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/stories/how-they-arrived">How they arrived</a>
+            
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/list-100/">List 100</a>
+            
+          
+            
+            
+            <a class="page-link" href="/llama-devs.html">Open Source LLM Developers</a>
+            
+          
+            
+            
+            <a class="page-link" href="/llama-police.html">Open Source LLM Tools</a>
+            
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/mlops/">MLOps - tools, best practices, and case studies</a>
+            
+          
+            
+            
+            <a class="page-link" href="/mlops/">MLOps guide</a>
+            
+          
+            
+            
+            <a class="page-link" href="/stories/my-posthumous-collection-of-letters.html">My posthumous collection of letters</a>
+            
+          
+            
+            
+            <a class="page-link" href="/stories/neo-beat">Unnamed</a>
+            
+          
+            
+            
+            <a class="page-link" href="/research/">Research</a>
+            
+          
+            
+            
+            <a class="page-link" href="/start/">You made it!</a>
+            
+          
+            
+            
+            <a class="page-link" href="/stories/the-door.html">The door</a>
+            
+          
+            
+            
+          
+            
+            
+          
+        </div> -->
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <!-- Sidebar Navigation, which can be customized for each post -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+  <aside id="sidebar" class="sidebar">
+    <span class="toc-title"><b>Table of Contents</b></span>
+    <button id="close-sidebar-btn" class="close-btn"><i class="fas fa-chevron-down"></i></button>
+      <a href="#agent_overview">Agent Overview</a><br>
+<a href="#tools">Tools</a>
+<ul class="sidebar-list">
+    <li><a href="#knowledge_augmentation">Knowledge augmentation</a></li>
+    <li><a href="#capability_extension">Capability extension</a></li>
+    <li><a href="#write_actions">Write actions</a></li>
+</ul>
+<a href="#planning">Planning</a>
+<ul class="sidebar-list">
+    <li><a href="#planning_overview">Planning overview</a></li>
+    <li><a href="#foundation_models_as_planners">Foundation models as planners</a></li>
+    <li><a href="#plan_generation">Plan generation</a>
+    <ul>
+        <li><a href="#function_calling">Function calling</a></li>
+        <li><a href="#planning_granularity">Planning granularity</a></li>
+        <li><a href="#complex_plans">Complex plans</a></li>
+    </ul>
+    </li>
+    <li><a href="#reflection_and_error_correction">Reflection and error correction</a></li>
+    <li><a href="#tool_selection">Tool selection</a></li>
+</ul>
+<a href="#agent_failure_modes_and_evaluation">Agent Failure Modes and Evaluation</a>
+<ul class="sidebar-list">
+    <li><a href="#planning_failures">Planning failures</a></li>
+    <li><a href="#tool_failures">Tool failures</a></li>
+    <li><a href="#efficiency">Efficiency</a></li>
+</ul>
+<a href="#conclusion">Conclusion</a>
+
+  </aside>
+
+  <!-- Button to reopen the sidebar -->
+  <button id="open-sidebar-btn" class="open-btn" style="display:none;">
+    Table of Contents <span class="chevron-icon"><i class="fas fa-chevron-up"></i></span>
+  </button>
+
+
+<script>
+  
+    // Function to handle sidebar visibility on resize
+    function handleResize() {
+      if (window.innerWidth <= 768) {
+        // Automatically minimize the sidebar if it's open on small screens
+        document.getElementById('sidebar').classList.add('sidebar-hidden');
+        document.getElementById('open-sidebar-btn').style.display = 'block'; // Show open button
+      }
+    }
+  
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+  
+    // Call handleResize on page load to check the initial screen size
+    handleResize();
+  
+    // Close sidebar and show "Table of Contents" button
+    document.getElementById('close-sidebar-btn').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.add('sidebar-hidden');
+      document.getElementById('open-sidebar-btn').style.display = 'block'; // Show open button
+    });
+  
+    // Reopen the sidebar when "Table of Contents" is clicked
+    document.getElementById('open-sidebar-btn').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.remove('sidebar-hidden');
+      document.getElementById('open-sidebar-btn').style.display = 'none'; // Hide open button
+    });
+  
+</script>
+
+<article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Agents</h1>
+    <p class="post-meta">
+      <time datetime="2025-01-07T00:00:00+00:00" itemprop="datePublished">
+        
+        Jan 7, 2025
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Chip Huyen</span></span>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Intelligent agents are considered by many to be the ultimate goal of AI. The classic book by Stuart Russell and Peter Norvig, <em>Artificial Intelligence: A Modern Approach</em> (Prentice Hall, 1995), defines the field of AI research as “<em>the study and design of rational agents.</em>”</p>
+
+<p>The unprecedented capabilities of foundation models have opened the door to agentic applications that were previously unimaginable. These new capabilities make it finally possible to develop autonomous, intelligent agents to act as our assistants, coworkers, and coaches. They can help us create a website, gather data, plan a trip, do market research, manage a customer account, automate data entry, prepare us for interviews, interview our candidates, negotiate a deal, etc. The possibilities seem endless, and the potential economic value of these agents is enormous.</p>
+
+<p>This section will start with an overview of agents and then continue with two aspects that determine the capabilities of an agent: tools and planning. Agents, with their new modes of operations, have new modes of failure. This section will end with a discussion on how to evaluate agents to catch these failures.</p>
+
+<p><em>This post is adapted from the <strong>Agents</strong> section of <a href="https://amzn.to/49j1cGS"><strong>AI Engineering</strong></a> (2025) with minor edits to make it a standalone post.</em></p>
+
+<p><strong>Notes</strong>:</p>
+<ol>
+  <li>AI-powered agents are an emerging field with no established theoretical frameworks for defining, developing, and evaluating them. This section is a best-effort attempt to build a framework from the existing literature, but it will evolve as the field does. Compared to the rest of the book, this section is more experimental. I received helpful feedback from early reviewers, and I hope to get feedback from readers of this blog post, too.</li>
+  <li>Just before this book came out, Anthropic published a blog post on <a href="https://www.anthropic.com/research/building-effective-agents">Building effective agents</a> (Dec 2024). I’m glad to see that Anthropic’s blog post and my agent section are <a href="https://cedricchee.com/blog/the-dna-of-ai-agents/">conceptually aligned</a>, though with slightly different terminologies. However, Anthropic’s post focuses on isolated patterns, whereas my post covers why and how things work. I also focus more on planning, tool selection, and failure modes.</li>
+  <li>The post contains a lot of background information. Feel free to skip ahead if it feels a little too in the weeds!</li>
+</ol>
+
+<h2 id="agent_overview">Agent Overview</h2>
+
+<p>The term <em>agent</em> has been used in many different engineering contexts, including but not limited to a software agent, intelligent agent, user agent, conversational agent, and reinforcement learning agent. So, what exactly is an agent?</p>
+
+<p>An agent is anything that can perceive its environment and act upon that environment. <em>Artificial Intelligence: A Modern Approach</em> (1995) defines an agent as anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators.</p>
+
+<p>This means that an agent is characterized by the <em>environment</em> it operates in and <em>the set of actions</em> it can perform.</p>
+
+<p>The <em>environment</em> an agent can operate in is defined by its use case. If an agent is developed to play a game (e.g., <em>Minecraft,</em> Go, <em>Dota</em>), that game is its environment. If you want an agent to scrape documents from the internet, the environment is the internet. A self-driving car agent’s environment is the road system and its adjacent areas.</p>
+
+<p>The <em>set of actions</em> an AI agent can perform is augmented by the <em>tools</em> it has access to. Many generative AI-powered applications you interact with daily are agents with access to tools, albeit simple ones. ChatGPT is an agent. It can search the web, execute Python code, and generate images. RAG systems are agents—text retrievers, image retrievers, and SQL executors are their tools.</p>
+
+<p>There’s a strong dependency between an agent’s environment and its set of tools. The environment determines what tools an agent can potentially use. For example, if the environment is a chess game, the only possible actions for an agent are the valid chess moves. However, an agent’s tool inventory restricts the environment it can operate in. For example, if a robot’s only action is swimming, it’ll be confined to a water environment.</p>
+
+<p>Figure 6-8 shows a visualization of <a href="https://arxiv.org/abs/2405.15793">SWE-agent</a> (Yang et al., 2024), an agent built on top of GPT-4. Its environment is the computer with the terminal and the file system. Its set of actions include navigate repo, search files, view files, and edit lines.</p>
+
+<center>
+    <figure>
+    <img alt="A coding agent" src="/assets/pics/agents/1-swe-agent.png" style="float: center; max-width: 90%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-8. SWE-agent is a coding agent whose environment is the computer and whose actions include navigation, search, view files, and editing
+</center>
+<p><br /></p>
+
+<p>An AI agent is meant to accomplish tasks typically provided by the users. In an AI agent, AI is the brain that processes the task, plans a sequence of actions to achieve this task, and determines whether the task has been accomplished.</p>
+
+<p>Let’s return to the RAG system with tabular data in the Kitty Vogue example above. This is a simple agent with three actions:</p>
+
+<ul>
+  <li>response generation,</li>
+  <li>SQL query generation, and</li>
+  <li>SQL query execution.</li>
+</ul>
+
+<p>Given the query <code class="language-plaintext highlighter-rouge">"Project the sales revenue for Fruity Fedora over the next three months"</code>, the agent might perform the following sequence of actions:</p>
+
+<ol>
+  <li>Reason about how to accomplish this task. It might decide that to predict future sales, it first needs the sales numbers from the last five years. An agent’s reasoning can be shown as intermediate responses.</li>
+  <li>Invoke SQL query generation to generate the query to get sales numbers from the last five years.</li>
+  <li>Invoke SQL query execution to execute this query.</li>
+  <li>Reason about the tool outputs (outputs from the SQL query execution) and how they help with sales prediction. It might decide that these numbers are insufficient to make a reliable projection, perhaps because of missing values. It then decides that it also needs information about past marketing campaigns.</li>
+  <li>Invoke SQL query generation to generate the queries for past marketing campaigns.</li>
+  <li>Invoke SQL query execution.</li>
+  <li>Reason that this new information is sufficient to help predict future sales. It then generates a projection.</li>
+  <li>Reason that the task has been successfully completed.</li>
+</ol>
+
+<p>Compared to non-agent use cases, agents typically require more powerful models for two reasons:</p>
+
+<ul>
+  <li><strong>Compound mistakes</strong>: an agent often needs to perform multiple steps to accomplish a task, and the overall accuracy decreases as the number of steps increases. If the model’s accuracy is 95% per step, over 10 steps, the accuracy will drop to 60%, and over 100 steps, the accuracy will be only 0.6%.</li>
+  <li><strong>Higher stakes</strong>: with access to tools, agents are capable of performing more impactful tasks, but any failure could have more severe consequences.</li>
+</ul>
+
+<p>A task that requires many steps can take time and money to run. A common complaint is that agents are only good for burning through your API credits. However, if agents can be autonomous, they can save human time, making their costs worthwhile.</p>
+
+<p>Given an environment, the success of an agent in an environment depends on <strong>the tool it has access to</strong> and <strong>the strength of its AI planner</strong>. Let’s start by looking into different kinds of tools a model can use. We’ll analyze AI’s capability for planning next.</p>
+
+<h2 id="tools">Tools</h2>
+
+<p>A system doesn’t need access to external tools to be an agent. However, without external tools, the agent’s capabilities would be limited. By itself, a model can typically perform one action—an LLM can generate text and an image generator can generate images. External tools make an agent vastly more capable.</p>
+
+<p>Tools help an agent to both perceive the environment and act upon it. Actions that allow an agent to perceive the environment are <em>read-only actions</em>, whereas actions that allow an agent to act upon the environment are <em>write actions</em>.</p>
+
+<p>The set of tools an agent has access to is its tool inventory. Since an agent’s tool inventory determines what an agent can do, it’s important to think through what and how many tools to give an agent. More tools give an agent more capabilities. However, the more tools there are, the more challenging it is to understand and utilize them well. Experimentation is necessary to find the right set of tools, as discussed later in the “<strong>Tool selection</strong>” section.</p>
+
+<p>Depending on the agent’s environment, there are many possible tools. Here are three categories of tools that you might want to consider: knowledge augmentation (i.e., context construction), capability extension, and tools that let your agent act upon its environment.</p>
+
+<h3 id="knowledge_augmentation">Knowledge augmentation</h3>
+
+<p>I hope that this book, so far, has convinced you of the importance of having the relevant context for a model’s response quality. An important category of tools includes those that help augment the knowledge of your agent. Some of them have already been discussed: text retriever, image retriever, and SQL executor. Other potential tools include internal people search, an inventory API that returns the status of different products, Slack retrieval, an email reader, etc.</p>
+
+<p>Many such tools augment a model with your organization’s private processes and information. However, tools can also give models access to public information, especially from the internet.</p>
+
+<p>Web browsing was among the earliest and most anticipated capabilities to be incorporated into ChatGPT. Web browsing prevents a model from going stale. A model goes stale when the data it was trained on becomes outdated. If the model’s training data was cut off last week, it won’t be able to answer questions that require information from this week unless this information is provided in the context. Without web browsing, a model won’t be able to tell you about the weather, news, upcoming events, stock prices, flight status, etc.</p>
+
+<p>I use web browsing as an umbrella term to cover all tools that access the internet, including web browsers and APIs such as search APIs, news APIs, GitHub APIs, or social media APIs.</p>
+
+<p>While web browsing allows your agent to reference up-to-date information to generate better responses and reduce hallucinations, it can also open up your agent to the cesspools of the internet. Select your Internet APIs with care.</p>
+
+<h3 id="capability_extension">Capability extension</h3>
+
+<p>You might also consider tools that address the inherent limitations of AI models. They are easy ways to give your model a performance boost. For example, AI models are notorious for being bad at math. If you ask a model what is 199,999 divided by 292, the model will likely fail. However, this calculation would be trivial if the model had access to a calculator. Instead of trying to train the model to be good at arithmetic, it’s a lot more resource-efficient to just give the model access to a tool.</p>
+
+<p>Other simple tools that can significantly boost a model’s capability include a calendar, timezone converter, unit converter (e.g., from lbs to kg), and translator that can translate to and from the languages that the model isn’t good at.</p>
+
+<p>More complex but powerful tools are code interpreters. Instead of training a model to understand code, you can give it access to a code interpreter to execute a piece of code, return the results, or analyze the code’s failures. This capability lets your agents act as coding assistants, data analysts, and even research assistants that can write code to run experiments and report results. However, automated code execution comes with the risk of code injection attacks, as discussed in Chapter 5 in the section “Defensive Prompt Engineering<strong>“</strong>. Proper security measurements are crucial to keep you and your users safe.</p>
+
+<p>Tools can turn a text-only or image-only model into a multimodal model. For example, a model that can generate only texts can leverage a text-to-image model as a tool, allowing it to generate both texts and images. Given a text request, the agent’s AI planner decides whether to invoke text generation, image generation, or both. This is how ChatGPT can generate both text and images—it uses DALL-E as its image generator.</p>
+
+<p>Agents can also use a code interpreter to generate charts and graphs, a LaTex compiler to render math equations, or a browser to render web pages from HTML code.</p>
+
+<p>Similarly, a model that can process only text inputs can use an image captioning tool to process images and a transcription tool to process audio. It can use an OCR (optical character recognition) tool to read PDFs.</p>
+
+<p><em>Tool use can significantly boost a model’s performance compared to just prompting or even finetuning</em>. <a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023) shows that a GPT-4-powered agent, augmented with a set of 13 tools, can outperform GPT-4 alone on several benchmarks. Examples of tools this agent used are knowledge retrieval, a query generator, an image captioner, a text detector, and Bing search.</p>
+
+<p>On ScienceQA, a science question answering benchmark, Chameleon improves the best published few-shot result by 11.37%. On TabMWP (Tabular Math Word Problems) (Lu et al., 2022), a benchmark involving tabular math questions, Chameleon improves the accuracy by 17%.</p>
+
+<h3 id="write_actions">Write actions</h3>
+
+<p>So far, we’ve discussed read-only actions that allow a model to read from its data sources. But tools can also perform write actions, making changes to the data sources. An SQL executor can retrieve a data table (read) and change or delete the table (write). An email API can read an email but can also respond to it. A banking API can retrieve your current balance, but can also initiate a bank transfer.</p>
+
+<p>Write actions enable a system to do more. They can enable you to automate the whole customer outreach workflow: researching potential customers, finding their contacts, drafting emails, sending first emails, reading responses, following up, extracting orders, updating your databases with new orders, etc.</p>
+
+<p>However, the prospect of giving AI the ability to automatically alter our lives is frightening. Just as you shouldn’t give an intern the authority to delete your production database, you shouldn’t allow an unreliable AI to initiate bank transfers. Trust in the system’s capabilities and its security measures is crucial. You need to ensure that the system is protected from bad actors who might try to manipulate it into performing harmful actions.</p>
+
+<hr />
+<blockquote>
+  <p><strong>Sidebar: Agents and security</strong></p>
+</blockquote>
+
+<p>Whenever I talk about autonomous AI agents to a group of people, there is often someone who brings up self-driving cars. “<em>What if someone hacks into the car to kidnap you?</em>” While the self-driving car example seems visceral because of its physicality, an AI system can cause harm without a presence in the physical world. It can manipulate the stock market, steal copyrights, violate privacy, reinforce biases, spread misinformation and propaganda, and more, as discussed in the section “Defensive Prompt Engineering” in Chapter 5.</p>
+
+<p>These are all valid concerns, and any organization that wants to leverage AI needs to take safety and security seriously. However, this doesn’t mean that AI systems should never be given the ability to act in the real world. If we can trust a machine to take us into space, I hope that one day, security measures will be sufficient for us to trust autonomous AI systems. Besides, humans can fail, too. Personally, I would trust a self-driving car more than the average stranger to give me a lift.</p>
+
+<hr />
+<p><br />
+Just as the right tools can help humans be vastly more productive—can you imagine doing business without Excel or building a skyscraper without cranes?—tools enable models to accomplish many more tasks. Many model providers already support tool use with their models, a feature often called function calling. Going forward, I would expect function calling with a wide set of tools to be common with most models.</p>
+
+<h2 id="planning">Planning</h2>
+
+<p>At the heart of a foundation model agent is the model responsible for solving user-provided tasks. A task is defined by its goal and constraints. For example, one task is to schedule a two-week trip from San Francisco to India with a budget of $5,000. The goal is the two-week trip. The constraint is the budget.</p>
+
+<p>Complex tasks require planning. The output of the planning process is a plan, which is a roadmap outlining the steps needed to accomplish a task. Effective planning typically requires the model to understand the task, consider different options to achieve this task, and choose the most promising one.</p>
+
+<p>If you’ve ever been in any planning meeting, you know that planning is hard. As an important computational problem, planning is well studied and would require several volumes to cover. I’ll only be able to cover the surface here.</p>
+
+<h3 id="planning_overview">Planning overview</h3>
+
+<p>Given a task, there are many possible ways to solve it, but not all of them will lead to a successful outcome. Among the correct solutions, some are more efficient than others. Consider the query, <code class="language-plaintext highlighter-rouge">"How many companies without revenue have raised at least $1 billion?"</code>, and the two example solutions:</p>
+
+<ol>
+  <li>Find all companies without revenue, then filter them by the amount raised.</li>
+  <li>Find all companies that have raised at least $1 billion, then filter them by revenue.</li>
+</ol>
+
+<p>The second option is more efficient. There are vastly more companies without revenue than companies that have raised $1 billion. Given only these two options, an intelligent agent should choose option 2.</p>
+
+<p>You can couple planning with execution in the same prompt. For example, you give the model a prompt, ask it to think step by step (such as with a chain-of-thought prompt), and then execute those steps all in one prompt. But what if the model comes up with a 1,000-step plan that doesn’t even accomplish the goal? Without oversight, an agent can run those steps for hours, wasting time and money on API calls, before you realize that it’s not going anywhere.</p>
+
+<p>To avoid fruitless execution, <em>planning</em> should be decoupled from <em>execution</em>. You ask the agent to first generate a plan, and only after this plan is <em>validated</em> is it executed. The plan can be validated using heuristics. For example, one simple heuristic is to eliminate plans with invalid actions. If the generated plan requires a Google search and the agent doesn’t have access to Google Search, this plan is invalid. Another simple heuristic might be eliminating all plans with more than X steps.</p>
+
+<p>A plan can also be validated using AI judges. You can ask a model to evaluate whether the plan seems reasonable or how to improve it.</p>
+
+<p>If the generated plan is evaluated to be bad, you can ask the planner to generate another plan. If the generated plan is good, execute it.</p>
+
+<p>If the plan consists of external tools, function calling will be invoked. Outputs from executing this plan will then again need to be evaluated. Note that the generated plan doesn’t have to be an end-to-end plan for the whole task. It can be a small plan for a subtask. The whole process looks like Figure 6-9.</p>
+
+<center>
+    <figure>
+    <img alt="Agent pattern" src="/assets/pics/agents/2-agent-pattern.png" style="float: center; max-width: 90%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-9. Decoupling planning and execution so that only validated plans are executed
+</center>
+<p><br /></p>
+
+<p>Your system now has three components: one to generate plans, one to validate plans, and another to execute plans. If you consider each component an agent, this can be considered a multi-agent system. Because most agentic workflows are sufficiently complex to involve multiple components, most agents are multi-agent.</p>
+
+<p>To speed up the process, instead of generating plans sequentially, you can generate several plans in parallel and ask the evaluator to pick the most promising one. This is another latency–cost tradeoff, as generating multiple plans simultaneously will incur extra costs.</p>
+
+<p>Planning requires understanding the intention behind a task: what’s the user trying to do with this query? An intent classifier is often used to help agents plan. As shown in Chapter 5 in the section “Break complex tasks into simpler subtasks<strong>“</strong>, intent classification can be done using another prompt or a classification model trained for this task. The intent classification mechanism can be considered another agent in your multi-agent system.</p>
+
+<p>Knowing the intent can help the agent pick the right tools. For example, for customer support, if the query is about billing, the agent might need access to a tool to retrieve a user’s recent payments. But if the query is about how to reset a password, the agent might need to access documentation retrieval.</p>
+
+<blockquote>
+  <p><strong>Tip</strong>:</p>
+
+  <p>Some queries might be out of the scope of the agent. The intent classifier should be able to classify requests as <code class="language-plaintext highlighter-rouge">IRRELEVANT</code> so that the agent can politely reject those instead of wasting FLOPs coming up with impossible solutions.</p>
+</blockquote>
+
+<p>So far, we’ve assumed that the agent automates all three stages: generating plans, validating plans, and executing plans. In reality, humans can be involved at any stage to aid with the process and mitigate risks.</p>
+
+<ul>
+  <li>A human expert can provide a plan, validate a plan, or execute parts of a plan. For example, for complex tasks for which an agent has trouble generating the whole plan, a human expert can provide a high-level plan that the agent can expand upon.</li>
+  <li>If a plan involves risky operations, such as updating a database or merging a code change, the system can ask for explicit human approval before executing or defer to humans to execute these operations. To make this possible, you need to clearly define the level of automation an agent can have for each action.</li>
+</ul>
+
+<p>To summarize, solving a task typically involves the following processes. Note that reflection isn’t mandatory for an agent, but it’ll significantly boost the agent’s performance.</p>
+
+<ol>
+  <li><em>Plan generation</em>: come up with a plan for accomplishing this task. A plan is a sequence of manageable actions, so this process is also called task decomposition.</li>
+  <li><em>Reflection and error correction</em>: evaluate the generated plan. If it’s a bad plan, generate a new one.</li>
+  <li><em>Execution</em>: take actions outlined in the generated plan. This often involves calling specific functions.</li>
+  <li><em>Reflection and error correction</em>: upon receiving the action outcomes, evaluate these outcomes and determine whether the goal has been accomplished. Identify and correct mistakes. If the goal is not completed, generate a new plan.</li>
+</ol>
+
+<p>You’ve already seen some techniques for plan generation and reflection in this book. When you ask a model to “think step by step”, you’re asking it to decompose a task. When you ask a model to “verify if your answer is correct”, you’re asking it to reflect.</p>
+
+<h3 id="foundation_models_as_planners">Foundation models as planners</h3>
+
+<p>An open question is how well foundation models can plan. Many researchers believe that foundation models, at least those built on top of autoregressive language models, cannot. Meta’s Chief AI Scientist Yann LeCun states unequivocably that <a href="https://x.com/ylecun/status/1702027572077326505">autoregressive LLMs can’t plan</a> (2023).</p>
+
+<center>
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Auto-Regressive LLMs can&#39;t plan <br />(and can&#39;t really reason).<br /><br />&quot;While our own limited experiments didn&#39;t show any significant improvement [in planning abilities] through fine tuning, it is possible that with even more fine tuning data and effort, the empirical performance may well… <a href="https://t.co/rHA5QHi90C">https://t.co/rHA5QHi90C</a></p>&mdash; Yann LeCun (@ylecun) <a href="https://twitter.com/ylecun/status/1702027572077326505?ref_src=twsrc%5Etfw">September 13, 2023</a></blockquote> <script async="" src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</center>
+
+<p>While there is a lot of anecdotal evidence that LLMs are poor planners, it’s unclear whether it’s because we don’t know how to use LLMs the right way or because LLMs, fundamentally, can’t plan.</p>
+
+<p><strong>Planning, at its core, is a search problem</strong>. You search among different paths towards the goal, predict the outcome (reward) of each path, and pick the path with the most promising outcome. Often, you might determine that no path exists that can take you to the goal.</p>
+
+<p>Search often requires <em>backtracking</em>. For example, imagine you’re at a step where there are two possible actions: A and B. After taking action A, you enter a state that’s not promising, so you need to backtrack to the previous state to take action B.</p>
+
+<p>Some people argue that an autoregressive model can only generate forward actions. It can’t backtrack to generate alternate actions. Because of this, they conclude that autoregressive models can’t plan. However, this isn’t necessarily true. After executing a path with action A, if the model determines that this path doesn’t make sense, it can revise the path using action B instead, effectively backtracking. The model can also always start over and choose another path.</p>
+
+<p>It’s also possible that LLMs are poor planners because they aren’t given the toolings needed to plan. To plan, it’s necessary to know not only the available actions but also <em>the potential outcome of each action</em>. As a simple example, let’s say you want to walk up a mountain. Your potential actions are turn right, turn left, turn around, or go straight ahead. However, if turning right will cause you to fall off the cliff, you might not consider this action. In technical terms, an action takes you from one state to another, and it’s necessary to know the outcome state to determine whether to take an action.</p>
+
+<p>This means that prompting a model to generate only a sequence of actions like what the popular chain-of-thought prompting technique does isn’t sufficient. The paper “<a href="https://arxiv.org/abs/2305.14992">Reasoning with Language Model is Planning with World Model</a>” (Hao et al., 2023) argues that an LLM, by containing so much information about the world, is capable of predicting the outcome of each action. This LLM can incorporate this outcome prediction to generate coherent plans.</p>
+
+<p>Even if AI can’t plan, it can still be a part of a planner. It might be possible to augment an LLM with a search tool and state tracking system to help it plan.</p>
+
+<hr />
+
+<blockquote>
+  <p><strong>Sidebar: Foundation model (FM) versus reinforcement learning (RL) planners</strong></p>
+</blockquote>
+
+<p>The <em>agent</em> is a core concept in RL, which is defined in <a href="https://en.wikipedia.org/wiki/Reinforcement_learning">Wikipedia</a> as a field “<em>concerned with how an intelligent agent ought to take actions in a dynamic environment in order to maximize the cumulative reward.</em>”</p>
+
+<p>RL agents and FM agents are similar in many ways. They are both characterized by their environments and possible actions. The main difference is in how their planners work.</p>
+<ul>
+  <li>In an RL agent, the planner is trained by an RL algorithm. Training this RL planner can require a lot of time and resources.</li>
+  <li>In an FM agent, the model is the planner. This model can be prompted or finetuned to improve its planning capabilities, and generally requires less time and fewer resources.</li>
+</ul>
+
+<p>However, there’s nothing to prevent an FM agent from incorporating RL algorithms to improve its performance. I suspect that in the long run, FM agents and RL agents will merge.</p>
+
+<hr />
+
+<h3 id="plan_generation">Plan generation</h3>
+
+<p>The simplest way to turn a model into a plan generator is with prompt engineering. Imagine that you want to create an agent to help customers learn about products at Kitty Vogue. You give this agent access to three external tools: retrieve products by price, retrieve top products, and retrieve product information. Here’s an example of a prompt for plan generation. This prompt is for illustration purposes only. Production prompts are likely more complex.</p>
+
+<p><strong>SYSTEM PROMPT</strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Propose a plan to solve the task. You have access to 5 actions:
+
+* get_today_date()
+* fetch_top_products(start_date, end_date, num_products)
+* fetch_product_info(product_name)
+* generate_query(task_history, tool_output)
+* generate_response(query)
+
+The plan must be a sequence of valid actions.
+
+Examples
+Task: "Tell me about Fruity Fedora"
+Plan: [fetch_product_info, generate_query, generate_response]
+
+Task: "What was the best selling product last week?"
+Plan: [fetch_top_products, generate_query, generate_response]
+
+Task: {USER INPUT}
+Plan:
+
+</code></pre></div></div>
+
+<p>There are two things to note about this example:</p>
+
+<ul>
+  <li>The plan format used here—a list of functions whose parameters are inferred by the agent—is just one of many ways to structure the agent control flow.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">generate_query</code> function takes in the task’s current history and the most recent tool outputs to generate a query to be fed into the response generator. The tool output at each step is added to the task’s history.</li>
+</ul>
+
+<p>Given the user input “What’s the price of the best-selling product last week”, a generated plan might look like this:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">get_time()</code></li>
+  <li><code class="language-plaintext highlighter-rouge">fetch_top_products()</code></li>
+  <li><code class="language-plaintext highlighter-rouge">fetch_product_info()</code></li>
+  <li><code class="language-plaintext highlighter-rouge">generate_query()</code></li>
+  <li><code class="language-plaintext highlighter-rouge">generate_response()</code></li>
+</ol>
+
+<p>You might wonder, “What about the parameters needed for each function?” The exact parameters are hard to predict in advance since they are often extracted from the previous tool outputs. If the first step, <code class="language-plaintext highlighter-rouge">get_time()</code>, outputs “2030-09-13”, the agent can reason that the parameters for the next step should be called with the following parameters:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fetch_top_products(
+    start_date="2030-09-07",
+    end_date="2030-09-13",
+    num_products=1
+)
+</code></pre></div></div>
+
+<p>Often, there’s insufficient information to determine the exact parameter values for a function. For example, if a user asks “What’s the average price of best-selling products?”, the answers to the following questions are unclear:</p>
+
+<ul>
+  <li>How many best-selling products the user wants to look at?</li>
+  <li>Does the user want the best-selling products last week, last month, or of all time?</li>
+</ul>
+
+<p>This means that models frequently have to make guesses, and guesses can be wrong.</p>
+
+<p>Because both the action sequence and the associated parameters are generated by AI models, they can be hallucinated. Hallucinations can cause the model to call an invalid function or call a valid function but with wrong parameters. Techniques for improving a model’s performance in general can be used to improve a model’s planning capabilities.</p>
+
+<blockquote>
+  <p><strong>Tips</strong> for making an agent better at planning.</p>
+
+  <ul>
+    <li>Write a better system prompt with more examples.</li>
+    <li>Give better descriptions of the tools and their parameters so that the model understands them better.</li>
+    <li>Rewrite the functions themselves to make them simpler, such as refactoring a complex function into two simpler functions.</li>
+    <li>Use a stronger model. In general, stronger models are better at planning.</li>
+    <li>Finetune a model for plan generation.</li>
+  </ul>
+</blockquote>
+
+<h4 id="function_calling">Function calling</h4>
+
+<p>Many model providers offer tool use for their models, effectively turning their models into agents. A tool is a function. Invoking a tool is, therefore, often called <em>function calling</em>. Different model APIs work differently, but in general, function calling works as follows:</p>
+
+<ol>
+  <li><em>Create a tool inventory.</em> 
+Declare all the tools that you might want a model to use. Each tool is described by its execution entry point (e.g., its function name), its parameters, and its documentation (e.g., what the function does and what parameters it needs).</li>
+  <li><em>Specify what tools the agent can use for a query.</em> <br />
+Because different queries might need different tools, many APIs let you specify a list of declared tools to be used per query. Some let you control tool use further by the following settings:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">required</code>: the model must use at least one tool.</li>
+      <li><code class="language-plaintext highlighter-rouge">none</code>: the model shouldn’t use any tool.</li>
+      <li><code class="language-plaintext highlighter-rouge">auto</code>: the model decides which tools to use.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Function calling is illustrated in Figure 6-10. This is written in pseudocode to make it representative of multiple APIs. To use a specific API, please refer to its documentation.</p>
+
+<center>
+    <figure>
+    <img alt="An example of function calling" src="/assets/pics/agents/3-function-calling.png" style="float: center; max-width: 100%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-10. An example of a model using two simple tools
+</center>
+<p><br /></p>
+
+<p>Given a query, an agent defined as in Figure 6-10 will automatically generate what tools to use and their parameters. Some function calling APIs will make sure that only valid functions are generated, though they won’t be able to guarantee the correct parameter values.</p>
+
+<p>For example, given the user query “How many kilograms are 40 pounds?”, the agent might decide that it needs the tool <code class="language-plaintext highlighter-rouge">lbs_to_kg_tool</code> with one parameter value of 40. The agent’s response might look like this.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>response = ModelResponse(
+    finish_reason='tool_calls',
+    message=chat.Message(
+        content=None,
+        role='assistant',
+        tool_calls=[
+            ToolCall(
+                function=Function(
+                    arguments='{"lbs":40}',
+                    name='lbs_to_kg'),
+                type='function')
+        ])
+)
+</code></pre></div></div>
+
+<p>From this response, you can evoke the function <code class="language-plaintext highlighter-rouge">lbs_to_kg(lbs=40)</code> and use its output to generate a response to the users.</p>
+
+<blockquote>
+  <p><strong>Tip</strong>: When working with agents, always ask the system to report what parameter values it uses for each function call. Inspect these values to make sure they are correct.</p>
+</blockquote>
+
+<h4 id="planning_granularity">Planning granularity</h4>
+
+<p>A plan is a roadmap outlining the steps needed to accomplish a task. A roadmap can be of different levels of granularity. To plan for a year, a quarter-by-quarter plan is higher-level than a month-by-month plan, which is, in turn, higher-level than a week-to-week plan.</p>
+
+<p>There’s a planning/execution tradeoff. A detailed plan is harder to generate, but easier to execute. A higher-level plan is easier to generate, but harder to execute. An approach to circumvent this tradeoff is to plan hierarchically. First, use a planner to generate a high-level plan, such as a quarter-to-quarter plan. Then, for each quarter, use the same or a different planner to generate a month-to-month plan.</p>
+
+<p>So far, all examples of generated plans use the exact function names, which is very granular. A problem with this approach is that an agent’s tool inventory can change over time. For example, the function to get the current date <code class="language-plaintext highlighter-rouge">get_time()</code> can be renamed to <code class="language-plaintext highlighter-rouge">get_current_time()</code>. When a tool changes, you’ll need to update your prompt and all your examples. Using the exact function names also makes it harder to reuse a planner across different use cases with different tool APIs.</p>
+
+<p>If you’ve previously finetuned a model to generate plans based on the old tool inventory, you’ll need to finetune the model again on the new tool inventory.</p>
+
+<p>To avoid this problem, plans can also be generated using a more natural language, which is higher-level than domain-specific function names. For example, given the query “What’s the price of the best-selling product last week”, an agent can be instructed to output a plan that looks like this:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">get current date</code></li>
+  <li><code class="language-plaintext highlighter-rouge">retrieve the best-selling product last week</code></li>
+  <li><code class="language-plaintext highlighter-rouge">retrieve product information</code></li>
+  <li><code class="language-plaintext highlighter-rouge">generate query</code></li>
+  <li><code class="language-plaintext highlighter-rouge">generate response</code></li>
+</ol>
+
+<p>Using more natural language helps your plan generator become robust to changes in tool APIs. If your model was trained mostly on natural language, it’ll likely be better at understanding and generating plans in natural language and less likely to hallucinate.</p>
+
+<p>The downside of this approach is that you need a translator to translate each natural language action into executable commands. <a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023) calls this translator a program generator. However, translating is a much simpler task than planning and can be done by weaker models with a lower risk of hallucination.</p>
+
+<h4 id="complex_plans">Complex plans</h4>
+
+<p>The plan examples so far have been sequential: the next action in the plan is <em>always</em> executed after the previous action is done. The order in which actions can be executed is called a <em>control flow</em>. The sequential form is just one type of control flow. Other types of control flows include the parallel, if statement, and for loop. The list below provides an overview of each control flow, including sequential for comparison:</p>
+
+<ul>
+  <li>
+    <p><strong>Sequential</strong></p>
+
+    <p>Executing task B after task A is complete, possibly because task B depends on task A. For example, the SQL query can only be executed after it’s been translated from the natural language input.</p>
+  </li>
+  <li>
+    <p><strong>Parallel</strong></p>
+
+    <p>Executing tasks A and B at the same time. For example, given the query “Find me best-selling products under $100”, an agent might first retrieve the top 100 best-selling products and, for each of these products, retrieve its price.</p>
+  </li>
+  <li>
+    <p><strong>If statement</strong></p>
+
+    <p>Executing task B or task C depending on the output from the previous step. For example, the agent first checks NVIDIA’s earnings report. Based on this report, it can then decide to sell or buy NVIDIA stocks. <a href="https://www.anthropic.com/research/building-effective-agents">Anthropic’s post</a> calls this pattern “routing”.</p>
+  </li>
+  <li>
+    <p><strong>For loop</strong></p>
+
+    <p>Repeat executing task A until a specific condition is met. For example, keep on generating random numbers until a prime number.</p>
+  </li>
+</ul>
+
+<p>These different control flows are visualized in Figure 6-11.</p>
+
+<center>
+    <figure>
+    <img alt="Agent control flow" src="/assets/pics/agents/4-agent-control-flow.png" style="float: center; max-width: 90%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-11. Examples of different orders in which a plan can be executed
+</center>
+<p><br /></p>
+
+<p>In traditional software engineering, conditions for control flows are exact. With AI-powered agents, AI models determine control flows. Plans with non-sequential control flows are more difficult to both generate and translate into executable commands.</p>
+
+<blockquote>
+  <p><strong>Tip</strong>:</p>
+
+  <p>When evaluating an agent framework, check what control flows it supports. For example, if the system needs to browse ten websites, can it do so simultaneously? Parallel execution can significantly reduce the latency perceived by users.</p>
+</blockquote>
+
+<h3 id="reflection_and_error_correction">Reflection and error correction</h3>
+
+<p>Even the best plans need to be constantly evaluated and adjusted to maximize their chance of success. While reflection isn’t strictly necessary for an agent to operate, it’s necessary for an agent to succeed.</p>
+
+<p>There are many places during a task process where reflection can be useful:</p>
+
+<ul>
+  <li>After receiving a user query to evaluate if the request is feasible.</li>
+  <li>After the initial plan generation to evaluate whether the plan makes sense.</li>
+  <li>After each execution step to evaluate if it’s on the right track.</li>
+  <li>After the whole plan has been executed to determine if the task has been accomplished.</li>
+</ul>
+
+<p>Reflection and error correction are two different mechanisms that go hand in hand. Reflection generates insights that help uncover errors to be corrected.</p>
+
+<p>Reflection can be done with the same agent with self-critique prompts. It can also be done with a separate component, such as a specialized scorer: a model that outputs a concrete score for each outcome.</p>
+
+<p>First proposed by <a href="https://arxiv.org/abs/2210.03629">ReAct</a> (Yao et al., 2022), interleaving <span style="text-decoration:underline;">re</span>asoning and <span style="text-decoration:underline;">ac</span>tion has become a common pattern for agents. Yao et al. used the term “reasoning” to encompass both planning and reflection. At each step, the agent is asked to explain its thinking (planning), take actions, then analyze observations (reflection), until the task is considered finished by the agent. The agent is typically prompted, using examples, to generate outputs in the following format:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Thought 1: …
+Act 1: …
+Observation 1: …
+
+… [continue until reflection determines that the task is finished] …
+
+Thought N: … 
+Act N: Finish [Response to query]
+</code></pre></div></div>
+
+<p>Figure 6-12 shows an example of an agent following the ReAct framework responding to a question from HotpotQA (<a href="https://arxiv.org/abs/1809.09600">Yang et al., 2018</a>), a benchmark for multi-hop question answering.</p>
+
+<center>
+    <figure>
+    <img alt="ReAct example" src="/assets/pics/agents/5-ReAct.png" style="float: center; max-width: 80%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-12: A ReAct agent in action.
+</center>
+<p><br /></p>
+
+<p>You can implement reflection in a multi-agent setting: one agent plans and takes actions and another agent evaluates the outcome after each step or after a number of steps.</p>
+
+<p>If the agent’s response failed to accomplish the task, you can prompt the agent to reflect on why it failed and how to improve. Based on this suggestion, the agent generates a new plan. This allows agents to learn from their mistakes.</p>
+
+<p>For example, given a coding generation task, an evaluator might evaluate that the generated code fails ⅓ of the test cases. The agent then reflects that it failed because it didn’t take into account arrays where all numbers are negative. The actor then generates new code, taking into account all-negative arrays.</p>
+
+<p>This is the approach that Reflexion (<a href="https://arxiv.org/abs/2303.11366">Shinn et al., 2023</a>) took. In this framework, reflection is separated into two modules: an evaluator that evaluates the outcome and a self-reflection module that analyzes what went wrong. Figure 6-13 shows examples of Reflexion agents in action. The authors used the term “trajectory” to refer to a plan. At each step, after evaluation and self-reflection, the agent proposes a new trajectory.</p>
+
+<center>
+    <figure>
+    <img alt="Reflexion example" src="/assets/pics/agents/6-reflexion.png" style="float: center; max-width: 100%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-13. Examples of how Reflexion agents work.
+</center>
+<p><br /></p>
+
+<p>Compared to plan generation, reflection is relatively easy to implement and can bring surprisingly good performance improvement. The downside of this approach is latency and cost. Thoughts, observations, and sometimes actions can take a lot of tokens to generate, which increases cost and user-perceived latency, especially for tasks with many intermediate steps. To nudge their agents to follow the format, both ReAct and Reflexion authors used plenty of examples in their prompts. This increases the cost of computing input tokens and reduces the context space available for other information.</p>
+
+<h3 id="tool_selection">Tool selection</h3>
+
+<p>Because tools often play a crucial role in a task’s success, tool selection requires careful consideration. The tools to give your agent depend on the environment and the task, but also depends on the AI model that powers the agent.</p>
+
+<p>There’s no foolproof guide on how to select the best set of tools. Agent literature consists of a wide range of tool inventories. For example:</p>
+<ul>
+  <li><a href="https://arxiv.org/abs/2302.04761">Toolformer</a> (Schick et al., 2023) finetuned GPT-J to learn 5 tools.</li>
+  <li><a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023) uses 13 tools.</li>
+  <li><a href="https://arxiv.org/abs/2305.15334">Gorilla</a> (Patil et al., 2023) attempted to prompt agents to select the right API call among 1,645 APIs.</li>
+</ul>
+
+<p>More tools give the agent more capabilities. However, the more tools there are, the harder it is to efficiently use them. It’s similar to how it’s harder for humans to master a large set of tools. Adding tools also means increasing tool descriptions, which might not fit into a model’s context.</p>
+
+<p>Like many other decisions while building AI applications, tool selection requires experimentation and analysis. Here are a few things you can do to help you decide:</p>
+
+<ul>
+  <li>Compare how an agent performs with different sets of tools.</li>
+  <li>Do an ablation study to see how much the agent’s performance drops if a tool is removed from its inventory. If a tool can be removed without a performance drop, remove it.</li>
+  <li>Look for tools that the agent frequently makes mistakes on. If a tool proves too hard for the agent to use—for example, extensive prompting and even finetuning can’t get the model to learn to use it—change the tool.</li>
+  <li>Plot the distribution of tool calls to see what tools are most used and what tools are least used. Figure 6-14 shows the differences in tool use patterns of GPT-4 and ChatGPT in <a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023).</li>
+</ul>
+
+<center>
+    <figure>
+    <img alt="Different models have different tool preferences" src="/assets/pics/agents/7-tool-preference.png" style="float: center; max-width: 100%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-14. Different models and tasks express different tool use patterns.
+</center>
+<p><br /></p>
+
+<p>Experiments by <a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023) also demonstrate two points:</p>
+
+<ol>
+  <li>Different tasks require different tools. ScienceQA, the science question answering task, relies much more on knowledge retrieval tools than TabMWP, a tabular math problem-solving task.</li>
+  <li>Different models have different tool preferences. For example, GPT-4 seems to select a wider set of tools than ChatGPT. ChatGPT seems to favor image captioning, while GPT-4 seems to favor knowledge retrieval.</li>
+</ol>
+
+<blockquote>
+  <p><strong>Tip</strong>:</p>
+
+  <p>When evaluating an agent framework, evaluate what planners and tools it supports. Different frameworks might focus on different categories of tools. For example, AutoGPT focuses on social media APIs (Reddit, X, and Wikipedia), whereas Composio focuses on enterprise APIs (Google Apps, GitHub, and Slack).</p>
+
+  <p>As your needs will likely change over time, evaluate how easy it is to extend your agent to incorporate new tools.</p>
+</blockquote>
+
+<p>As humans, we become more productive not just by using the tools we’re given, but also by creating progressively more powerful tools from simpler ones. Can AI create new tools from its initial tools?</p>
+
+<p><a href="https://arxiv.org/abs/2304.09842">Chameleon</a> (Lu et al., 2023) proposes the study of tool transition: after tool X, how likely is the agent to call tool Y? Figure 6-15 shows an example of tool transition. If two tools are frequently used together, they can be combined into a bigger tool. If an agent is aware of this information, the agent itself can combine initial tools to continually build more complex tools.</p>
+
+<center>
+    <figure>
+    <img alt="Tool transition" src="/assets/pics/agents/8-tool-transition.png" style="float: center; max-width: 70%; margin: 0 0 0em 0em" />
+    </figure>
+    Figure 6-15. A tool transition tree by Chameleon (Lu et al., 2023).
+</center>
+<p><br /></p>
+
+<p><a href="https://arxiv.org/abs/2305.16291">Vogager</a> (Wang et al., 2023) proposes a skill manager to keep track of new skills (tools) that an agent acquires for later reuse. Each skill is a coding program. When the skill manager determines a newly created skill is to be useful (e.g., because it’s successfully helped an agent accomplish a task), it adds this skill to the skill library (conceptually similar to the tool inventory). This skill can be retrieved later to use for other tasks.</p>
+
+<p>Earlier in this section, we mentioned that the success of an agent in an environment depends on its tool inventory and its planning capabilities. Failures in either aspect can cause the agent to fail. The next section will discuss different failure modes of an agent and how to evaluate them.</p>
+
+<h2 id="agent_failure_modes_and_evaluation">Agent Failure Modes and Evaluation</h2>
+
+<p>Evaluation is about detecting failures. The more complex a task an agent performs, the more possible failure points there are. Other than the failure modes common to all AI applications discussed in Chapters 3 and 4, agents also have unique failures caused by planning, tool execution, and efficiency. Some of the failures are easier to catch than others.</p>
+
+<p>To evaluate an agent, identify its failure modes and measure how often each of these failure modes happens.</p>
+
+<h3 id="planning_failures">Planning failures</h3>
+
+<p>Planning is hard and can fail in many ways. The most common mode of planning failure is tool use failure. The agent might generate a plan with one or more of these errors.</p>
+
+<ul>
+  <li>
+    <p><strong>Invalid tool</strong></p>
+
+    <p>For example, it generates a plan that contains <code class="language-plaintext highlighter-rouge">bing_search</code>, which isn’t in the tool inventory.</p>
+  </li>
+  <li>
+    <p><strong>Valid tool, invalid parameters.</strong></p>
+
+    <p>For example, it calls <code class="language-plaintext highlighter-rouge">lbs_to_kg</code> with two parameters, but this function requires only one parameter, <code class="language-plaintext highlighter-rouge">lbs</code>.</p>
+  </li>
+  <li>
+    <p><strong>Valid tool, incorrect parameter values</strong></p>
+
+    <p>For example, it calls <code class="language-plaintext highlighter-rouge">lbs_to_kg with </code>one parameter, <code class="language-plaintext highlighter-rouge">lbs</code>, but uses the value 100 for lbs when it should be 120.</p>
+  </li>
+</ul>
+
+<p>Another mode of planning failure is goal failure: the agent fails to achieve the goal. This can be because the plan doesn’t solve a task, or it solves the task without following the constraints. To illustrate this, imagine you ask the model to plan a two-week trip from San Francisco to India with a budget of $5,000. The agent might plan a trip from San Francisco to Vietnam, or plan you a two-week trip from San Francisco to India that will cost you way over the budget.</p>
+
+<p>A common constraint that is often overlooked by agent evaluation is time. In many cases, the time an agent takes matters less because you can assign a task to an agent and only need to check in when it’s done. However, in many cases, the agent becomes less useful with time. For example, if you ask an agent to prepare a grant proposal and the agent finishes it after the grant deadline, the agent isn’t very helpful.</p>
+
+<p>An interesting mode of planning failure is caused by errors in reflection. The agent is convinced that it’s accomplished a task when it hasn’t. For example, you ask the agent to assign 50 people to 30 hotel rooms. The agent might assign only 40 people and insist that the task has been accomplished.</p>
+
+<p>To evaluate an agent for planning failures, one option is to create a planning dataset where each example is a tuple <code class="language-plaintext highlighter-rouge">(task, tool inventory)</code>. For each task, use the agent to generate a K number of plans. Compute the following metrics:</p>
+
+<ol>
+  <li>Out of all generated plans, how many are valid?</li>
+  <li>For a given task, how many plans does the agent have to generate to get a valid plan?</li>
+  <li>Out of all tool calls, how many are valid?</li>
+  <li>How often are invalid tools called?</li>
+  <li>How often are valid tools called with invalid parameters?</li>
+  <li>How often are valid tools called with incorrect parameter values?</li>
+</ol>
+
+<p>Analyze the agent’s outputs for patterns. What types of tasks does the agent fail more on? Do you have a hypothesis why? What tools does the model frequently make mistakes with? Some tools might be harder for an agent to use. You can improve an agent’s ability to use a challenging tool by better prompting, more examples, or finetuning. If all fail, you might consider swapping out this tool for something easier to use.</p>
+
+<h3 id="tool_failures">Tool failures</h3>
+
+<p>Tool failures happen when the correct tool is used, but the tool output is wrong. One failure mode is when a tool just gives the wrong outputs. For example, an image captioner returns a wrong description, or an SQL query generator returns a wrong SQL query.</p>
+
+<p>If the agent generates only high-level plans and a translation module is involved in translating from each planned action to executable commands, failures can happen because of translation errors.</p>
+
+<p>Tool failures are tool-dependent. Each tool needs to be tested independently. Always print out each tool call and its output so that you can inspect and evaluate them. If you have a translator, create benchmarks to evaluate it.</p>
+
+<p>Detecting missing tool failures requires an understanding of what tools should be used. If your agent frequently fails on a specific domain, this might be because it lacks tools for this domain. Work with human domain experts and observe what tools they would use.</p>
+
+<h3 id="efficiency">Efficiency</h3>
+
+<p>An agent might generate a valid plan using the right tools to accomplish a task, but it might be inefficient. Here are a few things you might want to track to evaluate an agent’s efficiency:</p>
+
+<ul>
+  <li>How many steps does the agent need, on average, to complete a task?</li>
+  <li>How much does the agent cost, on average, to complete a task?</li>
+  <li>How long does each action typically take? Are there any actions that are especially time-consuming or expensive?</li>
+</ul>
+
+<p>You can compare these metrics with your baseline, which can be another agent or a human operator. When comparing AI agents to human agents, keep in mind that humans and AI have very different modes of operation, so what’s considered efficient for humans might be inefficient for AI and vice versa. For example, visiting 100 web pages might be inefficient for a human agent who can only visit one page at a time but trivial for an AI agent that can visit all the web pages at once.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>At its core, the concept of an agent is fairly simple. An agent is defined by the environment it operates in and the set of tools it has access to. In an AI-powered agent, the AI model is the brain that leverages its tools and feedback from the environment to plan how best to accomplish a task. Access to tools makes a model vastly more capable, so the agentic pattern is inevitable.</p>
+
+<p>While the concept of “agents” sounds novel, they are built upon many concepts that have been used since the early days of LLMs, including self-critique, chain-of-thought, and structured outputs.</p>
+
+<p>This post covered conceptually how agents work and different components of an agent. In a future post, I’ll discuss how to evaluate agent frameworks.</p>
+
+<p>The agentic pattern often deals with information that exceeds a model’s context limit. A memory system that supplements the model’s context in handling information can significantly enhance an agent’s capabilities. Since this post is already long, I’ll explore how a memory system works in a future blog post.</p>
+
+  </div>
+
+  <!-- Twitter cards -->
+  <meta name="twitter:site"    content="@chipro">
+  <meta name="twitter:creator" content="@Chip Huyen">
+  <meta name="twitter:title"   content="Agents">
+
+  
+  <meta name="twitter:description" content="Foundation models enable many new application interfaces, but one that has especially grown in popularity is the conversational interface, such as with chatbots and assistants. The conversational interface makes it easier for users to give feedback but harder for developers to extract signals. This post will discuss what conversational AI feedback looks like and how to design a system to collect the right feedback without hurting user experience.">
+  
+
+  
+  <meta name="twitter:card"  content="summary_large_image">
+  <meta name="twitter:image" content="https://huyenchip.com/assets/pics/agents/2-agent-pattern.png">
+  
+  <!-- end of Twitter cards -->
+  
+  <!-- <div id="collective_recsys"></div> -->
+  <!-- <script async data-uid="45ca838230" src="https://chiphuyen.ck.page/45ca838230/index.js"></script> -->
+  <br>
+  
+  
+    
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://huyenchip.com/2025/01/07/agents.html';
+      this.page.identifier = 'https://huyenchip.com/2025/01/07/agents.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://chiphuyen.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+  
+</article>
+
+<!-- Add the scroll detection script here -->
+<script>
+  // Get all h2 and h3 and h4 elements within the .post-content
+  const sections = document.querySelectorAll(".post-content h2, .post-content h3, .post-content h4");
+
+  // Get all links in the sidebar
+  const navLinks = document.querySelectorAll(".sidebar a");
+
+  // Function to update active link
+  function updateActiveLink() {
+    let currentSection = "";
+
+    // Get the distance from the top of the page to the top of the first section
+    const firstSectionTop = sections[0].offsetTop;
+
+    // Only run the active class update if you've scrolled past the first section
+    if (window.pageYOffset < firstSectionTop - 100) {
+      // If we're at the top of the page, make sure all links are inactive
+      navLinks.forEach((link) => {
+        link.classList.remove("active");
+      });
+      return; // Stop execution here so no links are marked active
+    }
+
+    // Loop through sections to find the current section in view
+    sections.forEach((section) => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+
+      // Check if the section is in the viewport
+      if (pageYOffset >= sectionTop - sectionHeight / 3) {
+        currentSection = section.getAttribute("id");
+      }
+    });
+
+    // Update active class on the sidebar links
+    navLinks.forEach((link) => {
+      link.classList.remove("active");
+      // if (link.getAttribute("href").includes(currentSection)) {
+      //   link.classList.add("active");
+      // }
+      // Extract the href value and match exactly with the current section
+      const linkHref = link.getAttribute("href").replace("#", ""); // Remove the '#' to match the section id
+      if (linkHref === currentSection) {
+        link.classList.add("active");
+      }
+    });
+  }
+
+  // Add scroll event listener to update active link while scrolling
+  window.addEventListener("scroll", updateActiveLink);
+</script>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <!-- <h2 class="footer-heading">Chip Huyen</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <!--li>
+            
+            Chip Huyen
+            
+          </li-->
+          
+          <li>
+            <a><span class="icon icon--github"><svg viewBox="0 4.801209 28.3499966 18.7475815" enable-background="new 0 4.801209 28.3499966 18.7475815">
+<path fill="#828282" d="M15.699194,17.7568531c-0.4572582,0.3048401-0.9145174,0.6096783-1.5241938,0.6096783
+	c-0.6096773,0-1.0669355-0.15242-1.5241938-0.6096783L0,6.7826605v16.1564522C0,23.2439518,0.3048387,23.54879,0.6096774,23.54879
+	h27.1306419c0.3048401,0,0.6096764-0.3048382,0.6096764-0.6096764V6.7826605L15.699194,17.7568531z"/>
+<path fill="#828282" d="M14.9370966,15.7754021L27.587904,4.801209H0.9145162l12.6508064,10.9741936
+	C13.870162,16.0802422,14.4798384,16.0802422,14.9370966,15.7754021z"/>
+</svg>
+</span><span class="username">hi@[thiswebsite]</span></a>
+
+          </li>
+          
+          
+          
+          <li>
+            <a href="https://twitter.com/chipro"><span class="icon icon--twitter"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/></svg>
+</span><span class="username">chipro</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://www.linkedin.com/in/chiphuyen"><span class="icon icon--linkedin"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg></span><span class="username">chiphuyen</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://chiphuyen.substack.com"><span class="icon icon--linkedin"><?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <title>Substack logo</title>
+  <g fill="#FF6719">
+    <!-- top stripe -->
+    <rect x="0" y="40" width="256" height="32" />
+    <!-- middle stripe -->
+    <rect x="0" y="96" width="256" height="32" />
+    <!-- bookmark shape -->
+    <polygon points="0,160 256,160 256,256 128,208 0,256"/>
+  </g>
+</svg>
+</span><span class="username">chiphuyen</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://facebook.com/chipiscrazy"><span class="icon icon--facebook"><svg viewBox="0 0 155 155" width="16px" height="16px"><path id="f_1_" d="M89.584,155.139V84.378h23.742l3.562-27.585H89.584V39.184   c0-7.984,2.208-13.425,13.67-13.425l14.595-0.006V1.08C115.325,0.752,106.661,0,96.577,0C75.52,0,61.104,12.853,61.104,36.452   v20.341H37.29v27.585h23.814v70.761H89.584z" fill="#828282"/></svg>
+</span><span class="username">chipiscrazy</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://instagram.com/huyenchip19"><span class="icon icon--instagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
+    <g>
+        <path d="M127.999746,23.06353 C162.177385,23.06353 166.225393,23.1936027 179.722476,23.8094161 C192.20235,24.3789926 198.979853,26.4642218 203.490736,28.2166477 C209.464938,30.5386501 213.729395,33.3128586 218.208268,37.7917319 C222.687141,42.2706052 225.46135,46.5350617 227.782844,52.5092638 C229.535778,57.0201472 231.621007,63.7976504 232.190584,76.277016 C232.806397,89.7746075 232.93647,93.8226147 232.93647,128.000254 C232.93647,162.177893 232.806397,166.225901 232.190584,179.722984 C231.621007,192.202858 229.535778,198.980361 227.782844,203.491244 C225.46135,209.465446 222.687141,213.729903 218.208268,218.208776 C213.729395,222.687649 209.464938,225.461858 203.490736,227.783352 C198.979853,229.536286 192.20235,231.621516 179.722476,232.191092 C166.227425,232.806905 162.179418,232.936978 127.999746,232.936978 C93.8200742,232.936978 89.772067,232.806905 76.277016,232.191092 C63.7971424,231.621516 57.0196391,229.536286 52.5092638,227.783352 C46.5345536,225.461858 42.2700971,222.687649 37.7912238,218.208776 C33.3123505,213.729903 30.538142,209.465446 28.2166477,203.491244 C26.4637138,198.980361 24.3784845,192.202858 23.808908,179.723492 C23.1930946,166.225901 23.0630219,162.177893 23.0630219,128.000254 C23.0630219,93.8226147 23.1930946,89.7746075 23.808908,76.2775241 C24.3784845,63.7976504 26.4637138,57.0201472 28.2166477,52.5092638 C30.538142,46.5350617 33.3123505,42.2706052 37.7912238,37.7917319 C42.2700971,33.3128586 46.5345536,30.5386501 52.5092638,28.2166477 C57.0196391,26.4642218 63.7971424,24.3789926 76.2765079,23.8094161 C89.7740994,23.1936027 93.8221066,23.06353 127.999746,23.06353 M127.999746,0 C93.2367791,0 88.8783247,0.147348072 75.2257637,0.770274749 C61.601148,1.39218523 52.2968794,3.55566141 44.1546281,6.72008828 C35.7374966,9.99121548 28.5992446,14.3679613 21.4833489,21.483857 C14.3674532,28.5997527 9.99070739,35.7380046 6.71958019,44.1551362 C3.55515331,52.2973875 1.39167714,61.6016561 0.769766653,75.2262718 C0.146839975,88.8783247 0,93.2372872 0,128.000254 C0,162.763221 0.146839975,167.122183 0.769766653,180.774236 C1.39167714,194.398852 3.55515331,203.703121 6.71958019,211.845372 C9.99070739,220.261995 14.3674532,227.400755 21.4833489,234.516651 C28.5992446,241.632547 35.7374966,246.009293 44.1546281,249.28042 C52.2968794,252.444847 61.601148,254.608323 75.2257637,255.230233 C88.8783247,255.85316 93.2367791,256 127.999746,256 C162.762713,256 167.121675,255.85316 180.773728,255.230233 C194.398344,254.608323 203.702613,252.444847 211.844864,249.28042 C220.261995,246.009293 227.400247,241.632547 234.516143,234.516651 C241.632039,227.400755 246.008785,220.262503 249.279912,211.845372 C252.444339,203.703121 254.607815,194.398852 255.229725,180.774236 C255.852652,167.122183 256,162.763221 256,128.000254 C256,93.2372872 255.852652,88.8783247 255.229725,75.2262718 C254.607815,61.6016561 252.444339,52.2973875 249.279912,44.1551362 C246.008785,35.7380046 241.632039,28.5997527 234.516143,21.483857 C227.400247,14.3679613 220.261995,9.99121548 211.844864,6.72008828 C203.702613,3.55566141 194.398344,1.39218523 180.773728,0.770274749 C167.121675,0.147348072 162.762713,0 127.999746,0 Z M127.999746,62.2703115 C91.698262,62.2703115 62.2698034,91.69877 62.2698034,128.000254 C62.2698034,164.301738 91.698262,193.730197 127.999746,193.730197 C164.30123,193.730197 193.729689,164.301738 193.729689,128.000254 C193.729689,91.69877 164.30123,62.2703115 127.999746,62.2703115 Z M127.999746,170.667175 C104.435741,170.667175 85.3328252,151.564259 85.3328252,128.000254 C85.3328252,104.436249 104.435741,85.3333333 127.999746,85.3333333 C151.563751,85.3333333 170.666667,104.436249 170.666667,128.000254 C170.666667,151.564259 151.563751,170.667175 127.999746,170.667175 Z M211.686338,59.6734287 C211.686338,68.1566129 204.809755,75.0337031 196.326571,75.0337031 C187.843387,75.0337031 180.966297,68.1566129 180.966297,59.6734287 C180.966297,51.1902445 187.843387,44.3136624 196.326571,44.3136624 C204.809755,44.3136624 211.686338,51.1902445 211.686338,59.6734287 Z" fill="#0A0A08"></path>
+    </g>
+</svg>
+</span><span class="username">huyenchip19</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/chiphuyen"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">chiphuyen</span></a>
+
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <p>I work to bring AI into production. I write about AI system design.
+</p>
+        <!-- <p><b>I&#39;m thinking about starting a newsletter. Sign up to be the first to know!
+</b></p> -->
+
+        <p>I don't have a <a href='https://chiphuyen.substack.com/'>Substack</a> yet, but if more people nudge me, I might actually start it.</p>
+        <div class="substack-box">
+        <iframe src="https://chiphuyen.substack.com/embed" width="480" height="150" style="border:0px solid #EEE; background:white;" frameborder="0" scrolling="no"></iframe>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"b955410eeaaf4b389e2cbb9df5c229cb","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+
+</html>

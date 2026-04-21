@@ -59,3 +59,10 @@ python -m app.codex_dashboard --scan-once --print-summary
 - parse real `token_count` events from `C:\Users\gregs\.codex\sessions\`
 - keep the first version Windows-only and hotkey-first
 - treat repo-root `REGRESSION.md` as canonical for task-level regression in this repo
+
+## Jobs And Scheduling
+
+- In this repo, if the human asks to create, change, repair, or verify a recurring job or scheduled task on this machine, default to the backend-controlled Temporal path that powers the dashboard.
+- The expected implementation path is: update tracked v1 job specs under `C:\Users\gregs\.codex\Orchestration\Jobs\specs\`, reconcile through the orchestration backend, and verify the job appears in `GET /api/v1/jobs` and the dashboard Jobs tab.
+- Do not satisfy those requests by creating or editing standalone Windows Scheduled Tasks, `declared-jobs.json`, or other legacy scheduler state unless the human explicitly asks for a legacy Windows-task path or the work is specifically backend bootstrap infrastructure such as `CodexDashboard-Orchestration-ServiceLane`.
+- If legacy Windows scheduler state and backend or Temporal state disagree, treat the backend or Temporal path as the requested product behavior and call out the mismatch explicitly instead of silently using the legacy path.

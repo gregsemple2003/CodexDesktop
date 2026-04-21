@@ -1,0 +1,193 @@
+﻿Diagnose log at 2026-04-15T03:25:18Z
+
+AppPath: C:\Program Files\Git\mingw64\bin\git-credential-manager.exe
+InstallDir: C:\Program Files\Git\mingw64\bin\
+Version: 2.7.3+5fa7116896c82164996a609accd1c5ad90fe730a
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+OneDriveConsumer=C:\Users\gregs\OneDrive
+ProgramFiles(x86)=C:\Program Files (x86)
+MSYSTEM=MINGW64
+ProgramW6432=C:\Program Files
+windir=C:\WINDOWS
+PROCESSOR_IDENTIFIER=AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD
+TMP=C:\Users\gregs\AppData\Local\Temp
+CODEX_INTERNAL_ORIGINATOR_OVERRIDE=codex_vscode
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL
+VSCODE_CWD=C:\Program Files\VSCodium
+SUPERLUMINAL_API_DIR=C:\Program Files\Superluminal\Performance\API
+LINUX_MULTIARCH_ROOT=C:\UnrealToolchains\v26_clang-20.1.8-rockylinux8\
+PROCESSOR_REVISION=6102
+TEMP=C:\Users\gregs\AppData\Local\Temp
+USERPROFILE=C:\Users\gregs
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+LOGONSERVER=\\AGENTPRIME
+TERM=xterm-256color
+USERNAME=gregs
+SystemRoot=C:\WINDOWS
+CODEX_THREAD_ID=019d7d3f-6449-7d50-ba01-3a0f40ff70e9
+PLINK_PROTOCOL=ssh
+EFC_7364_1592913036=1
+PATH=C:/Program Files/Git/mingw64/libexec/git-core;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\gregs\bin;C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe;C:\Users\gregs\.codex\tmp\arg0\codex-arg0HOnF1k;C:\Program Files\Python313\Scripts\;C:\Program Files\Python313\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\VSCodium\bin;C:\Program Files\Perforce\;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\dotnet\;C:\Program Files\GitHub CLI\;C:\Program Files\Git\cmd;C:\Program Files\Superluminal\Performance;C:\Program Files\Go\bin;C:\Program Files\Docker\Docker\resources\bin;C:\Users\gregs\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot\bin;C:\Program Files\Python313\Scripts\;C:\Program Files\Python313\;C:\Users\gregs\AppData\Local\Microsoft\WindowsApps;C:\Users\gregs\.dotnet\tools;C:\Users\gregs\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-essentials_build\bin;C:\Users\gregs\go\bin;C:\Users\gregs\AppData\Local\Microsoft\WinGet\Links;;c:\Users\gregs\.vscode-oss\extensions\openai.chatgpt-26.406.31014-win32-x64\bin\windows-x86_64
+OneDrive=C:\Users\gregs\OneDrive
+PROCESSOR_ARCHITECTURE=AMD64
+CommonProgramFiles=C:\Program Files\Common Files
+RUST_LOG=warn
+ProgramData=C:\ProgramData
+LC_CTYPE=C.UTF-8
+HOMEPATH=\Users\gregs
+COMPUTERNAME=AGENTPRIME
+VSCODE_NLS_CONFIG={"userLocale":"en-us","osLocale":"en-ca","resolvedLanguage":"en","defaultMessagesFile":"C:\\Program Files\\VSCodium\\resources\\app\\out\\nls.messages.json","locale":"en-us","availableLanguages":{}}
+VSCODE_HANDLES_UNCAUGHT_ERRORS=true
+ALLUSERSPROFILE=C:\ProgramData
+CommonProgramW6432=C:\Program Files\Common Files
+VSCODE_ESM_ENTRYPOINT=vs/workbench/api/node/extensionHostProcess
+GIT_EXEC_PATH=C:/Program Files/Git/mingw64/libexec/git-core
+SESSIONNAME=Console
+DriverData=C:\Windows\System32\Drivers\DriverData
+HOMEDRIVE=C:
+VSCODE_PID=40696
+VSCODE_CRASH_REPORTER_PROCESS_TYPE=extensionHost
+GIT_TRACE2_PARENT_SID=5757c85f-b92f-4bdb-bb0a-7c328b9a57e3
+SystemDrive=C:
+NUMBER_OF_PROCESSORS=32
+OS=Windows_NT
+ProgramFiles=C:\Program Files
+ComSpec=C:\WINDOWS\system32\cmd.exe
+USERDOMAIN_ROAMINGPROFILE=AGENTPRIME
+HOME=C:\Users\gregs
+VSCODE_IPC_HOOK=\\.\pipe\9d1bde0b-1.112.01907-main-sock
+JAVA_HOME=C:\Users\gregs\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot\
+ELECTRON_RUN_AS_NODE=1
+PSModulePath=C:\Users\gregs\OneDrive\Documents\PowerShell\Modules;C:\Program Files\PowerShell\Modules;c:\program files\windowsapps\microsoft.powershell_7.6.0.0_x64__8wekyb3d8bbwe\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+TMPDIR=C:\Users\gregs\AppData\Local\Temp
+APPDATA=C:\Users\gregs\AppData\Roaming
+USERDOMAIN=AGENTPRIME
+PROCESSOR_LEVEL=25
+LOCALAPPDATA=C:\Users\gregs\AppData\Local
+DEBUG=release
+EFC_7364_344590478=1
+COLORTERM=truecolor
+VSCODE_CODE_CACHE_PATH=C:\Users\gregs\AppData\Roaming\VSCodium\CachedData\e2b23bbd5646cc28aaa6f26ee53b257c290b6be1
+PUBLIC=C:\Users\Public
+GOPATH=C:\Users\gregs\go
+VSCODE_L10N_BUNDLE_LOCATION=
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\gregs\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\gregs\AppData\Local\Temp\3f5a4f129ae57f5e309c00cb'... OK
+Reading from temporary file 'C:\Users\gregs\AppData\Local\Temp\3f5a4f129ae57f5e309c00cb'... OK
+Deleting temporary file 'C:\Users\gregs\AppData\Local\Temp\3f5a4f129ae57f5e309c00cb'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\gregs
+UserDataDirectoryPath: C:\Users\gregs\.gcm
+GetCurrentDirectory(): C:\Agent\CodexDashboard
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... OK
+ OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:54623/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.53.0.windows.2'
+Locating current repository...Git repository at 'C:/Agent/CodexDashboard/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Program Files/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Program Files/Git/etc/gitconfig	core.autocrlf=false
+file:C:/Program Files/Git/etc/gitconfig	core.fscache=true
+file:C:/Program Files/Git/etc/gitconfig	core.symlinks=true
+file:C:/Program Files/Git/etc/gitconfig	pull.rebase=false
+file:C:/Program Files/Git/etc/gitconfig	credential.helper=manager
+file:C:/Program Files/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Program Files/Git/etc/gitconfig	init.defaultbranch=master
+file:C:/Users/gregs/.gitconfig	user.name=gregsemple2003
+file:C:/Users/gregs/.gitconfig	user.email=gregsemple2003@yahoo.com
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	remote.upstream.url=https://gregsemple2003@github.com/gregsemple2003/CodexDesktop
+file:.git/config	remote.upstream.fetch=+refs/heads/*:refs/remotes/upstream/*
+file:.git/config	branch.master.vscode-merge-base=upstream/master
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\gregs\AppData\Local\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\gregs\AppData\Local\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+

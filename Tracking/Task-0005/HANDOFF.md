@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0005` is complete with caveats.
+`Task-0005` follow-up repair work landed on `2026-04-19`.
 
 Completed closure evidence:
 
@@ -10,9 +10,48 @@ Completed closure evidence:
 - `PASS-0003` replaced the Tk `Jobs` tab's local Windows reconciliation path with the backend-backed control-plane view and bounded `Sync now` / `Run now` controls
 - `PASS-0004` corrected the human-facing operating model by installing a persistent local service lane and separating disposable validation work onto different ports
 - repo-root regression coverage now reflects the backend-backed `Jobs` surface, with [REGRESSION-RUN-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0001.md) covering the original Jobs surface and [REGRESSION-RUN-0002.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/Testing/REGRESSION-RUN-0002.md) proving validation-lane targeting while the service lane stayed up
+- `2026-04-19` follow-up repair removed the legacy Windows digest and hourly-probe tasks, added a backend-owned hourly probe spec, removed the daily digest wrapper's fixed-EST time gate, and then removed default script-side run-date gating entirely so schedule ownership stays outside the script unless a caller explicitly asks for `-GateOnRunDate`
 - current runtime baseline:
   - service lane scheduled task `CodexDashboard-Orchestration-ServiceLane` is installed and should be left running on `127.0.0.1:4318` and `127.0.0.1:7233`
   - validation lane is disposable and should normally be stopped when not actively used for proof work
+  - the live machine no longer has standalone Windows Scheduled Tasks for the daily digests or the hourly probe; those product jobs now live in backend or Temporal desired state
+
+## Next Session Guardrail
+
+In this repo, when the human says `job`, `scheduled job`, `task`, `set up a job`, `fix the daily run`, or asks about job run times, the intended meaning is:
+
+- a Git-tracked v1 job spec under `C:\Users\gregs\.codex\Orchestration\Jobs\specs\`
+- reconciled by `backend/orchestration/` into Temporal
+- visible through `GET /api/v1/jobs` and the dashboard `Jobs` tab
+
+That is the product path. It is the default meaning unless the human explicitly asks for a standalone Windows Scheduled Task.
+
+Hard rules for the next session:
+
+- do not treat a legacy Windows Scheduled Task that launches the same script as the same thing as a repo job
+- do not accept `email arrived`, `script ran`, or `Task Scheduler says success` as proof that a repo job is set up correctly
+- use backend readback and dashboard visibility as the acceptance test for any claimed job setup or fix
+- the allowed Windows bootstrap lane is `CodexDashboard-Orchestration-ServiceLane`; that task exists to keep the backend alive, not to replace Temporal-owned product jobs
+- if a legacy Windows task and a Temporal job both exist for the same logical digest, call out the split immediately instead of silently using whichever one happens to work
+
+## Resolved Runtime Mismatch
+
+The original task closed with a split scheduler reality, but that machine-state mismatch was repaired on `2026-04-19`:
+
+- the standalone Windows Scheduled Tasks for:
+  - `Codex Daily Agentic SWE Digest`
+  - `Codex Daily Physical Agents Digest`
+  - `Codex Daily UE Determinism Digest`
+  - `Codex Hourly Email Probe`
+  were removed
+- `codex-hourly-email-probe` now exists as a backend-managed v1 job spec under `.codex\Orchestration\Jobs\specs\` and was re-proved through autonomous Temporal schedule firings plus direct email evidence
+- the shared digest wrapper at [invoke-codex-scheduled-digest.ps1](/c:/Users/gregs/.codex/scheduled-digests/invoke-codex-scheduled-digest.ps1) no longer enforces a wrapper-owned fixed `4:00 AM EST` window; schedule ownership now stays with Temporal, and any script-side run-date gating is opt-in via explicit `-GateOnRunDate`
+- live proof on `2026-04-19`:
+  - a real scheduled `codex-daily-agentic-swe-digest` run started from Temporal at `10:53 AM America/Toronto`
+  - it completed at `11:00 AM America/Toronto`
+  - it rewrote [2026-04-19-SWE-Orchestration.md](/c:/Users/gregs/.codex/reports/2026-04-19-SWE-Orchestration.md#L1)
+  - the wrapper's direct-send fallback wrote a matching Gmail proof entry at `2026-04-19T11:00:12`
+  - after that proof, the wrapper was tightened again so it no longer suppresses same-day reruns unless a caller explicitly requests `-GateOnRunDate`
 
 ## Current Baseline
 
@@ -103,9 +142,13 @@ Research output captured so far:
 
 ## Next Step
 
-No further task work is required for `Task-0005`.
+No further task work is required for `Task-0005` itself, but any follow-up session that touches jobs should start from the runtime split above instead of assuming the machine has one scheduler.
 
-If follow-up work is desired later, the clearest separate task would be hardening the successful Windows executor path away from `--dangerously-bypass-approvals-and-sandbox`, or moving the service lane from the current interactive-user boundary to a more durable host-level runner when that tradeoff is worth the extra complexity.
+If follow-up work is desired later, the clearest separate tasks would be:
+
+- harden the successful Windows executor path away from `--dangerously-bypass-approvals-and-sandbox`
+- harden the scheduled-digest Codex path away from `workspace-write` shell sandbox failures so the skill can use local shell reads instead of falling back to web plus direct-send recovery
+- move the service lane from the current interactive-user boundary to a more durable host-level runner when that tradeoff is worth the extra complexity
 
 ## Watchouts
 
@@ -113,6 +156,8 @@ If follow-up work is desired later, the clearest separate task would be hardenin
 - do not let startup reconcile become the only sync path
 - do not widen this task into a full agent-graph or self-improvement system
 - keep Git as desired state and Temporal as runtime truth
+- do not satisfy human job-setup requests with standalone legacy Windows Scheduled Tasks when the intent is a dashboard-visible job; use Git specs plus Temporal and verify through backend readback
+- in this repo, `job` means the backend plus Temporal product path unless the human explicitly says they want the legacy Windows path
 - the original startup over-release and `CreateProcessAsUserW failed: 1920` failure are now historical evidence in [BUG-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0005/BUG-0001.md), not the active blocker
 - the service lane is intentionally the default human-facing runtime and should not be taken down for ordinary unit, smoke, or regression work
 - use the validation lane for disposable proof work and point the app at it with `CODEX_DASHBOARD_JOBS_BACKEND_URL=http://127.0.0.1:14318`
@@ -120,6 +165,7 @@ If follow-up work is desired later, the clearest separate task would be hardenin
 - the real digest proof touched user `.codex` runtime state under `reports\` and `gmail-digest-email\`; treat those as operator/runtime artifacts rather than dashboard product files
 - `go`, `docker`, and `temporal` are available on this host, but this shell still needed explicit executable resolution when `PATH` was stale
 - the current service-lane Scheduled Task runs at user logon under the interactive user because that is where `.codex` state and the logged-in `codex` CLI session live
+- as of `2026-04-19`, the only remaining `Codex*` Windows Scheduled Task should be `CodexDashboard-Orchestration-ServiceLane`
 
 ## References
 

@@ -15,6 +15,16 @@ The current backend slice establishes:
 
 The current backend slice is intentionally narrow. It reconciles desired `schedule` triggers into Temporal, exposes readback for the dashboard, and routes `schedule`, `manual`, and `webhook` into one durable workflow type.
 
+## Scheduling Boundary
+
+The service-lane Windows Scheduled Task exists only to keep the backend alive at user logon. It is bootstrap infrastructure, not the product scheduling surface for user jobs.
+
+When a human asks to set up or change a job in this repo:
+
+- implement it through tracked v1 job specs plus backend reconcile into Temporal
+- verify it through `GET /api/v1/jobs`, Temporal readback, and the dashboard Jobs tab
+- do not treat an ad hoc Windows Scheduled Task as an acceptable substitute unless the human explicitly asks for the legacy Windows path
+
 The intended local operating model now has two lanes:
 
 - `service lane`

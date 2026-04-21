@@ -14,9 +14,9 @@ import (
 
 const (
 	managedSchedulePrefix = "codex-job--"
-	// Keep the managed catchup window short so a restart does not release
-	// hours-old schedule work, while still tolerating brief control-plane restarts.
-	ManagedScheduleCatchupWindow = time.Minute
+	// Allow same-day catchup after an overnight reboot or late logon without
+	// releasing multi-day backlog work all at once.
+	ManagedScheduleCatchupWindow = 12 * time.Hour
 )
 
 type Backend interface {
