@@ -15,7 +15,9 @@ from app.codex_dashboard.config import (
 )
 from app.codex_dashboard.startup import startup_command
 from app.codex_dashboard.ui import (
+    DEFAULT_CHART_BUCKET_COUNT,
     DashboardApp,
+    chart_bucket_count,
     format_budget_billions,
     format_chart_title,
     format_jobs_timestamp,
@@ -29,6 +31,7 @@ from app.codex_dashboard.ui import (
     jobs_needs_attention_count,
     parse_budget_billions,
     rolling_average_tokens,
+    usage_history_lookback,
     write_overlay_capture,
 )
 
@@ -136,6 +139,19 @@ class DesktopSupportTests(unittest.TestCase):
             SimpleNamespace(total_tokens=30),
         ]
         self.assertEqual(rolling_average_tokens(buckets, 4), 19)
+
+    def test_chart_bucket_count_expands_daily_view(self) -> None:
+        self.assertEqual(chart_bucket_count("1d"), 35)
+        self.assertEqual(chart_bucket_count("1h"), DEFAULT_CHART_BUCKET_COUNT)
+
+    def test_usage_history_lookback_expands_daily_chart_beyond_summary_window(self) -> None:
+        self.assertEqual(
+            usage_history_lookback("1d").days,
+            35,
+        )
+
+    def test_usage_history_lookback_keeps_shorter_intervals_at_seven_days(self) -> None:
+        self.assertEqual(usage_history_lookback("1h").days, 7)
 
     def test_advisory_implied_weekly_budget_rounds_to_nearest_50m(self) -> None:
         self.assertEqual(
@@ -367,6 +383,45 @@ class DesktopSupportTests(unittest.TestCase):
         self.assertIsNone(app.chart_context_region)
         app._hide_chart_tooltip.assert_called_once_with()
         overlay.withdraw.assert_called_once_with()
+
+    def test_schedule_ingest_requeues_even_when_previous_scan_is_still_running(self) -> None:
+        root = mock.Mock()
+        app = SimpleNamespace(
+            _quitting=False,
+            root=root,
+            config=SimpleNamespace(polling_seconds=5),
+            ingest_in_flight=True,
+            schedule_ingest=mock.Mock(),
+        )
+
+        with mock.patch("app.codex_dashboard.ui.threading.Thread") as thread_ctor:
+            DashboardApp.schedule_ingest(app)
+
+        root.after.assert_called_once_with(5000, app.schedule_ingest)
+        thread_ctor.assert_not_called()
+
+    def test_schedule_ingest_starts_worker_and_queues_next_poll(self) -> None:
+        root = mock.Mock()
+        thread = mock.Mock()
+        app = SimpleNamespace(
+            _quitting=False,
+            root=root,
+            config=SimpleNamespace(
+                polling_seconds=5,
+                db_path="C:/Users/gregs/AppData/Local/CodexDashboard/dashboard.db",
+            ),
+            ingest_in_flight=False,
+            ingest_queue=mock.Mock(),
+            schedule_ingest=mock.Mock(),
+        )
+
+        with mock.patch("app.codex_dashboard.ui.threading.Thread", return_value=thread) as thread_ctor:
+            DashboardApp.schedule_ingest(app)
+
+        self.assertTrue(app.ingest_in_flight)
+        root.after.assert_called_once_with(5000, app.schedule_ingest)
+        thread_ctor.assert_called_once()
+        thread.start.assert_called_once_with()
 
 
 if __name__ == "__main__":

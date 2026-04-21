@@ -52,6 +52,11 @@ CHART_MODES = {
     "repo": "Repo",
 }
 FONT_ASSET_DIR = Path(__file__).resolve().parent / "assets" / "fonts"
+USAGE_SUMMARY_WINDOW = timedelta(days=7)
+DEFAULT_CHART_BUCKET_COUNT = 20
+CHART_BUCKET_COUNT_BY_INTERVAL = {
+    "1d": 35,
+}
 ROLLING_PROJECTION_BUCKETS = 4
 REPO_STACK_COLORS = (
     "#5eb8ff",
@@ -164,6 +169,18 @@ def rolling_average_tokens(buckets, sample_size: int) -> int:
         return 0
     recent_buckets = buckets[-sample_size:]
     return int(round(sum(bucket.total_tokens for bucket in recent_buckets) / len(recent_buckets)))
+
+
+def chart_bucket_count(interval_key: str) -> int:
+    return CHART_BUCKET_COUNT_BY_INTERVAL.get(interval_key, DEFAULT_CHART_BUCKET_COUNT)
+
+
+def usage_history_lookback(interval_key: str, bucket_count: int | None = None) -> timedelta:
+    effective_bucket_count = bucket_count or chart_bucket_count(interval_key)
+    return max(
+        USAGE_SUMMARY_WINDOW,
+        timedelta(seconds=INTERVAL_SECONDS[interval_key] * effective_bucket_count),
+    )
 
 
 def format_chart_title(
@@ -1112,6 +1129,9 @@ class DashboardApp:
         self.root.after(100, self._poll_ingest_results)
 
     def schedule_ingest(self) -> None:
+        if self._quitting:
+            return
+        self.root.after(self.config.polling_seconds * 1000, self.schedule_ingest)
         if self.ingest_in_flight:
             return
         self.ingest_in_flight = True
@@ -1137,13 +1157,18 @@ class DashboardApp:
 
         thread = threading.Thread(target=worker, daemon=True)
         thread.start()
-        self.root.after(self.config.polling_seconds * 1000, self.schedule_ingest)
 
     def refresh_data(self) -> None:
         connection = connect(Path(self.config.db_path))
         initialize_db(connection)
         now = datetime.now(self.display_timezone)
-        events = load_events_since(connection, now.astimezone(UTC) - timedelta(days=7))
+        bucket_count = chart_bucket_count(self.selected_interval)
+        history_since = now.astimezone(UTC) - usage_history_lookback(
+            self.selected_interval,
+            bucket_count,
+        )
+        summary_since = now.astimezone(UTC) - USAGE_SUMMARY_WINDOW
+        events = load_events_since(connection, history_since)
         session_context_markers = (
             load_session_context_markers(
                 connection,
@@ -1161,7 +1186,7 @@ class DashboardApp:
         raw_buckets = build_buckets(
             events,
             self.selected_interval,
-            bucket_count=20,
+            bucket_count=bucket_count,
             now=now,
             display_tz=self.display_timezone,
             metric_mode="total",
@@ -1171,13 +1196,15 @@ class DashboardApp:
             display_buckets = build_buckets(
                 events,
                 self.selected_interval,
-                bucket_count=20,
+                bucket_count=bucket_count,
                 now=now,
                 display_tz=self.display_timezone,
                 metric_mode=self.selected_metric_mode,
             )
         interval_seconds = INTERVAL_SECONDS[self.selected_interval]
-        total_7d = sum(event.total_tokens for event in events)
+        total_7d = sum(
+            event.total_tokens for event in events if event.event_timestamp >= summary_since
+        )
         latest_advisory = next(
             (event for event in reversed(events) if event.weekly_used_percent is not None),
             None,
@@ -1235,7 +1262,7 @@ class DashboardApp:
                 events,
                 session_context_markers,
                 self.selected_interval,
-                bucket_count=20,
+                bucket_count=bucket_count,
                 now=now,
                 display_tz=self.display_timezone,
                 top_n=5,
