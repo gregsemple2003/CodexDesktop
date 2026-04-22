@@ -1,0 +1,45 @@
+{
+  "scope": {
+    "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+    "repo_ref": "C:\\Agent\\ThirdPerson",
+    "analysis_mode": "packet_level_with_representative_events",
+    "human_desire_present": false
+  },
+  "allowed_policy_inputs": [
+    {
+      "source": "AGENTS.md",
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "excerpts": [
+        "Use this repo as a standalone Unreal Engine sandbox for validating third-person gameplay baselines outside the engine source tree.",
+        "prefer durable runtime instrumentation over one-off editor guesses when debugging live PIE behavior",
+        "treat repo-root REGRESSION.md as canonical for task-level regression claims in this repo"
+      ]
+    },
+    {
+      "source": "REGRESSION.md",
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "excerpts": [
+        "Regression in this repo uses the human default lane.",
+        "Operator lanes such as command-line overrides, alternate maps, proof views, or other non-default harnesses do not substitute for regression proof of the human default experience.",
+        "TP-REG-003: The possessed pawn is visible and controllable."
+      ]
+    },
+    {
+      "source": "TESTING.md",
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "excerpts": [
+        "regression test means running the real Unreal project in PIE and observing the gameplay surface",
+        "do not label headless diagnostics as regression by itself",
+        "use this lane for real gameplay proof"
+      ]
+    }
+  ],
+  "input_packet": {
+    "index_path": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\INDEX.json",
+    "source_packet_path": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-PACKET.jsonl"
+  },
+  "notes": [
+    "There is no HUMAN-DESIRE.md available for ThirdPerson in the provided local context.",
+    "Use AGENTS.md, REGRESSION.md, and TESTING.md as hard local constraints when they materially affect need selection."
+  ]
+}

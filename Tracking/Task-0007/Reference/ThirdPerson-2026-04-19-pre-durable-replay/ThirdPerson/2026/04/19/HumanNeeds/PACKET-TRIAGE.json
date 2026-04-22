@@ -1,0 +1,59 @@
+{
+  "schema_version": "needs.packet.triage.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Analyze the April 19, 2026 ThirdPerson packet for recurring needs around default-lane regression proof, runtime animation defects, and durable task-state alignment.",
+  "candidate_needs": [
+    {
+      "need": "Keep regression proof on the human default lane instead of off-lane automation or proof-view substitutes.",
+      "confidence": 0.49,
+      "supporting_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4202",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4919"
+      ]
+    },
+    {
+      "need": "Diagnose and fix the runtime character-readability defect: invisible pawn first, then floating, rounded, or offset feet and rocking/tilt.",
+      "confidence": 0.34,
+      "supporting_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6105",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6755",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    },
+    {
+      "need": "Keep pass and bug artifacts synchronized so the human does not have to restate the same constraint or defect framing.",
+      "confidence": 0.17,
+      "supporting_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4919",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    }
+  ],
+  "suffering_signals": [
+    "Repeated stop and restart commands.",
+    "Explicit complaints about wasted time and missed regression proof.",
+    "Escalation from invisible pawn to feet grounding and animation quality.",
+    "Repeated insistence on the human default lane only.",
+    "Rejection of non-runtime evidence as closure."
+  ],
+  "highest_leverage_context_to_fetch": [
+    "Current PASS-0009 runtime proof artifact on the human default lane.",
+    "BUG-0004 / HANDOFF / TASK-STATE entries that track the reopened defect and pass framing.",
+    "The exact runtime screenshot or video the human is using to judge animation and grounding."
+  ],
+  "clarifying_question": {
+    "needed": false,
+    "question": null,
+    "why_not_needed": "The packet already repeats the lane, defect class, and closure bar enough times to avoid burdening the human with another question."
+  },
+  "risk_notes": [
+    "Tone is sharp, but the actionable signal is the default-lane/runtime-evidence mismatch.",
+    "Some messages are planning-gate updates rather than runtime observations, so do not collapse them into one cosmetic issue.",
+    "Source/export and other non-runtime evidence were explicitly rejected as closure evidence."
+  ]
+}

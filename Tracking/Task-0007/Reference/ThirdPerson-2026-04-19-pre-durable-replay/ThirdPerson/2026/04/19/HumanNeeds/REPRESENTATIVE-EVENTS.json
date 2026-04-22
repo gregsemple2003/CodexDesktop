@@ -1,0 +1,86 @@
+{
+  "schema_version": "needs.packet.events.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "selected_events": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Report the invisible pawn seen in Development Editor PIE and why the regression missed it.",
+      "selection_reason": "Earliest direct failure report; anchors the packet's regression pain and the first human-perceived symptom.",
+      "priority_rank": 1
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Confirm that regression must use the human default lane.",
+      "selection_reason": "Makes the lane contract explicit and repeats the packet's central default-lane constraint.",
+      "priority_rank": 2
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4202",
+      "captured_at_local": "2026-04-19T11:15:00.988000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Fix the editor PIE driver so proof stays alive long enough to finish.",
+      "selection_reason": "Captures the tooling gate that prevented valid default-lane proof from completing.",
+      "priority_rank": 3
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+      "captured_at_local": "2026-04-19T11:56:52.517000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Re-evaluate the checker with the new no-engine-mods constraint.",
+      "selection_reason": "Records a hard local constraint that narrowed the solution space without changing the core need.",
+      "priority_rank": 4
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4919",
+      "captured_at_local": "2026-04-19T12:16:11.010000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Start PASS-0007 now and implement the reusable animation checker.",
+      "selection_reason": "Marks the transition from planning to approved implementation under the packet's pass structure.",
+      "priority_rank": 5
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6105",
+      "captured_at_local": "2026-04-19T14:04:28.895000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Reopen the default-lane defect about floating feet and poor lower-body readability.",
+      "selection_reason": "Shows the defect has shifted from visibility to runtime grounding and character readability.",
+      "priority_rank": 6
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "captured_at_local": "2026-04-19T14:56:15.912000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Track the runtime-only remaining defects on the human default lane.",
+      "selection_reason": "Consolidates the symptom set and rejects non-runtime evidence as a substitute.",
+      "priority_rank": 7
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6755",
+      "captured_at_local": "2026-04-19T15:21:05.850000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Add the third runtime defect: both feet hover above the ground.",
+      "selection_reason": "Makes the packet's runtime concern more specific and separates contact/grounding from shape/readability.",
+      "priority_rank": 8
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Continue the default-lane fix after the MaxSpeed and mesh-Z retune still failed.",
+      "selection_reason": "Shows the need for deeper root-cause tracing after a plausible but incomplete fix attempt.",
+      "priority_rank": 9
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "captured_at_local": "2026-04-19T16:35:27.989000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Trace the concrete runtime disagreement upstream to prove root cause.",
+      "selection_reason": "Best expresses the final diagnostic method the human wanted: name the disagreement and trace it upstream.",
+      "priority_rank": 10
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "intervention_time.summary.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "event_count": 62,
+  "stall_event_count": 2,
+  "typing_rate_chars_per_second": 1.0,
+  "stall_grace_seconds": 60,
+  "totals": {
+    "manual_chars": 21775,
+    "typing_seconds_estimate": 21775.0,
+    "stall_loss_seconds": 2099.309,
+    "intervention_time_seconds": 23874.309
+  },
+  "counts_by_intervention_kind": {
+    "new_request": 9,
+    "correction": 22,
+    "boundary_reset": 13,
+    "answer_to_question": 15,
+    "wake_up": 2,
+    "other": 1
+  },
+  "top_stall_events": [
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "stall_loss_seconds": 1647.027,
+      "captured_at_local": "2026-04-19T14:56:15.912-04:00",
+      "preview": "Continue Task-0006 PASS-0009 now."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "stall_loss_seconds": 452.282,
+      "captured_at_local": "2026-04-19T16:19:18.859-04:00",
+      "preview": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Sta…"
+    }
+  ],
+  "notes": [
+    "Manual characters are counted from parsed_envelope.request_text when present; otherwise raw_text.",
+    "Typing rate is intentionally conservative at 1.0 chars/second so the baseline partially absorbs human reading and thinking time.",
+    "Stall loss is charged only on wake_up events after the 60-second grace window.",
+    "Event hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3702 was reclassified to boundary_reset and set to zero stall loss because it followed an explicit wait gate.",
+    "Event hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4919 was reclassified to answer_to_question and set to zero stall loss because it followed an approval gate."
+  ]
+}

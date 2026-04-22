@@ -1,0 +1,111 @@
+{
+  "schema_version": "needs.packet.triage.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Make ThirdPerson work trustworthy on the human default lane: answer direct questions directly, honor repo-local boundaries, and prove runtime behavior honestly.",
+  "candidate_needs": [
+    {
+      "need": "Trustworthy default-lane runtime proof tied to the actual human-facing regression surface.",
+      "likelihood": "high",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4114",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4768",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5100",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    },
+    {
+      "need": "Direct answers in the requested shape instead of evasive summaries or proxy evidence.",
+      "likelihood": "high",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3392",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4399",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5001",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5073",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5263",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5272",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5281",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5290",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5300"
+      ]
+    },
+    {
+      "need": "Strict obedience to scope, pass, lane, and ownership boundaries once the human states them.",
+      "likelihood": "high",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3447",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3549",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4015",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4294",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4755",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    },
+    {
+      "need": "Autonomous continuation that keeps durable state current without pushing planning burden back onto the human.",
+      "likelihood": "medium",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3929",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038"
+      ]
+    }
+  ],
+  "suffering_signals": [
+    {
+      "signal": "Repeated stop-language and urgency markers",
+      "observed_in": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3392",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3447",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3549",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5108"
+      ],
+      "note": "OBSERVED repeated `STOP` or equivalent reset language."
+    },
+    {
+      "signal": "Time-loss complaints and frustration about avoidable repair work",
+      "observed_in": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5100",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5290"
+      ],
+      "note": "OBSERVED references to wasted time, evasion, and burden shifting."
+    },
+    {
+      "signal": "Reopened work due to untrustworthy proof or incomplete closure",
+      "observed_in": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4114",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4768",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6105",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6451"
+      ],
+      "note": "OBSERVED closure failure on the human-facing runtime surface."
+    }
+  ],
+  "highest_leverage_context_to_fetch": [],
+  "clarifying_question": {
+    "needed": false,
+    "question": null,
+    "reason": "The packet already contains repeated direct corrections plus the packet repo's regression and testing constraints."
+  },
+  "risk_notes": [
+    "The packet mixes one direct execution thread with one lifecycle or leader thread; packet conclusions should stay at the recurring-pattern level.",
+    "Strong frustration signals are observed, but the packet should not diagnose motives beyond the visible burden and repeated repairs.",
+    "The dominant need is constrained by ThirdPerson repo docs; broad cross-repo claims would overreach this evidence set."
+  ]
+}

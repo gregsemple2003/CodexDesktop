@@ -6,8 +6,8 @@ Current packet:
 
 - [2026-04-19 Day Root](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/INDEX.md)
 - [2026-04-19 HumanInterventionTime Summary](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInterventionTime/SUMMARY.json)
-- [Shared HumanInterventionTime Prompt](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/Prompts/HumanInterventionTime/PROMPT.md)
-- [Shared HumanInterventionTime Workflow](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/Prompts/HumanInterventionTime/WORKFLOW.md)
+- [Shared HumanInterventionTime Prompt](/c:/Users/gregs/.codex/Orchestration/Prompts/Interventions/HumanInterventionTime/PROMPT.md)
+- [Shared HumanInterventionTime Workflow](/c:/Users/gregs/.codex/Orchestration/Prompts/Interventions/HumanInterventionTime/WORKFLOW.md)
 - [Prioritization Note](/c:/Agent/CodexDashboard/Tracking/Task-0007/InterventionTime/PRIORITIZATION.md)
 
 Rules:

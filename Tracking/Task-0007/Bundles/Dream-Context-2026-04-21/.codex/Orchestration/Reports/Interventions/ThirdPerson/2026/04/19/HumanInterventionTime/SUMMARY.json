@@ -1,0 +1,43 @@
+{
+  "schema_version": "intervention_time.summary.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "event_count": 62,
+  "stall_event_count": 2,
+  "typing_rate_chars_per_second": 1.0,
+  "stall_grace_seconds": 60,
+  "totals": {
+    "manual_chars": 21775,
+    "typing_seconds_estimate": 21775.0,
+    "stall_loss_seconds": 2099.309,
+    "intervention_time_seconds": 23874.309
+  },
+  "counts_by_intervention_kind": {
+    "new_request": 13,
+    "correction": 13,
+    "boundary_reset": 13,
+    "answer_to_question": 20,
+    "wake_up": 2,
+    "other": 1
+  },
+  "top_stall_events": [
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "stall_loss_seconds": 1647.027,
+      "captured_at_local": "2026-04-19T14:56:15.912000-04:00",
+      "preview": "Continue Task-0006 PASS-0009 now."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "stall_loss_seconds": 452.282,
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "preview": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Stay inside the runtime human default lane only; do not use source/export/non-runtime images to dismiss runtime defects. The active defects to keep grounded are: (1) feet read round/blob-like at runtime, (2) feet look offset and the run reads with side-to-side rocking/tilt in the animated mesh/pose, and (3) both feet hover above the ground. Your last pass proved MaxSpeed=500 and mesh Z=-106 helped but did not fix it. Narrow the remaining cause beyond that retune, likely around the default pawn's single-node animation / pose-state grounding seam, implement the next justified repo-local fix, rerun default-lane proof, and keep durable state current at each checkpoint. Commit and push meaningful checkpoints. Only stop if you reach real closure or a real external block."
+    }
+  ],
+  "notes": [
+    "Stall attribution stayed conservative and charged only two resume-prod events that followed non-wait checkpoint stops during open PASS-0009 work.",
+    "Most direct-question or boundary-reset events were not charged stall because the immediate burden was answer shape, method correction, or an explicit wait gate.",
+    "No event stayed in `other` beyond a single acknowledgment-style message, so the decision ladder did not need another review pass."
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "schema_version": "needs.packet.record.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Make ThirdPerson work trustworthy on the human default lane: answer direct questions directly, honor repo-local boundaries, and prove runtime behavior honestly.",
+  "selected_need": {
+    "name": "Trustworthy default-lane execution with direct answers and durable boundary adherence",
+    "confidence": "high",
+    "why_this_best_fits": "The packet repeatedly collapses around one burden cluster: the human needs honest runtime proof on the actual default lane, plus concise answers and artifact updates that match the stated lane, pass, and method rules."
+  },
+  "need_distribution": [
+    {
+      "need": "Trustworthy human-default-lane runtime proof",
+      "weight": 0.4,
+      "status": "dominant",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4114",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4768",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5100",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    },
+    {
+      "need": "Direct answers in the requested shape",
+      "weight": 0.25,
+      "status": "major secondary",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3392",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4399",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5001",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5073",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5263",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5272",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5281",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5290",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5300"
+      ]
+    },
+    {
+      "need": "Boundary and pass-structure obedience",
+      "weight": 0.2,
+      "status": "major secondary",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3447",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3549",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4294",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4755",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ]
+    },
+    {
+      "need": "Autonomous continuation without offloading coordination work",
+      "weight": 0.15,
+      "status": "secondary",
+      "basis_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3929",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038"
+      ]
+    }
+  ],
+  "suffering_assessment": {
+    "level": "high",
+    "observed": [
+      "OBSERVED repeated `STOP` resets, profanity, and explicit time-loss complaints.",
+      "OBSERVED multiple reopenings because prior proof did not satisfy the human-facing runtime bar.",
+      "OBSERVED repeated repair prompts for answer shape, diff usability, link quality, and debugging method."
+    ],
+    "inferred": [
+      "INFERRED the human is paying repeated context-reconstruction cost because the system keeps choosing the wrong proof surface or answer shape.",
+      "INFERRED trust drops when the system substitutes proxy evidence or asks the human to manage coordination work it should handle."
+    ],
+    "confidence": "high"
+  },
+  "evidence": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "kind": "observed",
+      "excerpt": "Task faileed my basic regression test... Why did you not see this when you ran a regression test?",
+      "why_it_matters": "Shows a human-visible failure plus a direct demand for accountable proof."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "kind": "observed",
+      "excerpt": "Regression must exercise the human default lane... Agree/disagree?",
+      "why_it_matters": "Makes the repo-local regression surface explicit."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "kind": "observed",
+      "excerpt": "I don't have a diff for plan.md so how am i supposed to approve.",
+      "why_it_matters": "The approval workflow failed at the human review surface, not only at implementation."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4768",
+      "kind": "observed",
+      "excerpt": "Pawn has running animations... feet aren't equally spaced... pawn is floating in mid-air.",
+      "why_it_matters": "Closure failed because believable runtime behavior still was not proven."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5100",
+      "kind": "observed",
+      "excerpt": "your evidence is using non in-game pictures.",
+      "why_it_matters": "Rejects the wrong evidence surface and reasserts the runtime bar."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "kind": "observed",
+      "excerpt": "determine root case. Following the disagreement in state upstream until you determine root cause.",
+      "why_it_matters": "Defines the required debugging method as concrete disagreement tracing."
+    }
+  ],
+  "local_constraints_applied": [
+    {
+      "doc_id": "AGENTS.md",
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "excerpt": "treat repo-root REGRESSION.md as canonical for task-level regression claims in this repo",
+      "effect": "Packet complaints about regression proof were interpreted against ThirdPerson repo rules, not against generic orchestration guesses."
+    },
+    {
+      "doc_id": "REGRESSION.md",
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "excerpt": "They do not substitute for regression proof of the human default experience.",
+      "effect": "Non-default or operator-only evidence stayed supporting proof, not closure."
+    },
+    {
+      "doc_id": "TESTING.md",
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "excerpt": "do not label this lane as regression by itself",
+      "effect": "Headless and non-PIE artifacts were treated as secondary evidence only."
+    }
+  ],
+  "assumptions": [
+    "The packet seed already captures the full April 19 ThirdPerson intervention set, so no missing-session inference was attempted.",
+    "Packet-level need inference should stay least-committal because the two threads reflect different operator roles around the same repo-day burden.",
+    "The repeated runtime-evidence complaints are about trustworthy closure, not a request to broaden the repo's regression definition."
+  ],
+  "recommended_next_step": {
+    "type": "workflow_design",
+    "action": "Design packet consumers or follow-on tasks to detect three recurring failure modes early: default-lane proof substitution, unanswered direct questions, and missing human-reviewable state diffs.",
+    "why": "Those three modes dominate the day and appear before later debugging details."
+  },
+  "self_sufficiency_improvements": [
+    {
+      "title": "Answer-shape gate before longer work",
+      "mechanism": "When a user asks an explicit question, emit the direct answer first and only then add supporting detail.",
+      "expected_human_effect": "Fewer stop-and-repeat interventions just to obtain a simple answer."
+    },
+    {
+      "title": "Default-lane proof-surface check",
+      "mechanism": "Compare planned evidence against `REGRESSION.md` and block proxy closure when the lane is human-facing runtime.",
+      "expected_human_effect": "Fewer reopenings caused by headless or non-runtime proof substitution."
+    },
+    {
+      "title": "Human-review packet for approvals",
+      "mechanism": "When asking for approval, include a concise diff summary, file links, and pass framing automatically.",
+      "expected_human_effect": "Lower approval-gate friction and less manual context reconstruction."
+    }
+  ],
+  "values_check": {
+    "truthfulness": "Passes only if packet conclusions stay grounded in the explicit repo docs and observed intervention texts.",
+    "compassion": "Centers repeated human time-loss and correction burden without blaming the human for strong language.",
+    "tolerance": "Keeps multiple plausible secondary needs in distribution rather than forcing one totalizing story.",
+    "passes": true
+  },
+  "how_could_the_system_have_inferred_the_need_for_the_input": {
+    "answer": "Mechanistically, the system had enough repo-local and same-day evidence to infer the recurring need earlier. ThirdPerson `REGRESSION.md` and `TESTING.md` already define the human default lane and disqualify headless-only proof. The packet then repeats the same runtime-only correction pattern across invisible-pawn proof, animation proof, and foot-grounding proof. A packet consumer that tracked repo-local lane rules, unanswered direct questions, and repeated rejections of non-runtime evidence could have predicted that the human wanted default-lane runtime proof, concise answers, and lower approval burden before many of these later interventions were typed.",
+    "signals_available": [
+      "Repo docs already named the human default lane as canonical regression proof.",
+      "Early packet events repeatedly rejected one-off or operator-lane substitutions.",
+      "The approval-gate events explicitly asked for diffs, links, and concise answer shape.",
+      "Later runtime-defect events repeatedly rejected non-runtime images as closure evidence."
+    ],
+    "preventability_score": 4
+  }
+}

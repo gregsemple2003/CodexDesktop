@@ -1,0 +1,59 @@
+{
+  "schema_version": "needs.packet.local_context.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "docs": [
+    {
+      "doc_id": "AGENTS.md",
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "constraints": [
+        {
+          "constraint_id": "repo-local-docs-own-thirdperson-truth",
+          "excerpt": "Use repo-root docs here only for ThirdPerson-specific truth such as regression lane definitions.",
+          "applies_to": "Interpret packet complaints against ThirdPerson docs, not CodexDashboard docs."
+        },
+        {
+          "constraint_id": "regression-matrix-is-canonical",
+          "excerpt": "treat repo-root REGRESSION.md as canonical for task-level regression claims in this repo",
+          "applies_to": "Packet complaints about proof quality should be read against `REGRESSION.md`."
+        }
+      ]
+    },
+    {
+      "doc_id": "REGRESSION.md",
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "constraints": [
+        {
+          "constraint_id": "human-default-lane-rule",
+          "excerpt": "They do not substitute for regression proof of the human default experience.",
+          "applies_to": "Operator lanes or one-off proofs cannot close runtime regression concerns."
+        },
+        {
+          "constraint_id": "minimum-pass-bar",
+          "excerpt": "the pawn is visible and controllable",
+          "applies_to": "Invisible or non-believable runtime behavior directly fails the repo acceptance bar."
+        }
+      ]
+    },
+    {
+      "doc_id": "TESTING.md",
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "constraints": [
+        {
+          "constraint_id": "headless-is-supporting-proof",
+          "excerpt": "do not label this lane as regression by itself",
+          "applies_to": "Headless or non-PIE artifacts should stay supporting, not substitutive."
+        },
+        {
+          "constraint_id": "manual-pie-is-default-surface",
+          "excerpt": "This is the default regression surface for the repo.",
+          "applies_to": "Human-facing runtime complaints should be evaluated on the manual PIE lane first."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Repo-local constraints were sourced from the packet repo `C:\\Agent\\ThirdPerson`.",
+    "No CodexDashboard repo docs were substituted into packet-level interpretation."
+  ]
+}

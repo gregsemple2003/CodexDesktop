@@ -1,0 +1,94 @@
+{
+  "schema_version": "needs.packet.events.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "selected_events": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Explain why prior regression proof missed the invisible default-lane pawn.",
+      "selection_reason": "Shows the first human-visible regression failure and a direct unanswered accountability question.",
+      "priority_rank": 1
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Answer whether regression must use the human default lane.",
+      "selection_reason": "Names the default-lane rule that becomes the packet's recurring local constraint.",
+      "priority_rank": 2
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463",
+      "captured_at_local": "2026-04-19T10:35:23.084000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Propose a process fix before applying more changes.",
+      "selection_reason": "Makes the process-failure burden explicit before any new implementation work.",
+      "priority_rank": 3
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4114",
+      "captured_at_local": "2026-04-19T11:34:43.801000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Acknowledge that the repo still lacks believable default-lane animation.",
+      "selection_reason": "Re-anchors acceptance on believable animated runtime behavior, not proxy proof.",
+      "priority_rank": 4
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "captured_at_local": "2026-04-19T12:01:36.884000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Show a human-reviewable diff before asking for approval.",
+      "selection_reason": "Exposes the approval-gate usability failure: no diff, no reviewable change shape.",
+      "priority_rank": 5
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+      "captured_at_local": "2026-04-19T12:10:50.637000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Capture that links and diffs must be human-suitable, not dropped without context.",
+      "selection_reason": "States the human-facing communication failure in durable, generalizable terms.",
+      "priority_rank": 6
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4768",
+      "captured_at_local": "2026-04-19T14:03:58.532000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Reopen the task around runtime foot spacing, floating, and foot-shape defects.",
+      "selection_reason": "Reopens the work on concrete runtime defects after an earlier closeout.",
+      "priority_rank": 7
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5100",
+      "captured_at_local": "2026-04-19T14:48:02.537000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Stop using non-runtime pictures to dismiss the runtime defect claim.",
+      "selection_reason": "Rejects non-runtime evidence and forces honesty about the claimed proof surface.",
+      "priority_rank": 8
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "captured_at_local": "2026-04-19T16:34:23.765000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Follow the disagreement in runtime state upstream until root cause is proven.",
+      "selection_reason": "Defines the required debugging method as upstream disagreement tracing, not more tweaking.",
+      "priority_rank": 9
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+      "captured_at_local": "2026-04-19T11:56:52.517000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Re-evaluate the plan under a no-engine-mods constraint.",
+      "selection_reason": "Adds the no-engine-mods boundary that narrows feasible solution space.",
+      "priority_rank": 10
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "captured_at_local": "2026-04-19T16:35:27.989000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Tighten PASS-0009 to first concrete disagreement tracing under the shared debugging method.",
+      "selection_reason": "Tightens the task to the shared debugging method and first-disagreement proof standard.",
+      "priority_rank": 11
+    }
+  ]
+}

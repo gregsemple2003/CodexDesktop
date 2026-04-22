@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gregs.codex.local/orchestration/pass-checklist.schema.json",
+  "title": "Pass Checklist",
+  "description": "Machine-readable pass closeout state for one task pass.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "pass_id",
+    "checklist_status",
+    "implemented",
+    "build",
+    "unit_tests",
+    "pass_audit_written",
+    "audit_verdict",
+    "audit_result_ref",
+    "handoff_updated",
+    "commit_created",
+    "pushed_upstream",
+    "notify_sent",
+    "blockers",
+    "next_required_actions",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^Task-\\d{4}$"
+    },
+    "pass_id": {
+      "type": "string",
+      "pattern": "^PASS-\\d{4}$"
+    },
+    "checklist_status": {
+      "enum": [
+        "in_progress",
+        "ready_for_audit",
+        "ready_for_closeout",
+        "blocked",
+        "closed"
+      ]
+    },
+    "implemented": {
+      "type": "boolean"
+    },
+    "build": {
+      "$ref": "#/$defs/validation_status"
+    },
+    "unit_tests": {
+      "$ref": "#/$defs/validation_status"
+    },
+    "pass_audit_written": {
+      "type": "boolean"
+    },
+    "audit_verdict": {
+      "enum": [
+        "unknown",
+        "ready",
+        "ready_with_caveats",
+        "not_ready"
+      ]
+    },
+    "audit_result_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "handoff_updated": {
+      "type": "boolean"
+    },
+    "commit_created": {
+      "type": "boolean"
+    },
+    "pushed_upstream": {
+      "type": "boolean"
+    },
+    "notify_sent": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_required_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "validation_status": {
+      "enum": [
+        "unknown",
+        "pending",
+        "passing",
+        "failing",
+        "not_run",
+        "blocked",
+        "not_applicable"
+      ]
+    }
+  }
+}

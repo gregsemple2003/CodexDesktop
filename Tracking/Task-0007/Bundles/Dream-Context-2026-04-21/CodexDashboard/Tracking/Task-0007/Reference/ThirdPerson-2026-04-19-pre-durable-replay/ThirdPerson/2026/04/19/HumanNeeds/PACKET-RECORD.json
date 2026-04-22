@@ -1,0 +1,131 @@
+{
+  "schema_version": "needs.packet.record.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Summarize the packet-level need pattern and the least-committal next action for the April 19 ThirdPerson human-input packet.",
+  "selected_need": {
+    "label": "Keep regression proof and animation checking on the human default runtime lane, with the defect framed in human-perceived runtime terms rather than off-lane proxies.",
+    "confidence": 0.58,
+    "preventability_score": 3,
+    "observed_basis": "The packet repeatedly corrected lane choice, evidence quality, and the runtime defect framing after the initial invisible-pawn failure.",
+    "inferred_basis": "The user wants the same lane they actually play to be the one that proves visibility, animation, and grounding, so the proof and the defect live on the same surface."
+  },
+  "need_distribution": [
+    {
+      "need": "Default-lane regression alignment",
+      "weight": 0.58,
+      "why_it_fits": "The human repeatedly rejected off-lane or automation-only proof and kept returning to the human default lane."
+    },
+    {
+      "need": "Runtime animation and grounding diagnosis",
+      "weight": 0.27,
+      "why_it_fits": "The symptoms progressed from invisible pawn to floating, rounded, and hovering feet plus rocking/tilt."
+    },
+    {
+      "need": "Durable artifact and pass synchronization",
+      "weight": 0.15,
+      "why_it_fits": "The human kept asking for state, handoff, bug, and pass updates before more work continued."
+    }
+  ],
+  "suffering_assessment": {
+    "observed": [
+      "Multiple stop/short-answer corrections.",
+      "Direct complaints about wasted time and failed regression proof.",
+      "Repeated rejection of invalid or non-runtime evidence.",
+      "Escalation from visibility to believable motion and grounding."
+    ],
+    "inferred": [
+      "The user is carrying the burden of ambiguity and proof drift.",
+      "There is trust pressure because the system kept answering a slightly different question.",
+      "The main pain point is not the asset itself but the mismatch between claimed proof and human default-lane reality."
+    ],
+    "severity": "high"
+  },
+  "evidence": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "observed": "The human reports an invisible pawn in Development Editor PIE and says the regression test failed.",
+      "inference": "The need is a human-perceived default-lane visibility proof, not a mere asset-existence or automation proxy."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "observed": "The human asks whether regression must use the human default lane.",
+      "inference": "Lane selection is central to the user's need, not a side detail."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4202",
+      "captured_at_local": "2026-04-19T11:15:00.988000-04:00",
+      "observed": "The human asks to keep the editor alive long enough to finish PIE proof.",
+      "inference": "The system needs a reliable unattended proof path, not a driver that exits before evidence exists."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6105",
+      "captured_at_local": "2026-04-19T14:04:28.895000-04:00",
+      "observed": "The human reopens a defect because the pawn runs but the feet are floating and the lower body reads badly.",
+      "inference": "The need has moved from presence to runtime believability and grounding."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "captured_at_local": "2026-04-19T14:56:15.912000-04:00",
+      "observed": "The human names runtime-only defects and explicitly says non-runtime evidence should not dismiss them.",
+      "inference": "The closure bar is same-lane runtime proof, not source/export commentary."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "captured_at_local": "2026-04-19T16:35:27.989000-04:00",
+      "observed": "The human asks for a concrete disagreement and an upstream trace to root cause.",
+      "inference": "The user wants a mechanistic diagnosis path, not another bounded cosmetic tweak."
+    }
+  ],
+  "local_constraints_applied": [
+    {
+      "source": "AGENTS.md",
+      "excerpt": "Use this repo as a standalone Unreal Engine sandbox for validating third-person gameplay baselines outside the engine source tree.",
+      "applied_to": "Keep the analysis repo-local and do not assume engine-source access."
+    },
+    {
+      "source": "REGRESSION.md",
+      "excerpt": "Regression in this repo uses the human default lane.",
+      "applied_to": "Treat the human default lane as the only regression-closure lane."
+    },
+    {
+      "source": "REGRESSION.md",
+      "excerpt": "Operator lanes such as command-line overrides, alternate maps, pawn, game mode, or proof views do not substitute.",
+      "applied_to": "Do not treat off-lane or operator-only proof as closure."
+    },
+    {
+      "source": "TESTING.md",
+      "excerpt": "regression test means running the real Unreal project in PIE and observing the gameplay surface",
+      "applied_to": "Prefer in-PIE runtime evidence over headless diagnostics alone."
+    },
+    {
+      "source": "TESTING.md",
+      "excerpt": "do not label headless diagnostics as regression by itself",
+      "applied_to": "Avoid collapsing diagnostic support into regression proof."
+    }
+  ],
+  "assumptions": [
+    "The packet is one dominant intervention surface, not several unrelated asks.",
+    "The user's sharp tone reflects frustration and time pressure, not a new technical requirement.",
+    "The strongest reading is that runtime default-lane proof and runtime defect diagnosis are the same core need expressed at different stages."
+  ],
+  "recommended_next_step": {
+    "action": "Continue PASS-0009 on the human default lane, trace the concrete foot/ground disagreement upstream, and update the bug and regression artifacts before any further fix attempt.",
+    "why": "That path best matches the repeated packet instructions and is the most likely to produce human-satisfying closure."
+  },
+  "self_sufficiency_improvements": [
+    "Bake the human default-lane regression bar into the first pass prompt so the lane cannot drift.",
+    "Require runtime-only labels for proof artifacts so source/export evidence cannot be mistaken for closure.",
+    "Keep task-state and bug-framing updates synchronized with pass transitions so the human does not have to restate the same constraint."
+  ],
+  "values_check": {
+    "truthfulness": "Observed and inferred claims are separated, and no unavailable docs or tests are claimed.",
+    "compassion": "The packet is read as repeated burden and time loss, not as user hostility to be mirrored.",
+    "forbearance": "The interpretation stays least-committal while preserving multiple plausible runtime branches."
+  },
+  "how_could_the_system_have_inferred_the_need_for_the_input": {
+    "answer": "By pattern-matching repeated local phrases in the source packet such as 'human default lane', 'invisible pawn', 'runtime default lane', 'feet hover', and 'root cause', then cross-checking them against the repo-local `REGRESSION.md` and `TESTING.md` excerpts in `LOCAL-CONTEXT.json`, the system could infer that the user needed default-lane runtime proof plus a mechanistic animation and grounding diagnosis, not an off-lane or source-only surrogate.",
+    "mechanism": "Trigger on lane language, runtime symptom language, and explicit rejection of non-runtime evidence; then elevate the need when the same pattern repeats across multiple events."
+  }
+}

@@ -91,10 +91,10 @@ Use this split:
 
 ## Shared Prompt Home
 
-For now, keep reusable recipe bundles under `Prompts` in the durable shared intervention home:
+Keep reusable recipe bundles under the shared intervention prompt home:
 
 ```text
-C:\Users\gregs\.codex\Orchestration\Reports\Interventions\Prompts\
+C:\Users\gregs\.codex\Orchestration\Prompts\Interventions\
   HumanInputEvents\
   HumanNeeds\
   HumanInterventionTime\

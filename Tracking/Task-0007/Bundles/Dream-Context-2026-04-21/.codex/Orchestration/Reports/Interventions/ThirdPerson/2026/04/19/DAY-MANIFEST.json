@@ -1,0 +1,53 @@
+{
+  "schema_version": "intervention.packet.day_manifest.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "timezone": "America/Toronto",
+  "day_root": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19",
+  "dream_included": false,
+  "source_inputs": [
+    "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-PACKET.jsonl",
+    "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-SESSIONS.json",
+    "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInterventionTime\\04\\19\\LOCAL-CONTEXT.json",
+    "C:\\Agent\\ThirdPerson\\AGENTS.md",
+    "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+    "C:\\Agent\\ThirdPerson\\TESTING.md"
+  ],
+  "domains": {
+    "HumanInputEvents": {
+      "path": "HumanInputEvents",
+      "event_count": 62,
+      "files": [
+        "SOURCE-PACKET.jsonl",
+        "SOURCE-SESSIONS.json",
+        "INDEX.json",
+        "PROMPT-INPUT.md"
+      ]
+    },
+    "HumanNeeds": {
+      "path": "HumanNeeds",
+      "representative_event_count": 11,
+      "files": [
+        "LOCAL-CONTEXT.json",
+        "PACKET-TRIAGE.json",
+        "PACKET-RECORD.json",
+        "REPRESENTATIVE-EVENTS.json",
+        "PROMPT-INPUT.md"
+      ]
+    },
+    "HumanInterventionTime": {
+      "path": "HumanInterventionTime",
+      "event_count": 62,
+      "stall_event_count": 2,
+      "files": [
+        "LOCAL-CONTEXT.json",
+        "EVENT-MEASUREMENTS.jsonl",
+        "STALL-EVENTS.json",
+        "SUMMARY.json",
+        "PROMPT-INPUT.md"
+      ]
+    }
+  },
+  "generated_on": "2026-04-21"
+}

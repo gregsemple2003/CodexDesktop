@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gregs.codex.local/orchestration/task-state.schema.json",
+  "title": "Task State",
+  "description": "Machine-readable current orchestration state for one task.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "status",
+    "phase",
+    "plan_approved",
+    "current_pass",
+    "last_completed_pass",
+    "current_gate",
+    "latest_audit_verdict",
+    "validation",
+    "blockers",
+    "next_expected_artifacts",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^Task-\\d{4}$"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "in_progress",
+        "blocked",
+        "complete",
+        "cancelled"
+      ]
+    },
+    "phase": {
+      "enum": [
+        "creation",
+        "research",
+        "planning",
+        "implementation",
+        "regression",
+        "closure"
+      ]
+    },
+    "plan_approved": {
+      "type": "boolean"
+    },
+    "current_pass": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/pass_id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "last_completed_pass": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/pass_id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "current_gate": {
+      "enum": [
+        "none",
+        "research",
+        "planning",
+        "implementation",
+        "unit_testing",
+        "audit",
+        "handoff",
+        "regression",
+        "debugging",
+        "closure"
+      ]
+    },
+    "latest_audit_verdict": {
+      "enum": [
+        "unknown",
+        "ready",
+        "ready_with_caveats",
+        "not_ready"
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build",
+        "unit_tests",
+        "regression"
+      ],
+      "properties": {
+        "build": {
+          "$ref": "#/$defs/validation_status"
+        },
+        "unit_tests": {
+          "$ref": "#/$defs/validation_status"
+        },
+        "regression": {
+          "$ref": "#/$defs/validation_status"
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_expected_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "pass_id": {
+      "type": "string",
+      "pattern": "^PASS-\\d{4}$"
+    },
+    "validation_status": {
+      "enum": [
+        "unknown",
+        "pending",
+        "passing",
+        "failing",
+        "not_run",
+        "blocked",
+        "not_applicable"
+      ]
+    }
+  }
+}
