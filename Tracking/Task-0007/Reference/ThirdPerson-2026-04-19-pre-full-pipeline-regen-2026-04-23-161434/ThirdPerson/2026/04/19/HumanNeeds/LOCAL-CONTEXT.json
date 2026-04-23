@@ -1,0 +1,64 @@
+{
+  "schema_version": "interventions.local_context.v1",
+  "scope": {
+    "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+    "repo_ref": "C:\\Agent\\ThirdPerson",
+    "local_date": "2026-04-19",
+    "timezone": "America/Toronto"
+  },
+  "repo_docs": [
+    {
+      "doc_id": "AGENTS",
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "role": "repo guide",
+      "excerpts": [
+        {
+          "topic": "regression_authority",
+          "text": "Treat repo-root REGRESSION.md as canonical for task-level regression claims in this repo."
+        },
+        {
+          "topic": "automation_bridge_only",
+          "text": "Prefer durable runtime instrumentation over one-off editor guesses; treat editor Python as a bridge, not the final automation substrate."
+        }
+      ]
+    },
+    {
+      "doc_id": "REGRESSION",
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "role": "regression matrix",
+      "excerpts": [
+        {
+          "topic": "human_default_lane",
+          "text": "Regression in this repo uses the human default lane: launch normally, load the default map, and exercise PIE in Selected Viewport on the default pawn path."
+        },
+        {
+          "topic": "operator_lane_not_substitute",
+          "text": "Operator lanes, alternate maps, proof views, and automation-only harnesses may support diagnosis, but they do not substitute for regression proof."
+        },
+        {
+          "topic": "minimum_pass_bar",
+          "text": "A meaningful regression pass must satisfy TP-REG-001, TP-REG-002, and TP-REG-003 in the same run."
+        }
+      ]
+    },
+    {
+      "doc_id": "TESTING",
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "role": "testing adapter",
+      "excerpts": [
+        {
+          "topic": "headless_support_only",
+          "text": "Headless diagnostics are supporting proof and do not count as regression by themselves."
+        },
+        {
+          "topic": "manual_pie_default",
+          "text": "The Manual PIE Lane is the default regression surface for this repo."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Prepared from the packet repo on current disk as required by the repo-local context rule.",
+    "No substitute docs from the current workspace repo were used."
+  ]
+}

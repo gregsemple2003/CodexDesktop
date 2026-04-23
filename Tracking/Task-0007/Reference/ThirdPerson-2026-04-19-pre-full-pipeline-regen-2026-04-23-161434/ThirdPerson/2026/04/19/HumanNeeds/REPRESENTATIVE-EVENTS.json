@@ -1,0 +1,105 @@
+{
+  "schema_version": "needs.packet.events.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "selected_events": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Task faileed my basic regression test. I booted development editor and ran and see an invisible pawn. Why did you not see this when you ran a regression test? You're wasting my time.",
+      "need_tag": "default_lane_truth",
+      "selection_reason": "Earliest clear break in trust: the human rejects prior regression proof because the default lane visibly failed.",
+      "priority_rank": 1
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Regression must exercise the human default lane, not just whatever one-off you're working on. Agree/disagree?",
+      "need_tag": "default_lane_truth",
+      "selection_reason": "Directly states the repo-local regression truth the agent kept missing.",
+      "priority_rank": 2
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4015",
+      "captured_at_local": "2026-04-19T10:58:00.270000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Do not take over work from the subagent. Be extremely generous with time; at least 15 minutes of doing nothing before intervention.",
+      "need_tag": "agent_continuity",
+      "selection_reason": "Shows the supervision burden around subagent continuity and over-eager takeover.",
+      "priority_rank": 3
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4114",
+      "captured_at_local": "2026-04-19T11:34:43.801000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I tested the default lane. No animation is occurring. Failure to meet \"- can this repo produce one believable, controllable, animated playable character from a real static humanoid mesh through a ful…",
+      "need_tag": "unattended_animation_proof",
+      "selection_reason": "Expands the failure from one defect into the need for a durable unattended animation-checker lane.",
+      "priority_rank": 4
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4294",
+      "captured_at_local": "2026-04-19T11:56:24.176000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "New constraint: no engine mods. Re-evaluate.",
+      "need_tag": "durable_learning",
+      "selection_reason": "Captures a new hard constraint that should have become durable memory immediately.",
+      "priority_rank": 5
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+      "captured_at_local": "2026-04-19T12:10:50.637000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "For later analysis: the dropped ball here is that the model has no idea to reconstruct a human-suitable diff. No links. Links without context. Links to headers with no indication of what changed. Dri…",
+      "need_tag": "approval_surface",
+      "selection_reason": "Best packet-level statement of the approval-surface failure: links existed, but not in a human-reviewable shape.",
+      "priority_rank": 6
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "captured_at_local": "2026-04-19T14:22:07.173000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Your picture cut off the bottom of the ZeroMale meshes feet. Evidence invalid; re-take screenshot with feet in full view. They are clearly not spheres. Jackass.",
+      "need_tag": "runtime_evidence_honesty",
+      "selection_reason": "Strongest evidence-honesty complaint: the proof image omitted the feet and therefore did not count.",
+      "priority_rank": 7
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "captured_at_local": "2026-04-19T14:44:16.328000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I'm asking if the geometry of the foot is wrong. Not just in that picture. Stop evading the question.",
+      "need_tag": "direct_answer",
+      "selection_reason": "Representative direct-answer complaint where the human has to restate the exact question.",
+      "priority_rank": 8
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "captured_at_local": "2026-04-19T16:34:23.765000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "What I'm looking for you to do is determine root case. Following the disagreement in state upstream until you determine root cause. Ensure our repo local DEBUGGING.md links to C:\\Users\\gregs\\.codex\\O…",
+      "need_tag": "root_cause_debugging",
+      "selection_reason": "Most explicit request for first-disagreement, root-cause debugging rather than bounded tweaking.",
+      "priority_rank": 9
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+      "captured_at_local": "2026-04-19T11:56:52.517000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Reopen the Task-0006 planning gate for a new hard constraint: no engine mods. Requirements: - Re-evaluate the current unattended animation-checker plan under the assumption that we may not change any…",
+      "need_tag": "durable_learning",
+      "selection_reason": "Shows the second session preserving a new hard constraint and forcing a planning re-evaluation.",
+      "priority_rank": 10
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Stay inside the runtime human default lane …",
+      "need_tag": "agent_continuity",
+      "selection_reason": "Wake-up supervision event that makes ownership expectations explicit after dropped work.",
+      "priority_rank": 11
+    }
+  ]
+}

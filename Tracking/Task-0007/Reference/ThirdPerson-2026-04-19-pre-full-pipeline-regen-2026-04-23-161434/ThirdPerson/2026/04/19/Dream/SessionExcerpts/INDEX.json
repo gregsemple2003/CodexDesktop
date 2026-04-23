@@ -1,0 +1,202 @@
+{
+  "schema_version": "dream.session_excerpts.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "excerpt_count": 8,
+  "excerpts": [
+    {
+      "excerpt_id": "EXCERPT-0001",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3814",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3814"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 3810,
+      "source_line_end": 3819,
+      "reason_kept": "Shows the default-lane failure anchored to concrete artifacts and the asset-pair mismatch that made the pawn invisible.",
+      "entries": [
+        {
+          "source_line": 3810,
+          "role": "assistant",
+          "excerpt": "I\u2019ve confirmed the root cause from task-owned evidence: the default pawn is still hardwired to the old `ZM_ABP_Unarmed` lane that Task-0006 previously proved unsafe. I\u2019m promoting the repaired aligned anim class into `ThirdPersonPawn` now and adding the same runtime mesh-state logging there so the default-lane PIE evidence is auditable in `ThirdPerson.log`."
+        },
+        {
+          "source_line": 3814,
+          "role": "user",
+          "excerpt": "Concrete findings to use: the default-lane bug reproduces in Saved/GameAutomation/20260419T144717Z-9DF534D8415355F76DD9D3B25C6C6551-task0006-default-lane-diagnosis. lane_c_viewport.png and lane_c_pawn_proof.png both show the invisible pawn. lane-c-presentation.txt shows the default pawn is still using the legacy broken assets: mesh=/Game/Experimental/ZeroMale/Character/SK_ZeroMale_FirstPass and anim=/Game/Experimental/ZeroMale/Animations/ZM_ABP_Unarmed.ZM_ABP_Unarmed_C. That legacy lane was already failing validator smoke for local translation plausibility in Tracking/Task-0006/Testing/validator-smoke-existing-zeromale-report.json. The repaired assets live on the automation-pilot lane: mesh=/Game/Experimental/ZeroMaleAutomationPilot/Character/SK_ZeroMale_AutomationPilot and aligned anim=/Game/ZMAALN_ABP_Unarmed.ZMAALN_ABP_Unarmed_C. Also, local engine API exposes editor PIE automation through ULevelEditorSubsystem::EditorRequestBeginPlay / EditorRequestEndPlay in Engine/Source/Editor/LevelEditor/Public/LevelEditorSubsystem.h. Use this to keep final proof on the human default lane if needed. Proceed with durable state update, open/update the task-owned bug for the default-lane invisible pawn, implement the fix, and verify on the default lane."
+        },
+        {
+          "source_line": 3819,
+          "role": "assistant",
+          "excerpt": "Using the concrete default-lane evidence you surfaced. I already reopened the task and recorded the bug; now I\u2019m wiring `ThirdPersonPawn` off the legacy broken asset pair and onto the validated automation-pilot mesh plus aligned anim lane, then I\u2019ll rebuild and verify on the repo-default path."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0002",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6451",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6451"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 6451,
+      "source_line_end": 6456,
+      "reason_kept": "Shows evidence-quality enforcement: invalid proof is rejected and must be replaced before root-cause claims can stand.",
+      "entries": [
+        {
+          "source_line": 6451,
+          "role": "user",
+          "excerpt": "The human rejected part of the PASS-0009 evidence: the earlier ZeroMale mesh screenshot cut off the bottom of the feet, so that evidence is invalid.\n\nDo this now:\n- Retake source/promoted mesh evidence with the feet fully visible.\n- Prefer durable artifact screenshots/renders saved under Task-0006 research or testing, not ephemeral chat inspection.\n- Re-check the current root-cause claim after replacing the bad evidence. If the claim changes, update it honestly. If only the silhouette sub-claim changes, narrow the root-cause statement accordingly.\n- Update durable artifacts immediately if the evidence interpretation changes: TASK-STATE, HANDOFF, BUG-0004, or PASS-0009 notes as needed.\n- Keep going until you can state the corrected root cause with valid evidence.\n- Do not touch REGRESSION.md.\n\nOutput needed:\n- links to the replacement feet-fully-visible evidence\n- whether the previous 'sphere-like feet' claim is withdrawn or revised\n- corrected root-cause statement"
+        },
+        {
+          "source_line": 6456,
+          "role": "assistant",
+          "excerpt": "I\u2019m replacing the invalid foot-shape evidence first, using durable task-owned renders instead of the earlier clipped screenshot. Then I\u2019ll re-check whether that silhouette sub-claim still stands and update the bug narrative only if the interpretation really changes."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0003",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 6558,
+      "source_line_end": 6563,
+      "reason_kept": "Shows a wake-up / continuity intervention that explicitly restates the remaining runtime defects and demands durable state updates before code changes.",
+      "entries": [
+        {
+          "source_line": 6558,
+          "role": "user",
+          "excerpt": "Continue Task-0006 PASS-0009 now.\n\nHuman-approved runtime-only remaining defects to document and fix:\n1. On the runtime default lane, the feet read spherical-like / blob-like.\n2. On the runtime default lane, the feet look offset relative to the ground, and the run presents a fast side-to-side rocking / tilt read in the animated mesh or pose.\n\nRequirements:\n- Update durable artifacts immediately so these two runtime-only defects are stated clearly as the remaining problem. Do not dilute them with non-runtime evidence.\n- Keep the goal post pinned to the human default runtime lane only. Non-game/source/export renders may support debugging, but they must not be used to dismiss the runtime defect.\n- Iterate on a fix repo-locally. No engine modifications. Do not touch REGRESSION.md.\n- Preserve prior pass history honestly; this is PASS-0009 work.\n- Rerun unattended default-lane proof after changes.\n- Close only if the runtime lane itself looks and measures fixed; otherwise record the remaining runtime defect honestly.\n- Commit and push meaningful checkpoints.\n\nDeliverables:\n- updated BUG-0004 / HANDOFF / TASK-STATE with the two agreed runtime defects\n- code changes for the fix\n- fresh runtime-only proof artifacts\n- honest conclusion on whether the spherical-read and offset/rocking defects are actually fixed"
+        },
+        {
+          "source_line": 6563,
+          "role": "assistant",
+          "excerpt": "I\u2019m updating the task artifacts first so `PASS-0009` explicitly tracks the two remaining runtime-only defects on the human default lane before I touch code: blob-like feet read, and offset/rocking during live run."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0004",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 7038,
+      "source_line_end": 7059,
+      "reason_kept": "Shows the human reasserting ownership expectations and the agent re-committing to a concrete, non-tweak debugging seam.",
+      "entries": [
+        {
+          "source_line": 7038,
+          "role": "user",
+          "excerpt": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Stay inside the runtime human default lane only; do not use source/export/non-runtime images to dismiss runtime defects. The active defects to keep grounded are: (1) feet read round/blob-like at runtime, (2) feet look offset and the run reads with side-to-side rocking/tilt in the animated mesh/pose, and (3) both feet hover above the ground. Your last pass proved MaxSpeed=500 and mesh Z=-106 helped but did not fix it. Narrow the remaining cause beyond that retune, likely around the default pawn's single-node animation / pose-state grounding seam, implement the next justified repo-local fix, rerun default-lane proof, and keep durable state current at each checkpoint. Commit and push meaningful checkpoints. Only stop if you reach real closure or a real external block."
+        },
+        {
+          "source_line": 7044,
+          "role": "assistant",
+          "excerpt": "I\u2019m staying in PASS-0009 and pushing past the last failed increment. The next step is to inspect the default pawn\u2019s live single-node animation contract itself, because the `500` speed and `-106` mount proved the global retune was only part of the problem."
+        },
+        {
+          "source_line": 7047,
+          "role": "assistant",
+          "excerpt": "I\u2019ve got one strong clue from the live artifacts: the foot height is not just globally wrong, it changes a lot by animation state. That points away from \u201cjust lower the mesh more\u201d and toward the single-node state contract itself."
+        },
+        {
+          "source_line": 7059,
+          "role": "assistant",
+          "excerpt": "The current task-owned checker is also part of the problem: it still lets a lane \u201cpass\u201d when the human-facing lower-body read is plainly wrong. I\u2019m inspecting the runtime driver and the existing `GroundSpeed`/`ShouldMove` seams together so I can either repair the single-node lane or switch to a more truthful runtime contract without guessing."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0005",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "source_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19\\HumanInputEvents\\SOURCE-PACKET.jsonl",
+      "source_line_start": 34,
+      "source_line_end": 34,
+      "reason_kept": "Shows the direct-answer burden: the human has to restate the exact question due to perceived evasion.",
+      "entries": [
+        {
+          "source_line": 34,
+          "role": "user",
+          "excerpt": "I'm asking if the geometry of the foot is wrong. Not just in that picture. Stop evading the question."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0006",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4755",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4755"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 4755,
+      "source_line_end": 4760,
+      "reason_kept": "Shows approval friction around pass history: reopened work must be re-scoped under new pass ids and presented in an approval-ready shape.",
+      "entries": [
+        {
+          "source_line": 4755,
+          "role": "user",
+          "excerpt": "Reopen the Task-0006 planning gate for a pass-structure correction.\n\nUser requirement:\n- Put all reopened animation-checker work under a new pass.\n- Do not fold this work back into already-closed pass history.\n- Keep the task parked at the human approval gate after updating durable artifacts.\n\nDo this:\n- Revise PLAN.md so the new checker/reproof work is isolated under new pass ids rather than implying PASS-0006 is being re-closed.\n- Update TASK-STATE.json / HANDOFF.md / BUG-0003.md or any other task artifact if they mention the wrong pass framing.\n- Preserve the no-engine-mods constraint and current recommendation.\n- Do not touch REGRESSION.md.\n- Stop at the planning approval gate.\n\nOutput needed:\n- concise statement of the new pass structure\n- which artifacts changed\n- confirmation that closed pass history is no longer being rewritten"
+        },
+        {
+          "source_line": 4760,
+          "role": "assistant",
+          "excerpt": "I\u2019m correcting the pass framing now. First I\u2019m scanning Task-0006 for places where the reopened animation-checker work was incorrectly attached back onto `PASS-0006`, so I can move that future work under new pass ids without changing the underlying technical recommendation."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0007",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4684"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 4684,
+      "source_line_end": 4689,
+      "reason_kept": "Shows a hard constraint that must become durable state immediately: no engine modifications, stop at an approval gate.",
+      "entries": [
+        {
+          "source_line": 4684,
+          "role": "user",
+          "excerpt": "Reopen the Task-0006 planning gate for a new hard constraint: no engine mods.\n\nRequirements:\n- Re-evaluate the current unattended animation-checker plan under the assumption that we may not change anything under C:\\Agent\\UnrealEngine.\n- Determine whether the proposed checker can be implemented entirely repo-locally in C:\\Agent\\ThirdPerson using public Unreal APIs, existing scripting surfaces, plugins already present, and repo-owned code only.\n- If the recommendation changes, update durable task state immediately and revise PLAN.md / HANDOFF.md / TASK-STATE.json / any research note needed.\n- If the recommendation does not materially change, still update the plan and/or handoff so the no-engine-mods constraint is explicit and resolved.\n- Do not implement PASS-0007. Stop at the planning approval gate.\n- Keep REGRESSION.md untouched.\n\nOutput needed:\n- concise conclusion: does the recommended first move survive with no engine mods, yes/no and why\n- updated durable artifacts reflecting that answer\n- approval gate text for the human"
+        },
+        {
+          "source_line": 4689,
+          "role": "assistant",
+          "excerpt": "I\u2019m re-evaluating the approved animation-checker proposal under the new no-engine-mods constraint now. First step is to read the current Task-0006 planning artifacts and confirm whether the recommended lane depends on changes under `C:\\Agent\\UnrealEngine` or can stay entirely repo-local."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0008",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 7446,
+      "source_line_end": 7452,
+      "reason_kept": "Shows the explicit root-cause debugging contract: define the first concrete disagreement with values, then walk upstream through writers.",
+      "entries": [
+        {
+          "source_line": 7446,
+          "role": "user",
+          "excerpt": "Tighten PASS-0009 to the shared debugging method from C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\DEBUGGING.md. The task is not 'improve the look' and not 'another bounded tweak.' It is: identify the first concrete disagreement in runtime default-lane state, then trace that exact bad state upstream through the code and data that write or advance it until root cause is proven. Do not stop at 'single-node seam' as a category. Name the concrete disagreement with values. Examples of acceptable disagreement seams: left/right foot world Z or toe world Z vs ground/capsule bottom at a frame where the human says both feet are hovering; unexpected pelvis/mesh/root roll or lateral offset at a frame where the run reads like side-to-side rocking; unexpected component-space foot transforms while the capsule remains upright. Then trace writers/updaters upstream one boundary at a time: runtime bone/component/world transforms -> mesh relative transform / component transform -> animation asset/time/playback state or runtime pose evaluation -> whichever exact writer makes the state wrong. Update BUG-0004 and REGRESSION-RUN artifacts around that narrowing path. Keep all evidence on the human default lane. Do not use source/export renders to dismiss runtime defects. Continue until you can state confirmed cause or a tightly bounded remaining branch with contradictory evidence preserved."
+        },
+        {
+          "source_line": 7452,
+          "role": "assistant",
+          "excerpt": "I\u2019m tightening `PASS-0009` to the shared debugging method now. First step is to re-ground on the shared debugging contract, confirm there isn\u2019t a stray editor process from the aborted turn, and then define the first concrete runtime-state disagreement with values before touching the diagnosis again."
+        }
+      ]
+    }
+  ]
+}
+
