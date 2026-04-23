@@ -15,3 +15,7 @@ Notable analysis notes:
 
 - `Analysis/2026-04-21-HUMAN-INPUT-BURDEN-AND-PRIME-DIRECTIVE.md`
   - research summary and working doctrine for treating direct human input as system-side failure telemetry
+- `Analysis/2026-04-23-FORMAL-SOLUTION-DEVELOPMENT-AND-REFINEMENT.md`
+  - targeted frontier packet on explicit solution specs, refinement stages, verifiers, and why Task-0007 should treat `2A` / `2B` as the main solution-iteration loop
+- `Analysis/2026-04-23-HIGH-IMPACT-SOLUTION-GENERATION-TWEAKS.md`
+  - ranked extraction of the strongest Dream process changes needed to break solution reverence, force scope challenges, and make `2B` genuinely adversarial

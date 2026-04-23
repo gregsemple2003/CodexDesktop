@@ -1,0 +1,63 @@
+{
+  "schema_version": "intervention_time.stalls.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "stall_event_count": 3,
+  "stall_events": [
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432",
+      "captured_at_local": "2026-04-19T11:35:56.437000-04:00",
+      "intervention_kind": "wake_up",
+      "burden_tags": [
+        "ownership",
+        "target",
+        "evidence"
+      ],
+      "idle_gap_seconds": 383.328,
+      "stall_grace_seconds": 60,
+      "stall_loss_seconds": 323.328,
+      "evidence": [
+        {
+          "ref": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl:4429",
+          "excerpt": "The remaining editor PIE gate is cleared. The fix is in [ue_run_default_lane_editor_pie_regression.py](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/ue_run_default_lane_editor_pie_regression.py#L1): the driver no longer uses the auto-closing `-ExecutePythonScript` path, it no longer calls"
+        }
+      ]
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "captured_at_local": "2026-04-19T14:56:15.912000-04:00",
+      "intervention_kind": "wake_up",
+      "burden_tags": [
+        "ownership",
+        "target",
+        "evidence"
+      ],
+      "idle_gap_seconds": 1707.027,
+      "stall_grace_seconds": 60,
+      "stall_loss_seconds": 1647.027,
+      "evidence": [
+        {
+          "ref": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl:6555",
+          "excerpt": "Replacement evidence is now task-owned and pushed in `1ae2dc8` on `main`: - [FULLBODY-MESH-EVIDENCE.md](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/FULLBODY-MESH-EVIDENCE.md#L1) - [source-mesh-fullbody-front.png](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/source-mesh-fullbody-front.png) - [source-mesh-fullbody-side.png](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/source-mesh-fullbody-side.png) - [source-mesh-fullbody-report.json](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/source-mesh-fullbody-report.json#L1) - [promoted-export-fullbody-front.png](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/promoted-export-fullbody-front.png) - [promoted-export-fullbody-side.png](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/promoted-export-fullbody-side.png) - [promoted-export-fullbody-report.json](/c:/Agent/ThirdPerson/Tracking/Task-0006/Research/promoted-export-fullbody-report.json#L1)"
+        }
+      ]
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "intervention_kind": "wake_up",
+      "burden_tags": [
+        "ownership",
+        "target"
+      ],
+      "idle_gap_seconds": 512.282,
+      "stall_grace_seconds": 60,
+      "stall_loss_seconds": 452.282,
+      "evidence": [
+        {
+          "ref": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl:7035",
+          "excerpt": "`PASS-0009` is still open. I pushed a failing-but-meaningful checkpoint in `8781547` on `main`, and the durable state now reflects that the simple runtime retune helped"
+        }
+      ]
+    }
+  ]
+}

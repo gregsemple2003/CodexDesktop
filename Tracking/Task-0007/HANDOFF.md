@@ -213,3 +213,43 @@ If full-packet quality is judged:
 - do not self-synthesize reruns from local memory
 - do not say a raw transcript “exists” when only extracted seed events exist
 - do not use jargon like `transcript neighborhoods`; say `surrounding transcript context`
+
+## Dream Process Thread Lookup
+
+This handoff now also records where the Dream pass split was actually designed.
+
+The important distinction is:
+
+- the design-origin discussion happened in `Review Task-0007 handoff`
+- `Run Dream pass 2A and 2B` was a later spawned worker thread that executed under that parent
+
+Primary historical thread:
+
+- thread name: `Review Task-0007 handoff`
+- session id: `019db7be-6d89-7682-9924-51f719d86d10`
+- session index entry: [/c:/Users/gregs/.codex/session_index.jsonl](/c:/Users/gregs/.codex/session_index.jsonl#L398)
+- transcript: [/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L10)
+
+Key turns inside that parent thread:
+
+- the explicit `Pass 2A` and `Pass 2B` split proposal is at [/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L2424)
+- the human follow-up pushing the adversarial `SOLUTION-CREATE.md` and `SOLUTION-AUDIT.md` framing is at [/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L2430)
+
+Later worker thread:
+
+- thread name: `Run Dream pass 2A and 2B`
+- session id: `019db910-dc58-7d30-b0aa-bd67fe3617e0`
+- transcript: [/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T02-39-43-019db910-dc58-7d30-b0aa-bd67fe3617e0.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T02-39-43-019db910-dc58-7d30-b0aa-bd67fe3617e0.jsonl#L9)
+- parent-thread linkage proving it was spawned under `Review Task-0007 handoff` is at [/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T02-39-43-019db910-dc58-7d30-b0aa-bd67fe3617e0.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T02-39-43-019db910-dc58-7d30-b0aa-bd67fe3617e0.jsonl#L1)
+
+What this means for future discussion:
+
+- if the goal is to understand where the Dream split was designed, start from `Review Task-0007 handoff`
+- if the goal is to inspect the later execution pass, use `Run Dream pass 2A and 2B`
+- do not mistake the worker thread for the origin of the `2A` and `2B` design
+
+Current continuation frame from this lookup thread:
+
+- no durable Dream docs were changed in this lookup thread
+- this thread only recovered the historical source for the Dream pass split and the adversarial solution-audit follow-up
+- the next honest discussion can start from whether the current Dream workflow should stay split as `2A` and `2B` only, or remain the later `2A` / `2B` / `2C` design that separates solution design, winner synthesis, and winner-task drafting

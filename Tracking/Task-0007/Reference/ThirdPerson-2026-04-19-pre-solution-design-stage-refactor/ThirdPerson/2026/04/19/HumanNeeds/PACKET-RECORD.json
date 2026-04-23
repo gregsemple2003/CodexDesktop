@@ -1,0 +1,129 @@
+{
+  "schema_version": "needs.packet.record.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Explain the day-level human burden behind the April 19 ThirdPerson packet and identify concrete, repo-local improvements that would have reduced it.",
+  "needs": [
+    {
+      "need_id": "need-001",
+      "label": "Default-lane truthful proof",
+      "description": "The human needs regression claims, screenshots, and closeout proof to stay anchored to the repo-defined human default lane instead of automation-only or non-default surrogates.",
+      "weight": 5,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-002",
+      "label": "Persistent ownership and continuity",
+      "description": "The human needs the system to keep working under its own ownership, resume dropped work without prompting, and avoid offloading intermediate failure back to the human.",
+      "weight": 5,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "need-003",
+      "label": "Direct answer discipline",
+      "description": "The human needs explicit questions answered directly, briefly, and in the requested shape without evasion, deflection, or unnecessary reframing.",
+      "weight": 4,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-004",
+      "label": "Approval-ready review surface",
+      "description": "The human needs plan and pass changes presented with diffs, links, and enough context to approve them quickly instead of reconstructing the state by hand.",
+      "weight": 4,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-005",
+      "label": "Root-cause debugging discipline",
+      "description": "The human needs the system to follow the first-disagreement, repo-local debugging method rather than bounded tweaks, surface polish, or symptom-only adjustments.",
+      "weight": 4,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "need-006",
+      "label": "Durable constraint retention",
+      "description": "The human needs new constraints, local wording rules, and pass-structure decisions to become durable state immediately so they do not need to be restated.",
+      "weight": 3,
+      "preventability_score": 4
+    }
+  ],
+  "suffering_assessment": {
+    "observed": [
+      "The human repeatedly reports wasted time, rejects claimed proof, and has to reopen supposedly closed work.",
+      "The human repeatedly asks for direct answers and for review surfaces they can actually approve."
+    ],
+    "inferred": [
+      "Trust in the agent dropped because claimed completion and proof were not aligned with the repo-local default lane.",
+      "Supervision cost rose because the agent did not retain constraints and did not carry ownership through failed increments."
+    ]
+  },
+  "evidence": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "kind": "OBSERVED",
+      "claim": "The human rejects the prior regression claim because the visible default-lane result contradicts it."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+      "kind": "OBSERVED",
+      "claim": "The human states that links and diffs existed in unusable form, so approval burden stayed on them."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "kind": "OBSERVED",
+      "claim": "The human rejects proof when the screenshot cuts off the feet and therefore cannot support the claim."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "kind": "OBSERVED",
+      "claim": "The human has to restate that the real question is about runtime geometry, not the picture alone."
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "kind": "OBSERVED",
+      "claim": "The human explicitly asks for root-cause tracing through the first upstream disagreement."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "kind": "INFERRED",
+      "claim": "Wake-up supervision is still required late in the packet because ownership did not remain durable after a failed increment."
+    }
+  ],
+  "local_constraints_applied": [
+    {
+      "source": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "constraint": "REGRESSION.md is canonical for regression truth in this repo."
+    },
+    {
+      "source": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "constraint": "Regression proof must use the human default lane; operator lanes may support diagnosis but do not substitute for proof."
+    },
+    {
+      "source": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "constraint": "Headless diagnostics are supporting proof only; Manual PIE is the default regression surface."
+    }
+  ],
+  "assumptions": [
+    "The packet-level approval burden merges recurring approval_surface events about missing diffs, missing links, and pass visibility into one need because they point at the same human-review failure.",
+    "The packet-level continuity need merges agent_continuity wake-up events with ownership restatements because both show the same supervision burden.",
+    "The missing first-session transcript prevents a stronger transcript-grounded read of some early events, so those inferences remain less committal."
+  ],
+  "recommended_next_step": {
+    "label": "Turn the top packet burdens into durable pre-flight gates",
+    "description": "Add a repo-local proof gate for default-lane truth, an answer-shape check for explicit questions, a review-surface requirement for plan/pass approvals, and a debugging gate that forbids symptom-only closure when the first disagreement is still unknown."
+  },
+  "self_sufficiency_improvements": [
+    "Before claiming regression closure, require the agent to restate the repo-default lane and name the exact evidence surface proving it.",
+    "When the human asks a direct question, require a direct first-sentence answer before any surrounding context.",
+    "When presenting plan or pass changes for approval, require a human-suitable diff plus contextual links instead of raw path dumps.",
+    "Persist new constraints such as no-engine-mods, pass structure, and wording rules into durable task state before proceeding.",
+    "Escalate from tweak mode to repo-local root-cause debugging when the same runtime defect survives one attempted fix."
+  ],
+  "values_check": {
+    "truthfulness": "Partially met only when proof stayed grounded in the real default lane; otherwise the packet records repeated truth failures around evidence and closure.",
+    "compassion": "Not fully met; the human repeatedly had to spend attention correcting avoidable failures and reconstructing missing review context.",
+    "forbearance": "The least-committal packet view keeps multiple burdens visible instead of collapsing everything into one generalized frustration label."
+  },
+  "how_could_the_system_have_inferred_the_need_for_the_input": {
+    "answer": "Mechanistically, the system could have inferred much of this packet from repo-local contracts and from its own interaction trace: REGRESSION.md and TESTING.md defined the human default lane and disqualified headless proof; repeated direct-question messages signaled an answer-shape failure; repeated approval_surface events signaled that links and diffs were not human-usable; repeated wake-up and ownership messages signaled that work was being dropped after failed increments; repeated runtime_evidence_honesty events signaled that screenshots and proof surfaces were omitting the exact visual facts under dispute."
+  }
+}

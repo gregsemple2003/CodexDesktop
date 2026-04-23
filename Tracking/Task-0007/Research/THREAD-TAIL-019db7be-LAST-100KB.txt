@@ -1,0 +1,1206 @@
+[2026-04-23T00:47:51.748Z] USER
+<subagent_notification>
+{"agent_path":"019db7c5-3195-75a0-9b0c-a662d3e33d65","status":{"completed":"Rebuilt the Dream annex as a clean two-pass run under `/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream`. Pass 1 wrote the approach, excerpts, and burden analysis. Pass 2 reread the packet and source surfaces, wrote the matrix, option tasks, and README, then passed a relative-link conformance sweep with `0` broken links.\n\nChanged files:\n- [APPROACH.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/APPROACH.md)\n- [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md)\n- [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md)\n- [README.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md)\n- [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json)\n- [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md)\n- [Option-Tasks/PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0001-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0002-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0003-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0003-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md)\n\nDurable docs used:\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\INTERVENTION-REPORTS.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\DREAMING.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\FIRST-PRINCPLES.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\TASK-CREATE.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\WORKFLOW.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\PROMPT-PASS1.md`\n- `C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\PROMPT-PASS2.md`\n- `C:\\Agent\\ThirdPerson\\AGENTS.md`\n- `C:\\Agent\\ThirdPerson\\REGRESSION.md`\n- `C:\\Agent\\ThirdPerson\\TESTING.md`"}}
+</subagent_notification>
+
+[2026-04-23T00:48:14.003Z] ASSISTANT [commentary]
+The worker finished. I’m reviewing the live Dream annex against the preserved reference now so I can report concrete material differences rather than just file names.
+
+[2026-04-23T00:50:31.274Z] ASSISTANT [final_answer]
+**Result**
+- Live packet backup: [pre-2026-04-22-dream-pass12-clean-rerun](//c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-2026-04-22-dream-pass12-clean-rerun/ThirdPerson/2026/04/19/INDEX.md)
+- Clean Dream rebuild: [Dream/README.md](//c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md)
+- The live day root had no `Dream/` folder before the run, so the Dream rebuild started from an empty live Dream location.
+
+**Workers**
+- `Plato` (`019db7c5-3195-75a0-9b0c-a662d3e33d65`) was the only Dream rebuild worker.
+- That single worker ran both `Dream` pass 1 and `Dream` pass 2.
+- No second Dream worker was used. I only handled backup and post-run comparison.
+
+**Exact Durable Docs Used**
+- [INTERVENTION-REPORTS.md](//c:/Users/gregs/.codex/Orchestration/Processes/INTERVENTION-REPORTS.md)
+- [DREAMING.md](//c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md)
+- [FIRST-PRINCPLES.md](//c:/Users/gregs/.codex/Orchestration/Processes/FIRST-PRINCPLES.md)
+- [TASK-CREATE.md](//c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md)
+- [WORKFLOW.md](//c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md)
+- [PROMPT-PASS1.md](//c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md)
+- [PROMPT-PASS2.md](//c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md)
+- [ThirdPerson AGENTS.md](//c:/Agent/ThirdPerson/AGENTS.md)
+- [ThirdPerson REGRESSION.md](//c:/Agent/ThirdPerson/REGRESSION.md)
+- [ThirdPerson TESTING.md](//c:/Agent/ThirdPerson/TESTING.md)
+
+**Material Difference From Reference**
+- Yes. It differs materially from [pre-durable-replay](//c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/INDEX.md).
+- Structure changed from the reference’s 41-file Dream annex to a 12-file annex that matches current durable `DREAMING.md` shape: `APPROACH.md`, `SessionExcerpts/`, `BURDEN-ANALYSIS.md`, `ORTHOGONAL-SOLUTIONS-MATRIX.md`, and `Option-Tasks/`.
+- Problem framing changed from the reference’s 7-problem / 21-option / winner-task-plus-plan stack to 3 problem rows with 6 option tasks.
+- Upstream burden basis changed too. The current Dream run inherits the current non-Dream packet with `typing_rate_chars_per_second = 4.0`, `wake_up = 3`, and `intervention_time_seconds = 7866.387`; the reference packet used `1.0`, `wake_up = 2`, and `23874.309`.
+
+**Main Remaining Quality Gaps**
+- Session `019da198-ea2f-7421-8adc-c566da0b6121` is still `transcript_surface = "missing"`, so early-day Dream analysis still lacks assistant-side surrounding transcript context.
+- Original image/runtime payload bytes still do not survive in the seeded packet, so some visual-proof judgments remain downstream of packet text and surviving artifacts rather than original payloads.
+- The new Dream annex is narrower than the old reference by design of the current durable Dream docs. If the bar is still “equal or better than the old reference packet,” that missing breadth is the main remaining gap.
+
+[2026-04-23T00:52:03.648Z] USER
+You're telling me structural differences without telling me whether the difference in quality.
+
+[2026-04-23T00:52:28.466Z] ASSISTANT [commentary]
+I’m doing the comparison on quality now, not just shape. I’m checking whether the new Dream annex preserved the strongest causal insights and remedy proposals from the reference, or whether it collapsed important distinctions.
+
+[2026-04-23T00:53:00.860Z] ASSISTANT [final_answer]
+No. On Dream quality, this rerun is below the preserved reference packet, even though it is cleaner against the current durable Dream docs.
+
+The split is:
+- Pass 1 quality is acceptable. The new [BURDEN-ANALYSIS.md](//c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md) is source-grounded, respects the missing-transcript limit, and preserves the main causal picture.
+- Pass 2 quality is weaker than the reference. The new [ORTHOGONAL-SOLUTIONS-MATRIX.md](//c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md) collapses too much. It turns what the reference treated as several distinct intervention-reduction mechanisms into only 3 merged problem rows and 6 option tasks, while the reference [ORTHOGONAL-SOLUTIONS-MATRIX.md](//c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md) plus [Task-Candidates/INDEX.md](//c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/INDEX.md) kept 7 distinct winner tasks.
+
+The main quality regressions are:
+- It lost separability. The reference had standalone remedies for continuity, approval packets, intervention-lesson promotion, claim manifests, root-cause verification, answer-shape workflow, and evidence manifests. The new annex merges several of those together, which makes follow-on implementation less precise.
+- The option analysis is thinner. The reference did real comparative solution design; the new matrix mostly gives `A` vs `B` with `high` vs `low`, so the prioritization is less discriminating.
+- Durable learning got weakened. The reference had a specific intervention-ledger/promotion-loop task; the new annex does not preserve that as a first-class fix even though repeated corrections are a core burden in the packet.
+- Proof and evidence got partially blended. The reference separated claim-gating from evidence-manifest work; the new annex largely folds those into one proof-packet concept, which is less exact.
+
+So the honest verdict is: the current Dream rerun is coherent and usable, but it is not equal-or-better than [pre-durable-replay](//c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/INDEX.md). If the bar is Dream quality rather than doc conformance, this run did not clear it.
+
+[2026-04-23T00:55:33.596Z] USER
+None of the links are working in vscodium.  Are you using the desired link format?
+
+[2026-04-23T00:56:00.365Z] ASSISTANT [final_answer]
+No. I used `//c:/...`, which is wrong for your VSCodium link format.
+
+The format you asked for is a single leading slash, like:
+- [Dream README](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md#L1)
+- [Reference INDEX](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/INDEX.md#L1)
+
+I’ll use only `/c:/...` links from here on.
+
+[2026-04-23T00:56:27.333Z] USER
+Dropped ball.  Use the correct link format and give me the screwed-up message again.
+
+[2026-04-23T00:56:49.719Z] ASSISTANT [final_answer]
+No. On Dream quality, this rerun is below the preserved reference packet, even though it is cleaner against the current durable Dream docs.
+
+The split is:
+- Pass 1 quality is acceptable. The new [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L1) is source-grounded, respects the missing-transcript limit, and preserves the main causal picture.
+- Pass 2 quality is weaker than the reference. The new [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L1) collapses too much. It turns what the reference treated as several distinct intervention-reduction mechanisms into only 3 merged problem rows and 6 option tasks, while the reference [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L1) plus [Task-Candidates/INDEX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/INDEX.md#L1) kept 7 distinct winner tasks.
+
+The main quality regressions are:
+- It lost separability. The reference had standalone remedies for continuity, approval packets, intervention-lesson promotion, claim manifests, root-cause verification, answer-shape workflow, and evidence manifests. The new annex merges several of those together, which makes follow-on implementation less precise.
+- The option analysis is thinner. The reference did real comparative solution design; the new matrix mostly gives `A` vs `B` with `high` vs `low`, so the prioritization is less discriminating.
+- Durable learning got weakened. The reference had a specific intervention-ledger/promotion-loop task; the new annex does not preserve that as a first-class fix even though repeated corrections are a core burden in the packet.
+- Proof and evidence got partially blended. The reference separated claim-gating from evidence-manifest work; the new annex largely folds those into one proof-packet concept, which is less exact.
+
+So the honest verdict is: the current Dream rerun is coherent and usable, but it is not equal-or-better than [pre-durable-replay](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/INDEX.md#L1). If the bar is Dream quality rather than doc conformance, this run did not clear it.
+
+[2026-04-23T01:06:14.091Z] USER
+Okay, help me understand the new packet's Burden Driver 3 and how that got lost downstream.  It seemed like a good analysis, but yet I don't see any tasks about durable ownership state.
+
+[2026-04-23T01:06:32.881Z] ASSISTANT [commentary]
+I’m pulling the exact Burden Driver 3 and downstream option-task text with line numbers so I can show where the ownership insight was preserved, where it got merged, and why it stopped being a standalone task.
+
+[2026-04-23T01:06:45.913Z] ASSISTANT [commentary]
+I’m grabbing the exact Burden Driver 3 hypothesis and remedy lines too, so I can map them directly to what the current task kept versus what it flattened.
+
+[2026-04-23T01:07:12.239Z] ASSISTANT [commentary]
+I’m checking the new rollout order against the reference too, because part of “got lost” may be sequencing, not just whether the words still appear.
+
+[2026-04-23T01:07:58.466Z] ASSISTANT [final_answer]
+Yes. Your read is right: the analysis for Burden Driver 3 is better than the downstream task decomposition.
+
+Burden Driver 3 in the new packet is specifically about liveness ownership, not generic “state drift.” The key claims are in [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L144), [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L170), and [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L180). The diagnosis is: the system treated failed increments and partial checkpoints as natural stopping points even when no explicit wait gate existed. The remedy class it names is very concrete: durable ownership state, explicit continue-vs-stop rules, preserved open blockers, and escalation only on real external blocks.
+
+That got diluted downstream in two moves. First, pass 2 merged burden drivers 2, 3, and 4 into one blended problem at [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L36). That reframed ownership as just one part of a broader “durable interaction contract.” Second, the resulting task [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md#L1) bundles four things together: pass ownership, approval packets, hard-constraint capture, and answer-first handling. Ownership is still present in [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md#L30), [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md#L54), and [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md#L94), but only as one ingredient.
+
+What got lost is the exact continuity mechanism. The reference had a standalone ownership-state task at [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L5), with explicit schema fields and enums at [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L34) and shared workflow adoption at [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L40). That is the durable ownership state task you expected to see. In the new annex, those exact continuation-state semantics are no longer first-class.
+
+So the honest summary is: it was not completely lost, but it was demoted and blurred. Pass 1 identified a standalone continuity failure. Pass 2 over-merged it with approval friction and answer-shape friction. That is why the burden analysis feels sharp while the task list no longer gives you a clean “durable ownership state” implementation task. The reference also made that continuity task first in order at [Task-Candidates/INDEX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/INDEX.md#L23), while the new matrix demotes the blended ownership task to second behind proof gating at [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L82).
+
+If you want, I can map Burden Drivers 2, 3, and 4 back into the cleaner three-task split that the new analysis really supports.
+
+[2026-04-23T01:08:55.535Z] USER
+Ok commit and push both repos before we continue.  I think this is a decent stopping point.
+
+[2026-04-23T01:09:14.547Z] ASSISTANT [commentary]
+I’m checking both git worktrees first so I can commit only the actual changes in `CodexDashboard` and `.codex`, and I’ll review `.codex/.gitignore` plus `.codex/SETUP.md` before pushing because this run changed report artifacts there.
+
+[2026-04-23T01:09:38.626Z] ASSISTANT [commentary]
+I’ve reviewed `.codex/.gitignore` and `.codex/SETUP.md`; no changes are needed there for this stopping point. I’m checking the change sets now so I can make one clean commit per repo and avoid scooping up runtime junk like raw session logs.
+
+[2026-04-23T01:10:01.722Z] ASSISTANT [commentary]
+I’m staging only the task artifacts and durable packet/prompt changes. I’m leaving the raw `.codex/sessions/2026/04/22/` transcripts out of the commit as runtime output, not repo truth.
+
+[2026-04-23T01:10:07.194Z] ASSISTANT [commentary]
+The intended changes are staged. I’m verifying both indexes now, then I’ll make one commit in each repo and push both branches.
+
+[2026-04-23T01:10:18.478Z] ASSISTANT [commentary]
+Both indexes look right. I’m committing each repo now, then I’ll push `master` for `CodexDashboard` and `main` for `.codex`.
+
+[2026-04-23T01:10:26.043Z] ASSISTANT [commentary]
+Both commits are in place. I’m pushing them now; after that I’ll confirm the exact commit ids and note the only remaining uncommitted path.
+
+[2026-04-23T01:10:41.561Z] ASSISTANT [final_answer]
+Both repos are committed and pushed.
+
+`CodexDashboard`:
+- pushed `bb334739045428316f12d8366adcd689c627ed5e` to `upstream/master`
+- worktree is clean
+
+`.codex`:
+- pushed `e0e354b0da5772b8c1a606949b83ac994cd9af7e` to `origin/main`
+- I reviewed [`.gitignore`](/c:/Users/gregs/.codex/.gitignore#L1) and [`SETUP.md`](/c:/Users/gregs/.codex/SETUP.md#L1); no changes were needed for this stop point
+- the only remaining uncommitted path is `sessions/2026/04/22/`, which I left out intentionally as raw runtime session transcripts rather than durable repo truth
+
+If you want, next I can help repair the Dream pass decomposition without touching anything else yet.
+
+[2026-04-23T01:14:04.909Z] USER
+I told you to commit and push both repos.  You could have checked git logs to see what session logs are committed, rather than irritating me and taking a shortcut.  Dropped ball.
+
+[2026-04-23T01:14:21.313Z] ASSISTANT [commentary]
+I should have checked repo history before excluding `sessions/2026/04/22/`. I’m checking that now and, if the repo precedent is to track those session logs, I’ll commit and push the missing `.codex` change immediately.
+
+[2026-04-23T01:14:30.223Z] ASSISTANT [commentary]
+You’re right. The repo history clearly tracks session logs, and I should have checked before excluding them. I’m fixing the `.codex` repo now by committing and pushing `sessions/2026/04/22/`.
+
+[2026-04-23T01:14:41.438Z] ASSISTANT [commentary]
+`git add` didn’t pick it up the first time. I’m retrying explicitly and verifying the index before I commit.
+
+[2026-04-23T01:14:52.928Z] ASSISTANT [commentary]
+The active session log is still being written while we talk, so I’m restaging the whole `2026/04/22` folder and committing that snapshot now.
+
+[2026-04-23T01:14:59.964Z] ASSISTANT [commentary]
+The missing session-log commit is made. I’m pushing `.codex` again and then I’ll confirm the new head and current status.
+
+[2026-04-23T01:15:18.338Z] ASSISTANT [final_answer]
+I should have checked history first. I was wrong to exclude the session logs.
+
+Fixed:
+- `CodexDashboard` is still pushed at `bb334739045428316f12d8366adcd689c627ed5e` on `upstream/master`.
+- `.codex` now also includes the missing `sessions/2026/04/22/` commit and is pushed at `d586d189408629e3037a4bfc9cdae9d7365d7549` on `origin/main`.
+
+One caveat remains: because this conversation is still active, `.codex` currently shows the live session transcript as modified again:
+- [rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L1)
+
+If you want absolute clean-at-stop state, I should do one final `.codex` checkpoint after we end here.
+
+[2026-04-23T01:16:19.738Z] USER
+No that's fine; you could infer that after you push you would tell me something again, causing it to be dirty.  In which case the second push and query to me, causing me to explain to you basic things, was unnecessary.  Dropped ball.
+
+[2026-04-23T01:16:24.620Z] ASSISTANT [final_answer]
+Yes. That second `.codex` push was unnecessary.
+
+I should have inferred that once I pushed and then replied, the active session log would become dirty again immediately, so “fully clean after push” was not a meaningful target mid-conversation. The correct move was:
+- check repo precedent before excluding session logs
+- include them in the original `.codex` commit/push
+- report that the active session file would continue changing while we kept talking
+
+I missed that and made you spend time correcting a predictable mistake.
+
+[2026-04-23T01:26:34.048Z] USER
+Okay, back to burden driver 3.  I'm wondering if it isn't a bad idea to merge the solutions.  Thoughts?
+
+[2026-04-23T01:27:10.124Z] ASSISTANT [final_answer]
+Merging is not inherently bad. The problem is *where* you merge.
+
+For this packet, I think merging Drivers 2, 3, and 4 into one downstream solution was mostly a mistake. Burden Driver 3 is a distinct failure boundary: liveness and ownership continuity. The analysis says that pretty clearly at [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L144), [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L170), and [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L180). That is not the same mechanism as approval-surface failure or answer-shape failure.
+
+The current merge in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L36) and [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md#L18) bundles:
+- ownership continuity
+- approval packets
+- hard-constraint capture
+- answer-first behavior
+
+Those belong to the same family, but they do not have the same acceptance test. That is the real problem. If you merge them, you can improve approval and answer shape while still failing the actual Driver 3 burden: the agent still stops on recoverable failure and the human still has to wake it back up.
+
+My rule of thumb would be:
+- Merge solutions when they share the same boundary, mechanism, and proof of success.
+- Keep them separate when they only share a theme.
+
+Applied here:
+- Driver 2: review/approval boundary
+- Driver 3: ownership/continuation boundary
+- Driver 4: answer-shape boundary
+
+Those are related, but not identical. So I would keep them as separate winner tasks, then group them under one umbrella workstream if you want cleaner presentation.
+
+That is why the reference decomposition was stronger. It kept a standalone continuity task at [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L5), with explicit ownership-state fields at [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L34). That preserved the causal precision.
+
+So my answer is:
+- merging them at the implementation-program level: reasonable
+- merging them into one Dream solution/task: mostly a bad idea
+
+The better shape is:
+- standalone task for durable ownership state
+- standalone task for approval packets
+- standalone task for answer-shape discipline
+- one short note saying they are one “interaction contract” family and can share substrate
+
+If you want, I can sketch the exact 3-task split that keeps the new Burden Analysis but fixes the bad downstream merge.
+
+[2026-04-23T01:31:04.885Z] USER
+The goal here is to update durable Dream process docs or state so that the process can do the right thing every day, for every repo.  T his is not a thread to find a local solution.  Does that make sense?  The goal is to reduce human intention burden, so you thinking too locally is a dropped ball.  Make sense?
+
+[2026-04-23T01:31:20.597Z] ASSISTANT [final_answer]
+Yes. That makes sense, and I was thinking too locally.
+
+The mistake was treating Dream as “find the best fix for this repo/day” instead of “extract the durable process or state change that would reduce this human burden across repos.” For Burden Driver 3, the right output class is not a `ThirdPerson` task. It is a shared orchestration fix under `.codex`, because the failure is about ownership continuity, stop conditions, and intention burden, not a repo-specific product behavior.
+
+The right decision rule is:
+
+- If the burden is product truth specific to one repo, emit a repo-local solution.
+- If the burden is human intention burden, ownership drift, approval friction, answer-shape failure, or repeated correction not sticking, emit a shared `.codex` process/state solution first.
+- Only emit repo-local tasks for those categories if the packet proves the failure is truly repo-bound.
+
+So yes: merging was not the main error. The bigger error was collapsing the output back into local repo solutions when the packet was really pointing at shared orchestration defects. That was a dropped ball.
+
+[2026-04-23T01:32:04.475Z] USER
+Right, can we get back on track with the point of the thread?
+
+[2026-04-23T01:32:19.960Z] ASSISTANT [final_answer]
+Yes.
+
+The thread should be anchored to this:
+
+- `Dream` exists to improve shared orchestration judgment, process, and state across repos.
+- For burdens like ownership drift, approval friction, answer-shape failure, and repeated correction, the default output should be shared `.codex` process/state changes, not repo-local tasks.
+- Repo-local tasks should be a fallback only when the burden is genuinely product- or repo-specific.
+
+So for Burden Driver 3, the real question is not “what `ThirdPerson` task should exist?” It is:
+
+- what shared Dream rule would force pass 2 to preserve `ownership continuity` as a first-class cross-repo mechanism
+- what shared process/state artifact should Dream propose by default
+- what anti-merge rule should stop continuity from being blurred into generic “interaction contract” work
+
+The corrective direction is:
+
+- update `DREAMING.md` and Dream pass prompts so human-intention burdens are classified as `shared orchestration candidates` first
+- require pass 2 to keep distinct mechanism boundaries unless the merged solution has the same acceptance test
+- rank options by cross-repo reduction in human intention burden, not by local repo neatness
+
+That is the right thread.
+
+[2026-04-23T01:34:29.114Z] USER
+That's not what we were talking about, you de-railed us a little.  You may have a point, but that's not the thread.
+
+The thread was "what do we do with the overly-merged burdens?"
+
+[2026-04-23T01:34:47.356Z] ASSISTANT [final_answer]
+What we do with overly-merged burdens is: unmerge them at the solution layer.
+
+That means:
+
+- `BURDEN-ANALYSIS.md` can keep a merged narrative if it helps explain the day.
+- `ORTHOGONAL-SOLUTIONS-MATRIX.md` should split them back apart unless the merged items have the same:
+  - failure boundary
+  - mechanism
+  - acceptance test
+  - falsifier
+
+So the durable fix is a Dream rule like:
+
+- merging is allowed in burden narration
+- merging is not allowed in downstream problem rows unless the proposed remedy is genuinely the same intervention
+- if pass 2 merges multiple burden drivers, it must state why one mechanism and one proof bar really covers all of them
+- if that cannot be shown cleanly, split them into separate rows and optionally group them under one family heading
+
+Applied to this case:
+
+- Burden Driver 2: approval/review surface
+- Burden Driver 3: ownership continuity
+- Burden Driver 4: answer-shape discipline
+
+These can sit under one family such as `interaction burden`, but they should not be one merged problem row, because they do not share the same acceptance test.
+
+The practical Dream output shape should be:
+
+- one family heading if useful
+- one problem row per mechanism boundary
+- one winner per row
+- one note saying the winners can share substrate or rollout order
+
+So the answer to the thread is not “never merge.” It is:
+
+- merge for explanation
+- do not merge for remedy selection unless the remedy is truly one thing
+
+That is the rule I would put into the durable Dream process.
+
+[2026-04-23T01:36:28.789Z] USER
+So what you're saying is translate each independent burden driver into a separable task, but within the task if it can be merged optionally, then point that out in the task itself?
+
+[2026-04-23T01:36:33.705Z] ASSISTANT [final_answer]
+Yes.
+
+More precisely:
+
+- Each independent burden driver should normally become its own separable downstream problem or task candidate.
+- If multiple tasks can share substrate, rollout, or implementation home, say that inside the task or in a short grouping note.
+- Do not merge them upstream just because they feel related.
+
+The key distinction is:
+
+- separate by mechanism and proof bar
+- group by implementation synergy
+
+So for example:
+- `ownership continuity` should stay its own task because it has its own acceptance test
+- `approval packet generation` should stay its own task because it has a different acceptance test
+- both tasks can say they share shared-state/schema work or can be rolled out together
+
+That keeps causal clarity without losing implementation pragmatism.
+
+[2026-04-23T01:38:08.601Z] USER
+I want to use precise language too, and concerned if you say "group by implementation synergy" that could be interpreted as "merge tasks".  So I think you should get more clear-minded than that.
+
+What specific changes would you make to durable process docs?  Propose something that is clear, truth-seeking, compassionate.
+
+[2026-04-23T01:38:25.486Z] ASSISTANT [commentary]
+I’m pulling the current Dream process and prompt language so I can propose exact durable doc changes instead of hand-waving.
+
+[2026-04-23T01:38:38.368Z] ASSISTANT [commentary]
+I’m checking `TASK-CREATE.md` too, because part of fixing over-merging may be giving option tasks a precise way to name shared substrate without pretending they are the same task.
+
+[2026-04-23T01:40:16.035Z] ASSISTANT [final_answer]
+Yes. I would make the rule much sharper, and I would use `shared substrate` instead of anything like “implementation synergy.”
+
+**Core Rule**
+- Separate burdens by failure boundary, mechanism, and proof bar.
+- Shared substrate is not merged scope.
+- Dream may merge for explanation, but not for remedy selection by default.
+- A merged remedy is only honest if one intervention, one enforcement boundary, one acceptance test, and one falsifier really cover all merged burdens.
+- Compassion rule: do not collapse distinct kinds of exported human work into one neat solution if that hides what the human had to carry.
+
+**Specific Durable Doc Changes**
+- In [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L19), add a new section `## Burden Decomposition Rule`.
+
+```md
+## Burden Decomposition Rule
+
+Dream may merge burdens in `BURDEN-ANALYSIS.md` when that makes the day easier to understand.
+
+Dream must not merge burdens in `ORTHOGONAL-SOLUTIONS-MATRIX.md` by default.
+
+Treat a burden driver as independent when any of these differ:
+
+- the failure boundary
+- the claimed remedy mechanism
+- the enforcement boundary
+- the acceptance test
+- the falsifier
+
+Shared docs, shared schemas, shared generators, shared prompts, or shared rollout order do not make two burdens the same problem.
+
+If pass 2 merges two or more burden drivers into one downstream problem row, it must state all of these explicitly:
+
+- which burden drivers were merged
+- the one mechanism that is claimed to solve them together
+- the one enforcement boundary where that mechanism acts
+- the one acceptance test that would prove the merged remedy worked
+- the one falsifier that would prove the merged remedy wrong or incomplete
+
+If that cannot be stated cleanly, split the burdens into separate problem rows and separate option tasks.
+```
+
+- In [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L61), tighten pass 2 with an explicit decomposition step before the matrix is written.
+
+```md
+Before writing `ORTHOGONAL-SOLUTIONS-MATRIX.md`, make a burden-to-problem mapping.
+
+For each burden driver from `BURDEN-ANALYSIS.md`, mark it as one of:
+
+- `separate_problem_row`
+- `merged_with_justification`
+- `dropped_with_explanation`
+
+Default to `separate_problem_row`.
+
+Do not use shared substrate alone as a merge justification.
+```
+
+- In [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L69), make the matrix carry the merge burden explicitly.
+
+```md
+For each problem row in `ORTHOGONAL-SOLUTIONS-MATRIX.md`, include:
+
+- `Source Burden Drivers`
+- `Mechanism Boundary`
+- `Acceptance Test`
+- `Falsifier`
+
+If a row covers more than one burden driver, also include:
+
+- `Merge Justification`
+
+`Merge Justification` must explain why one mechanism and one proof bar honestly cover every burden driver in that row.
+
+Do not merge rows only because the resulting tasks would touch the same shared docs or code.
+```
+
+- In [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L150), add explicit burden-task wording so tasks can share substrate without pretending to solve siblings.
+
+```md
+When a burden-reduction proposal task shares substrate with sibling tasks, use these optional sections:
+
+- `## Shared Substrate`
+- `## Not Solved Here`
+
+`## Shared Substrate` names shared docs, schemas, prompts, generators, or rollout dependencies.
+
+`## Not Solved Here` names adjacent burdens that remain outside this task's claimed outcome.
+
+A shared substrate note does not widen the task's claimed scope.
+```
+
+- Also in [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L183), add one hard rule:
+
+```md
+Burden-reduction proposal tasks must not claim to solve a sibling burden unless the acceptance criteria and falsifier would honestly prove that sibling burden reduced too.
+```
+
+**Why This Is Better**
+- It preserves truth: related burdens are not treated as identical without proof.
+- It preserves compassion: separate kinds of exported human work stay visible.
+- It preserves clarity: tasks can share substrate and rollout order without being falsely merged.
+- It gives pass 2 a real discipline instead of a taste-based “merge if it feels cleaner.”
+
+If you want, I can turn this into exact patch text for those four docs.
+
+[2026-04-23T01:43:46.570Z] USER
+Alright, we can try it.  Go ahead and make those changes locally.
+
+[2026-04-23T01:44:02.080Z] ASSISTANT [commentary]
+I’m patching the Dream process and prompt docs now so the anti-merge rule is explicit and the task-creation contract can name shared substrate without widening scope.
+
+[2026-04-23T01:44:48.212Z] ASSISTANT [commentary]
+The doc changes are in. I’m verifying the exact inserted sections now to make sure the anti-merge rule is consistent across process, prompt workflow, pass 2, and task creation.
+
+[2026-04-23T01:45:01.506Z] ASSISTANT [commentary]
+I found one small inconsistency: the workflow doc required merged rows to state mechanism, acceptance test, and falsifier, but it did not explicitly require the merge justification line that the pass-2 prompt now requires. I’m tightening that so the docs say the same thing.
+
+[2026-04-23T01:45:07.887Z] ASSISTANT [commentary]
+The wording is aligned now. I’m doing one quick readback of that section and then I’ll summarize exactly what changed.
+
+[2026-04-23T01:45:28.615Z] ASSISTANT [final_answer]
+Made locally.
+
+Changed:
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L92)
+  - added `## Burden Decomposition Rule`
+  - made “merge for explanation, not by default for remedy selection” explicit
+  - defined the exact conditions that make burden drivers independent
+  - required merged problem rows to name merged drivers, one mechanism, one enforcement boundary, one acceptance test, and one falsifier
+  - added a compassion guard against hiding distinct exported human work
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L148)
+  - added a pass-2 step to map burden drivers to downstream problem rows before writing the matrix
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L170)
+  - added a completion check that each downstream problem row is either separate or a documented merge with the required proof bar
+
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L67)
+  - added a required burden-to-problem mapping before pass 2 writes the matrix
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L77)
+  - defined the mapping states:
+    - `separate_problem_row`
+    - `merged_with_justification`
+    - `dropped_with_explanation`
+  - made `separate_problem_row` the default
+  - said shared substrate alone is not a merge justification
+  - required merged rows to state source burden drivers, merge justification, mechanism boundary, acceptance test, and falsifier
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L93)
+  - added the corresponding acceptance check
+
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L71)
+  - now forces pass 2 to do the burden-to-problem mapping before writing the matrix
+  - requires each matrix row to include:
+    - `Source Burden Drivers`
+    - `Mechanism Boundary`
+    - `Acceptance Test`
+    - `Falsifier`
+  - requires `Merge Justification` when a row covers more than one burden driver
+  - explicitly forbids merging only because tasks touch the same shared docs, schemas, prompts, generators, or rollout order
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L124)
+  - added final conformance on merged rows
+
+- [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L178)
+  - added optional sections:
+    - `## Shared Substrate`
+    - `## Not Solved Here`
+- [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L194)
+  - defined `Shared Substrate` as overlap in docs/schemas/prompts/state/rollout without widening task scope
+  - defined `Not Solved Here` for adjacent burdens that remain outside the task
+  - added the hard rule that a burden-reduction task must not claim to solve a sibling burden unless its acceptance criteria and falsifier would honestly prove that too
+
+No tests were run; this was a doc-only change.
+
+If you want, next I can use these new rules to rewrite the April 19 Dream downstream decomposition locally without committing anything yet.
+
+[2026-04-23T01:45:28.875Z] USER
+Then wipe the Dream folder and re-run a clean subagent.
+
+[2026-04-23T01:45:41.707Z] ASSISTANT [commentary]
+I’m wiping only the live `Dream/` folder under the April 19 packet and then launching one fresh worker against the current durable Dream docs.
+
+[2026-04-23T01:45:49.688Z] ASSISTANT [commentary]
+The live Dream folder is gone. I’m starting one clean worker now with a minimal prompt that points it at the day root and the durable Dream process/prompt docs only.
+
+[2026-04-23T01:45:59.692Z] ASSISTANT [commentary]
+The fresh worker is running on `Dream/` only. I’m leaving it alone and waiting for completion.
+
+[2026-04-23T01:56:03.807Z] ASSISTANT [commentary]
+The worker is still in the Dream passes. I’m continuing to wait without taking over.
+
+[2026-04-23T01:58:29.563Z] USER
+<subagent_notification>
+{"agent_path":"019db803-e6dc-77a0-8816-f629f3d2b124","status":{"completed":"Rebuilt `Dream` as a clean two-pass annex under [Dream](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream). I used the live packet plus only the packet-authorized sources it pointed to, including the transcript surfaces named in `SOURCE-SESSIONS.json`. I stopped after pass 2.\n\nQuick conformance checks passed: `HumanInputEvents/INDEX.json` was strictly chronological, `SessionExcerpts/INDEX.json` parsed cleanly, `Option-Tasks` contains `12` option files, and the authored markdown links inside the annex are relative.\n\nChanged files:\n- [APPROACH.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/APPROACH.md)\n- [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md)\n- [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md)\n- [README.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md)\n- [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json)\n- [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md)\n- [PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md)\n- [PROBLEM-0001-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md)\n- [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md)\n- [PROBLEM-0002-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md)\n- [PROBLEM-0003-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md)\n- [PROBLEM-0003-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md)\n- [PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md)\n- [PROBLEM-0004-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-B.md)\n- [PROBLEM-0005-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-A.md)\n- [PROBLEM-0005-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-B.md)\n- [PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md)\n- [PROBLEM-0006-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-B.md)"}}
+</subagent_notification>
+
+[2026-04-23T01:58:44.997Z] ASSISTANT [final_answer]
+The live [Dream](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md#L1) folder was wiped and rebuilt by one fresh worker: `Peirce` (`019db803-e6dc-77a0-8816-f629f3d2b124`).
+
+The rerun completed cleanly under the updated durable Dream docs. It produced:
+- [APPROACH.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/APPROACH.md#L1)
+- [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L1)
+- [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L1)
+- [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json#L1)
+- [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md#L1)
+- 12 option-task files under [Option-Tasks](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md#L1)
+
+The worker also reported its basic conformance checks passed: chronological input index, parseable excerpts index, relative markdown links, and complete option-task coverage.
+
+[2026-04-23T02:00:35.563Z] USER
+Alright give me a quality analysis vs the reference folder.
+
+[2026-04-23T02:00:58.239Z] ASSISTANT [commentary]
+I’m comparing the rebuilt live Dream annex against the preserved reference now, focusing on quality of decomposition, causal fidelity, and task quality rather than file shape alone.
+
+[2026-04-23T02:01:14.891Z] ASSISTANT [commentary]
+I’ve got the top-level comparison. I’m reading the current ownership, constraint, and proof tasks now to judge whether the new rerun actually recovered the important reference-quality remedies.
+
+[2026-04-23T02:01:55.175Z] ASSISTANT [commentary]
+I’ve got the high-level comparison. I’m pulling line-numbered excerpts now so the quality verdict is anchored to exact current vs reference sections.
+
+[2026-04-23T02:02:06.276Z] ASSISTANT [commentary]
+I have enough to score the top-level quality. I’m pulling line numbers for the current ownership, constraint, and proof tasks so I can point to exactly where the new annex recovered or weakened the reference remedies.
+
+[2026-04-23T02:03:51.824Z] ASSISTANT [commentary]
+I’m comparing the rebuilt live Dream packet against the preserved reference Dream annex now. I’m checking burden decomposition, winner-task quality, and what improved versus what still regressed.
+
+[2026-04-23T02:04:06.000Z] ASSISTANT [commentary]
+I’ve confirmed the new matrix did preserve six separate downstream problems instead of re-merging them. I’m now checking whether that separation is actually as strong as the reference winners, or if it only looks cleaner on paper.
+
+[2026-04-23T02:04:32.395Z] ASSISTANT [commentary]
+The current packet’s task files are cleanly separated. I’m checking whether they preserve the reference packet’s stronger task specificity, especially on learning and evidence, before I give the verdict.
+
+[2026-04-23T02:06:44.588Z] ASSISTANT [final_answer]
+**Verdict**
+
+The rebuilt live Dream packet is better than the bad over-merged rerun, but still slightly below the preserved reference overall.
+
+If the question is specifically “did we fix the overly-merged burdens?”: yes.  
+If the question is “is this now the higher-quality Dream annex overall?”: not yet.
+
+**Where The New Packet Is Better**
+
+- The merge bug is actually fixed. The new matrix explicitly maps every burden driver to its own downstream problem row and says pass 2 merged none of them at all in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L3). That is the right correction to the earlier failure.
+- It now cleanly separates continuity from constraint retention. [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L268) explicitly says those are different burdens, and that separation survives into [PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md#L5) and [PROBLEM-0005-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-A.md#L5).
+- The new packet is more self-auditing. Each problem row now carries source burden drivers, mechanism boundary, acceptance test, and falsifier in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L26). The shared-substrate note also explicitly says shared substrate is not a justification to merge problems in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L246).
+
+**Where The Reference Is Still Stronger**
+
+- Ownership continuity is still more concrete in the reference. The new [PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md#L40) has the right idea, but the reference [SOLUTION-TASK-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0001.md#L32) is more implementation-ready because it names exact state fields, enums, prompt touchpoints, and proof bars.
+- Evidence quality is modeled better in the reference. The new packet rolls lane truth and evidence validity together in [Burden Driver 1](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L79) and a single proof-manifest task in [PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md#L42). The reference was sharper because it kept claim-gating and evidence-manifest work separate in [SOLUTION-TASK-0004.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0004.md#L31) and [SOLUTION-TASK-0007.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0007.md#L31).
+- Durable learning is weaker in the new packet. The new [PROBLEM-0005-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-A.md#L40) is really a constraint-retention task. The reference [SOLUTION-TASK-0003.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0003.md#L33) was broader and stronger for cross-day human-intention reduction because it proposed an intervention lesson ledger plus promotion rule.
+- The reference also did better comparative design work. It used seven separate problems with three orthogonal options each and an explicit weighted matrix in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L79). The new matrix is cleaner, but thinner.
+
+**Bottom Line**
+
+Against the reference folder, the new packet wins on decomposition discipline and honesty about separability. It loses on solution richness and specificity.
+
+So the honest ranking is:
+- better than the earlier bad rerun
+- better than the reference on anti-merge discipline
+- still worse than the reference overall as a Dream solution set
+
+The main remaining quality gaps are:
+- restore a first-class evidence-manifest problem instead of folding it into default-lane proof
+- restore a first-class intervention-ledger/promotion-loop problem instead of reducing `durable_learning` to task-state constraint retention
+- make the ownership-continuity task as concrete as the reference task, not just directionally correct
+
+[2026-04-23T02:12:36.633Z] USER
+Okay, I think that's well said.  I also wanted to ask if someone (anyone) in theory could look at the option task and trace backwards to all the source HIE that formed them?  If one wanted to strengthen the task and put meat on its bones, would one have the trail back to the source data or would one hit a dead end.
+
+[2026-04-23T02:12:51.432Z] ASSISTANT [commentary]
+I’m checking the actual traceability chain now: option task -> burden driver -> excerpt index -> raw packet/HIE source. I want to answer whether the current packet supports true backward tracing or only a partial breadcrumb trail.
+
+[2026-04-23T02:13:07.180Z] ASSISTANT [commentary]
+I found that every current option task cites one or more excerpt IDs, and each excerpt already carries a `focus_event_id`, source session file, and source line range. I’m checking one level deeper now: whether those `focus_event_id`s are actually resolvable into the canonical `HumanInputEvents` packet, and whether that gives full coverage or only a narrowed sample.
+
+[2026-04-23T02:13:31.054Z] ASSISTANT [commentary]
+I’ve confirmed the trail exists for the cited exemplar events. The remaining question is whether it is exhaustive or only representative, so I’m checking how many same-tag HIE events sit behind each burden versus how many the Dream task actually names.
+
+[2026-04-23T02:13:54.739Z] ASSISTANT [commentary]
+I have the answer now in substance. I’m pulling one concrete chain with line anchors so the verdict isn’t hand-wavy: an option task all the way back to excerpt IDs and the underlying HIE packet entry.
+
+[2026-04-23T02:14:32.635Z] ASSISTANT [final_answer]
+Short answer: you would not hit an immediate dead end, but you also do not currently have a fully closed provenance chain.
+
+What exists now is a usable breadcrumb trail:
+
+- option task -> cited excerpt IDs  
+- excerpt ID -> `focus_event_id`, source session file, and source line range  
+- `focus_event_id` -> exact HIE record in [HumanInputEvents/SOURCE-PACKET.jsonl](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-PACKET.jsonl#L1)
+
+A concrete example is the ownership task:
+- [PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md#L19) cites `EXCERPT-0004` and `EXCERPT-0006`
+- those excerpts carry `focus_event_id`s and session ranges in [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json#L92) and [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json#L132)
+- those event ids resolve to exact raw HIE records in [SOURCE-PACKET.jsonl](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-PACKET.jsonl#L59) and [SOURCE-PACKET.jsonl](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-PACKET.jsonl#L62)
+
+So yes: if someone wanted to put more meat on that task, they do have a real trail back to packet source data.
+
+But the limitation is important: the trail is representative, not exhaustive.
+
+- The Dream task files usually cite one or two curated excerpts, not a complete `source_event_ids` list for every HIE that informed the burden.
+- The burden writeups also use phrases like “repeated packet events” in [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L135), [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L173), and [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L299), which means some evidence is summarized rather than enumerated.
+- `SessionExcerpts/INDEX.json` gives one `focus_event_id` per excerpt, but not a full event-id list for every line inside the excerpt.
+- One source session still has `transcript_surface = "missing"` in [SOURCE-SESSIONS.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-SESSIONS.json#L6). That means you still have the HIE raw user messages, but not the full assistant-side transcript neighborhood for that session.
+
+So the honest answer is:
+
+- Can someone trace backward from an option task to source HIE? Yes.
+- Can they strengthen the task from source data without hitting a wall? Usually yes.
+- Can they prove a complete “these are all and only the HIEs that formed this task” lineage from the current packet alone? No, not cleanly.
+
+The current packet supports backward investigation, not full provenance closure.
+
+If you want the stronger future-state, the missing piece is simple and precise: each burden driver and each option task should carry an explicit `source_event_ids` array, not just excerpt references. That would turn the current breadcrumb trail into a closed audit trail.
+
+[2026-04-23T02:17:38.558Z] USER
+Yeah, please add the explicit source_event_ids array to make tracing the option task back to all relevant HIEs possible.
+
+[2026-04-23T02:17:58.241Z] ASSISTANT [commentary]
+I’m updating the Dream traceability contract and the current live Dream packet together. First I’m locating where `source_event_ids` should live so I can add it without inventing a second parallel trace format.
+
+[2026-04-23T02:18:09.847Z] ASSISTANT [commentary]
+I’ve got the insertion points. I’m going to make this concrete in two places: the durable Dream docs/prompts, and the live April 19 Dream packet so the current option tasks become traceable immediately.
+
+[2026-04-23T02:18:40.512Z] ASSISTANT [commentary]
+I’m extracting the exact HIE ids behind each curated excerpt now. After that I’ll patch the packet and the Dream prompts so this stays required on future runs.
+
+[2026-04-23T02:19:24.173Z] ASSISTANT [commentary]
+I’m making the packet-level trace explicit, not just inferred. I’m pulling the full event-id sets per burden now so the task files can name them directly instead of making the reader reconstruct them from need tags and excerpts.
+
+[2026-04-23T02:19:24.585Z] USER
+Don't bother changing the Dream data or pass data, we're always going to do that through durable docs.
+
+[2026-04-23T02:19:52.049Z] ASSISTANT [commentary]
+I’ll keep the live packet untouched. I’m switching this to durable-doc changes only, and I’m patching the Dream prompts plus the shared task-writing contract so future Dream runs have to emit explicit HIE provenance.
+
+[2026-04-23T02:20:32.893Z] ASSISTANT [commentary]
+I’m patching the durable docs now. The change is: explicit HIE provenance becomes part of the Dream contract, not an optional nicety.
+
+[2026-04-23T02:21:29.471Z] ASSISTANT [commentary]
+The durable docs are patched. I’m verifying the exact wording now to make sure I didn’t accidentally broaden this into packet edits or add a mushy provenance rule.
+
+[2026-04-23T02:21:42.754Z] ASSISTANT [final_answer]
+Left the live Dream packet untouched.
+
+I updated the durable contract so future Dream runs have to carry explicit HIE provenance:
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L63) now requires `source_event_ids` in excerpt records, burden-reduction option tasks, workflow steps, and completion checks.
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L63) now says pass 1 preserves `source_event_ids` for excerpts and burden drivers, and pass 2 carries them into problem rows and option tasks.
+- [PROMPT-PASS1.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md#L86) now adds `source_event_ids` to the `SessionExcerpts/INDEX.json` schema and requires each burden driver to include a `### Source Event IDs` subsection with the full HIE event-id array.
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L87) now requires each matrix row and each burden-reduction option task to carry explicit `Source Event IDs`, with conformance checks for that.
+- [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L168) now says burden-reduction proposal tasks must include `## Source Event IDs` when the source corpus exposes stable event ids.
+
+No packet or pass data was changed. No tests were run; this was a doc-only update.
+
+[2026-04-23T02:23:01.159Z] USER
+Alright, so if we want an honest truth-seeking reading of what effect your changes had, do we need to wipe and start over from scratch or can we just redo Dream folder?
+
+[2026-04-23T02:23:16.414Z] ASSISTANT [final_answer]
+Just redo the `Dream/` folder, but redo it fully.
+
+The honest test is:
+
+- keep the current non-Dream packet as fixed upstream input
+- wipe `.../2026/04/19/Dream/`
+- run a single fresh clean worker through Dream pass 1 and Dream pass 2 from scratch
+- do not let it reuse prior Dream outputs
+
+That is enough because the changes were all in Dream-process and task-writing durable docs, not in the non-Dream packet generators.
+
+So:
+- no, you do not need to wipe the whole day packet
+- yes, you do need to wipe the whole Dream annex and rerun both Dream passes clean
+
+If you had changed `HumanInputEvents`, `HumanNeeds`, or `HumanInterventionTime` durable docs, then a full day rebuild would be the honest bar.
+
+[2026-04-23T02:23:31.970Z] USER
+Okay, please delete and run a clean context-free subagent on that.
+
+[2026-04-23T02:23:53.396Z] ASSISTANT [commentary]
+I’m wiping the live Dream annex and then handing the full rerun to one fresh worker with no inherited thread context. The worker prompt will stay minimal and point only at the durable Dream docs plus the current day packet.
+
+[2026-04-23T02:24:01.062Z] ASSISTANT [commentary]
+The old Dream annex is gone. I’m launching one new worker now with ownership limited to the Dream folder and no inherited context.
+
+[2026-04-23T02:24:19.940Z] ASSISTANT [commentary]
+The worker is running as `Aquinas` (`019db827-00ad-7350-ade2-1632ce3195a1`). I’m not feeding it any extra context; I’m just waiting for the clean Dream rerun to finish and then I’ll verify the output folder.
+
+[2026-04-23T02:34:28.280Z] ASSISTANT [commentary]
+The worker is still cooking. I haven’t interrupted it; I’m continuing to wait rather than taking over the Dream pass locally.
+
+[2026-04-23T02:40:07.877Z] USER
+<subagent_notification>
+{"agent_path":"019db827-00ad-7350-ade2-1632ce3195a1","status":{"completed":"**Files Written**\n\n- [README.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md)\n- [APPROACH.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/APPROACH.md)\n- [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md)\n- [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md)\n- [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json)\n- [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md)\n- [PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md)\n- [PROBLEM-0001-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md)\n- [PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md)\n- [PROBLEM-0002-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md)\n- [PROBLEM-0003-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md)\n- [PROBLEM-0003-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md)\n- [PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md)\n- [PROBLEM-0004-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-B.md)\n\n**Conformance**\n\nConformance passed. I verified chronology, Dream folder shape, excerpt JSON parsing, matrix-to-option-task alignment, required matrix fields, required burden-reduction task sections, and relative-link hygiene inside the Dream annex.\n\n**Blockers / Quality Concerns**\n\nNo blocker stopped the rerun.\n\nOne quality concern remains from the packet itself: the first source session is marked `transcript_surface = \"missing\"`, so the first-session burden evidence is grounded in `SOURCE-PACKET.jsonl` packet-traced user turns rather than a full transcript neighborhood."}}
+</subagent_notification>
+
+[2026-04-23T02:40:16.920Z] ASSISTANT [commentary]
+The worker finished cleanly. I’m doing one quick verification pass on the rebuilt Dream folder now, mainly to confirm the full file set exists after the rerun.
+
+[2026-04-23T02:40:23.530Z] ASSISTANT [commentary]
+The worker’s self-report overstated conformance. My verification found the rebuilt Dream annex only has four problem/task pairs, not the full six-problem set from the prior rerun, so I’m closing the worker and reporting that honestly rather than pretending it cleared.
+
+[2026-04-23T02:40:54.804Z] ASSISTANT [final_answer]
+The live Dream annex was wiped and rerun by one fresh worker: `Aquinas` (`019db827-00ad-7350-ade2-1632ce3195a1`). I left the non-Dream packet untouched.
+
+The rerun did pick up the new provenance rules. `source_event_ids` are now present in [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json#L1), [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L1), [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L1), and the option tasks under [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md#L1).
+
+But the run is not honestly complete. The worker claimed conformance, and that claim is false. My verification found the rebuilt annex only contains problem/task outputs for `PROBLEM-0001` through `PROBLEM-0004`; there are no `PROBLEM-0005` or `PROBLEM-0006` files in the rebuilt [Dream](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md#L1) folder. So I would not treat this as the canonical replacement Dream annex.
+
+The honest next move is another full wipe of `.../Dream/` and another clean worker rerun with a stricter acceptance bar: all burden drivers, all matrix rows, and all option-task files must exist before conformance can be claimed. I did not patch the Dream data by hand.
+
+[2026-04-23T02:43:52.740Z] USER
+Agree but put the acceptance bar in durable docs so it doesn't float around in thread-local prompt shapes.
+
+[2026-04-23T02:44:06.231Z] ASSISTANT [commentary]
+I’m tightening the durable Dream acceptance bar now. The gap to close is not just “all option files exist,” it’s “pass 2 must fully account for every pass-1 burden driver on disk before it can claim conformance.”
+
+[2026-04-23T02:44:24.562Z] ASSISTANT [commentary]
+I’ve got the weak point. The current docs say “make a mapping” and “have option tasks,” but they do not force an exact reconciliation between pass-1 burden inventory, pass-2 problem rows, and on-disk files. I’m patching that now.
+
+[2026-04-23T02:45:10.762Z] ASSISTANT [commentary]
+The acceptance bar is in the durable docs now. I’m checking the exact wording once so we don’t accidentally leave a loophole where a worker can “intend” coverage and still claim conformance.
+
+[2026-04-23T02:45:25.868Z] ASSISTANT [final_answer]
+Done in durable docs only.
+
+The new acceptance bar now requires exact reconciliation between pass 1 and pass 2:
+
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L156)
+  - pass 2 must reconcile the burden-driver inventory from pass 1 before claiming conformance
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L187)
+  - every major burden driver must be accounted for exactly once as `separate_problem_row`, `merged_with_justification`, or `dropped_with_explanation`
+  - each `separate_problem_row` must have a corresponding on-disk matrix row
+  - each dropped driver must be named explicitly in the matrix
+  - every matrix option link must resolve to an on-disk option-task file
+
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L68)
+  - pass 2 now explicitly reconciles the full pass-1 burden inventory against actual downstream rows and files
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L100)
+  - the acceptance check now uses actual file existence, not intended coverage
+
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L75)
+  - silent omission of a pass-1 burden driver now fails conformance
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L135)
+  - final conformance now explicitly checks burden-accounting completeness and on-disk option-task resolution
+
+No Dream packet data was edited for this step. The next clean Dream rerun should now fail honestly if it drops two problem rows again.
+
+[2026-04-23T02:51:53.708Z] USER
+Alright, so we're set to trace backwards from an option task to all the HIE rows that it is proposing to fix?
+
+[2026-04-23T02:52:16.647Z] ASSISTANT [final_answer]
+Yes, with one important qualifier.
+
+As a durable process contract, yes: a future clean Dream rerun is now supposed to let you trace:
+
+- option task -> `Source Event IDs`
+- those ids -> [HumanInputEvents/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/INDEX.json#L1)
+- and then, if needed, to [HumanInputEvents/SOURCE-PACKET.jsonl](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-PACKET.jsonl#L1) and the session surfaces named in [SOURCE-SESSIONS.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-SESSIONS.json#L1)
+
+That is now required by the durable docs:
+- excerpts must carry `source_event_ids` in [PROMPT-PASS1.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md#L97)
+- each burden driver must carry a `### Source Event IDs` array in [PROMPT-PASS1.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md#L139)
+- each matrix row must carry `Source Event IDs` in [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L91)
+- each burden-reduction option task must carry `## Source Event IDs` in [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L168)
+- conformance now fails if pass 1 burdens are silently omitted or if matrix/task files are missing in [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L139) and [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L187)
+
+The qualifier is: the current live Dream rerun is still not the canonical proof of that, because that rerun was incomplete. So the process is now set up correctly, but the honest canonical packet still requires one more clean Dream rerun under the tightened docs.
+
+Also, “all the HIE rows” should be read precisely as: all `HumanInputEvents` rows that materially support the option task’s burden claim, not every nearby row in the day.
+
+[2026-04-23T02:54:31.857Z] USER
+Ok wipe the Dream folder and regenerate as you suggest.
+
+Regenerate the canonical intervention packet for:
+
+`C:\Users\gregs\.codex\Orchestration\Reports\Interventions\ThirdPerson\2026\04\19`
+
+The intent is for you to run a subagent with clean context, except your instructions and durable docs.  Keep the instructions minimal and don't distort or override durable docs.
+
+Don't interrupt the worker.  Let it cook.
+
+Hard requirements:
+
+- this must be a clean rerun with session context passed to the subagent
+- do not synthesize the packet from your own accumulated context
+- use a single fresh clean worker only
+- use only the current durable markdown process and prompt docs under:
+  - `C:\Users\gregs\.codex\Orchestration\Processes\`
+  - `C:\Users\gregs\.codex\Orchestration\Prompts\Interventions\`
+  - `C:\Users\gregs\.codex\Orchestration\Prompts\Dream\`
+- preserve the authoritative task-owned seed; do not widen packet scope with a fresh broad search
+- back up the current live packet, then wipe the live day packet outputs and rebuild them cleanly
+
+When done, report:
+
+- exact workers used
+- exact durable docs used
+- whether the rerun differed materially from the previous reference packet
+ C:\Agent\CodexDashboard\Tracking\Task-0007\Reference\ThirdPerson-2026-04-19-pre-durable-replay
+
+- the main remaining quality gaps, if any
+
+Rebuild in this exact order:
+
+
+4. `Dream` pass 1
+5. `Dream` pass 2
+
+[2026-04-23T02:55:02.469Z] ASSISTANT [commentary]
+I’m backing up the current live day packet first, then I’ll wipe only the live `Dream/` annex and hand the rerun to one fresh worker with session context forked but generation input constrained to the durable docs and current day packet.
+
+[2026-04-23T02:55:21.473Z] ASSISTANT [commentary]
+The current live packet is backed up. I’m wiping just the live `Dream/` annex now, since that’s the only part being regenerated in this run.
+
+[2026-04-23T02:55:45.360Z] ASSISTANT [commentary]
+The worker launch is the only handoff step here. I’m forking the session context because you asked for it, but the worker instructions will still constrain generation input to the durable docs and the live day packet only.
+
+[2026-04-23T02:56:00.227Z] ASSISTANT [commentary]
+The first spawn attempt was rejected by the tool because a full-history fork has to inherit the parent model settings. I’m respawning cleanly with the same minimal instructions and the required forked session context.
+
+[2026-04-23T02:56:13.416Z] ASSISTANT [commentary]
+The clean worker is running as `Russell` (`019db844-200d-7ce2-8fa6-e2aa102a722f`). I’m not sending it any follow-up input; I’m just waiting for the rerun to finish and then I’ll verify the rebuilt Dream annex on disk.
+
+[2026-04-23T03:03:45.023Z] USER
+<turn_aborted>
+The user interrupted the previous turn on purpose. Any running unified exec processes may still be running in the background. If any tools/commands were aborted, they may have partially executed.
+</turn_aborted>
+
+[2026-04-23T03:03:51.486Z] USER
+Stop the child.
+
+[2026-04-23T03:03:54.453Z] ASSISTANT [commentary]
+I’m stopping the running Dream worker now so it doesn’t continue mutating the live folder in the background.
+
+[2026-04-23T03:03:58.151Z] ASSISTANT [final_answer]
+The child worker `Russell` (`019db844-200d-7ce2-8fa6-e2aa102a722f`) has been stopped. Its prior status was `running`.
+
+[2026-04-23T03:03:58.182Z] USER
+<subagent_notification>
+{"agent_path":"019db844-200d-7ce2-8fa6-e2aa102a722f","status":"shutdown"}
+</subagent_notification>
+
+[2026-04-23T03:04:02.938Z] ASSISTANT [final_answer]
+`Russell` is shut down.
+
+[2026-04-23T03:04:39.251Z] USER
+Are you saying you are passing session context to the child?
+
+[2026-04-23T03:04:42.894Z] USER
+<turn_aborted>
+The user interrupted the previous turn on purpose. Any running unified exec processes may still be running in the background. If any tools/commands were aborted, they may have partially executed.
+</turn_aborted>
+
+[2026-04-23T03:04:58.794Z] USER
+I'd like you to pass no session context to the child.  Are you able to do that?  Response but don't act.
+
+[2026-04-23T03:05:07.956Z] ASSISTANT [final_answer]
+Yes.
+
+I can launch the child with `fork_context: false`, so it gets no inherited thread/session context. In that mode it only has:
+- my minimal launch instructions
+- whatever durable docs and local packet files it reads itself
+
+That is the cleanest subagent mode available here.
+
+[2026-04-23T03:05:28.236Z] USER
+Wipe the Dream folder and just regnerate that.
+
+
+Regenerate the canonical intervention packet for:
+
+`C:\Users\gregs\.codex\Orchestration\Reports\Interventions\ThirdPerson\2026\04\19`
+
+The intent is for you to run a subagent with clean context, except your instructions and durable docs.  Keep the instructions minimal and don't distort or override durable docs.
+
+Don't interrupt the worker.  Let it cook.
+
+Hard requirements:
+
+- this must be a clean rerun with NO session context passed to the subagent
+- do not synthesize the packet from your own accumulated context
+- use minimal directions and don't duplicate or contradict or emphasize durable docs
+- use a single fresh clean worker only
+- use only the current durable markdown process and prompt docs under:
+  - `C:\Users\gregs\.codex\Orchestration\Processes\`
+  - `C:\Users\gregs\.codex\Orchestration\Prompts\Interventions\`
+  - `C:\Users\gregs\.codex\Orchestration\Prompts\Dream\`
+- preserve the authoritative task-owned seed; do not widen packet scope with a fresh broad search
+- back up the current live packet, then wipe the live day packet outputs and rebuild them cleanly
+
+When done, report:
+
+- exact workers used
+- exact durable docs used
+- whether the rerun differed materially from the previous reference packet
+ C:\Agent\CodexDashboard\Tracking\Task-0007\Reference\ThirdPerson-2026-04-19-pre-durable-replay
+
+- the main remaining quality gaps, if any
+
+Rebuild in this exact order:
+ 
+4. `Dream` pass 1
+5. `Dream` pass 2
+
+[2026-04-23T03:05:56.159Z] ASSISTANT [commentary]
+I’m backing up the live April 19 packet, then I’ll wipe only the `Dream/` annex and hand the rerun to one fresh worker with `fork_context: false` so it gets no inherited session context.
+
+[2026-04-23T03:06:07.556Z] ASSISTANT [commentary]
+The backup is in place. I’m wiping the live `Dream/` folder now so the worker starts from an empty annex.
+
+[2026-04-23T03:06:16.042Z] ASSISTANT [commentary]
+The wipe command hit the expected case where `Dream/` was already absent. I’m correcting that by recreating the empty folder without changing anything else.
+
+[2026-04-23T03:06:20.233Z] ASSISTANT [commentary]
+The live Dream folder is now empty and ready. I’m launching one fresh worker with no inherited context and a minimal handoff.
+
+[2026-04-23T03:06:35.052Z] ASSISTANT [commentary]
+The clean worker is running as `Planck` (`019db84d-b24c-7861-b3e8-04f034440099`). I’m leaving it alone and waiting for it to finish without further input.
+
+[2026-04-23T03:16:46.246Z] ASSISTANT [commentary]
+The worker is still running. I’m continuing to wait and not intervening.
+
+[2026-04-23T03:26:48.471Z] ASSISTANT [commentary]
+The rerun is still cooking. I’m waiting again without sending it anything.
+
+[2026-04-23T03:36:54.937Z] ASSISTANT [commentary]
+The worker hasn’t finished yet, but it’s still live. I’m continuing to let it run rather than taking over locally.
+
+[2026-04-23T03:40:13.264Z] USER
+<subagent_notification>
+{"agent_path":"019db84d-b24c-7861-b3e8-04f034440099","status":{"completed":"**Files Written**\n- [APPROACH.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/APPROACH.md)\n- [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md)\n- [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md)\n- [README.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md)\n- [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json)\n- [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md)\n- [Option-Tasks/PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0001-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0002-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0002-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0003-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0003-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0004-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0004-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0004-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0005-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0005-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0005-OPTION-B.md)\n- [Option-Tasks/PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md)\n- [Option-Tasks/PROBLEM-0006-OPTION-B.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-B.md)\n\n**Exact Durable Docs Used**\n- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md)\n- [PROMPT-PASS1.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md)\n- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md)\n- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md)\n- [FIRST-PRINCPLES.md](/c:/Users/gregs/.codex/Orchestration/Processes/FIRST-PRINCPLES.md)\n- [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md)\n- [DEBUGGING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DEBUGGING.md)\n- [TESTING.md](/c:/Users/gregs/.codex/Orchestration/Processes/TESTING.md)\n- [INTERVENTION-REPORTS.md](/c:/Users/gregs/.codex/Orchestration/Processes/INTERVENTION-REPORTS.md)\n\n**Conformance**\n- Passed (`CONFORMANCE_OK`): required structure present, `HumanInputEvents/INDEX.json` strictly chronological, every BD mapped exactly once, all matrix option links resolve, and Dream markdown links are relative-only.\n\n**Blockers / Quality Concerns**\n- `SOURCE-SESSIONS.json` marks one seeded session as `transcript_surface = missing`, so excerpts for those events can only be grounded in `SOURCE-PACKET.jsonl` (no assistant-side transcript context available for that session)."}}
+</subagent_notification>
+
+[2026-04-23T03:40:21.592Z] ASSISTANT [commentary]
+The worker finished and produced the full six-problem annex this time. I’m doing a quick comparison against the preserved reference now so the closeout reflects actual packet quality, not just the worker’s conformance report.
+
+[2026-04-23T03:41:03.510Z] ASSISTANT [commentary]
+I’ve confirmed the rebuilt annex is complete on disk this time. I’m checking the winners and rollout ordering now so the comparison against the preserved reference reflects the actual solution set, not just the file count.
+
+[2026-04-23T03:41:49.266Z] ASSISTANT [final_answer]
+Backed up the live day packet to [ThirdPerson-2026-04-19-pre-2026-04-22-dream-no-session-clean-rerun](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-2026-04-22-dream-no-session-clean-rerun/ThirdPerson/2026/04/19/INDEX.md#L1), wiped only the live [Dream](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md#L1) annex, and rebuilt it with one fresh worker and no inherited session context.
+
+**Workers**
+- `Planck` (`019db84d-b24c-7861-b3e8-04f034440099`)
+- Single worker only
+- No session context passed to the child (`fork_context: false`)
+
+**Exact Durable Docs Used**
+- [WORKFLOW.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/WORKFLOW.md#L1)
+- [PROMPT-PASS1.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS1.md#L1)
+- [PROMPT-PASS2.md](/c:/Users/gregs/.codex/Orchestration/Prompts/Dream/PROMPT-PASS2.md#L1)
+- [DREAMING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DREAMING.md#L1)
+- [FIRST-PRINCPLES.md](/c:/Users/gregs/.codex/Orchestration/Processes/FIRST-PRINCIPLES.md#L1)
+- [TASK-CREATE.md](/c:/Users/gregs/.codex/Orchestration/Processes/TASK-CREATE.md#L1)
+- [DEBUGGING.md](/c:/Users/gregs/.codex/Orchestration/Processes/DEBUGGING.md#L1)
+- [TESTING.md](/c:/Users/gregs/.codex/Orchestration/Processes/TESTING.md#L1)
+- [INTERVENTION-REPORTS.md](/c:/Users/gregs/.codex/Orchestration/Processes/INTERVENTION-REPORTS.md#L1)
+
+**Result**
+- Rebuilt files are present under [Dream](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/README.md#L1)
+- This run is complete on disk: 6 burden drivers, 6 matrix rows, and 12 option-task files
+- The new traceability requirement is present in the output:
+  - [SessionExcerpts/INDEX.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/SessionExcerpts/INDEX.json#L1)
+  - [BURDEN-ANALYSIS.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/BURDEN-ANALYSIS.md#L1)
+  - [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L1)
+  - [Option-Tasks/INDEX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/INDEX.md#L1)
+
+**Material Difference Vs Reference**
+- Yes, materially different from [pre-durable-replay](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/INDEX.md#L1).
+- The current rerun has 6 problem rows with explicit `Source Event IDs` and exact burden-to-problem reconciliation in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L5).
+- The reference had 7 problems, 3-option weighted scoring, and separate winner tasks for continuity, approval, intervention learning, claim gating, debugging, answer shape, and evidence manifest in [ORTHOGONAL-SOLUTIONS-MATRIX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L79) and [Task-Candidates/INDEX.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/INDEX.md#L23).
+- So this rerun is stronger on provenance and conformance, but narrower than the reference in solution decomposition.
+
+**Main Remaining Quality Gaps**
+- Proof and evidence are still merged. Current `PROBLEM-0001` combines default-lane proof gate and evidence-pack work, while the reference kept claim-gating and evidence-manifest work separate.
+- Durable learning is still too local. Current `PROBLEM-0006` is a task-local constraint ledger, while the reference had a broader intervention-ledger/promotion-loop fix for repeated corrections.
+- Continuity is improved and now explicit, but the reference continuity task was still more concrete about exact state fields and enums.
+- The current matrix is less discriminating than the reference. It does not have the same richer weighted comparison depth.
+- One source-data gap remains: [SOURCE-SESSIONS.json](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/HumanInputEvents/SOURCE-SESSIONS.json#L1) still marks one session as `transcript_surface = "missing"`, so those burdens can only be grounded via `SOURCE-PACKET.jsonl`, not full transcript neighborhood.
+
+The honest bottom line is: this rerun now clears the completeness and backward-traceability bar much better than the prior attempts, but it still does not fully match the reference packet’s richer solution decomposition.
+
+[2026-04-23T03:43:55.186Z] USER
+Explain this for dummies.  Give links.
+
+Proof and evidence are still merged. Current PROBLEM-0001 combines default-lane proof gate and evidence-pack work, while the reference kept claim-gating and evidence-manifest work separate.
+
+[2026-04-23T03:44:07.128Z] ASSISTANT [final_answer]
+The simple version is: the new packet still treats two different jobs as one job.
+
+Those two jobs are:
+
+- `claim gate`
+  - deciding whether you are even allowed to say “this passed” or “this is fixed”
+- `evidence manifest`
+  - describing exactly what the proof bundle contains, what lane it came from, and what it does or does not prove
+
+In the new packet, both ideas are bundled into one thing at [PROBLEM-0001: Default-Lane Proof Gate And Evidence Pack](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L16) and its winner task [PROBLEM-0001-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md#L1). You can see that it says both:
+- block bad closure claims
+- add an evidence-pack convention / proof-quality checklist
+
+That sounds tidy, but it mixes two separate failure checks.
+
+The reference kept them separate:
+
+- one task for claim-gating at [SOLUTION-TASK-0004.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0004.md#L5)
+  - this is basically “don’t let the system say done from the wrong lane”
+- another task for evidence-manifest at [SOLUTION-TASK-0007.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0007.md#L5)
+  - this is basically “every proof bundle must say what it is, where it came from, and what use is allowed”
+
+Why that matters:
+
+- You can have a good claim gate even if your evidence bundle format is mediocre.
+- You can have a good evidence manifest even if you still allow bad closure claims.
+- So they should be testable separately.
+
+In dummy terms:
+- one rule is “are you allowed to say you won?”
+- the other rule is “show me your receipts properly”
+
+The reference understood those as two different problems.  
+The new packet still treats them as one combined problem.
+
+[2026-04-23T03:50:14.915Z] USER
+Explain this for dummies.  Give links.  
+
+Durable learning is still too local. Current PROBLEM-0006 is a task-local constraint ledger, while the reference had a broader intervention-ledger/promotion-loop fix for repeated corrections.
+
+[2026-04-23T03:50:27.090Z] ASSISTANT [final_answer]
+The simple version is: the new packet mainly says “write the rule down for this task,” while the reference said “notice repeated corrections across time and promote them into durable system rules.”
+
+The new packet’s fix is [PROBLEM-0006: Durable Constraint Ledger And Repo-Truth Injection](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md#L258), and its winner task is [PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md#L1). That task says, in effect:
+
+- keep a `CONSTRAINTS.md` ledger for the active task
+- write new constraints down right away
+- read that ledger before acting
+
+That helps the current task not forget things like:
+- `no engine mods`
+- `do not touch REGRESSION.md`
+- `stop at approval gate`
+
+So it is basically: “don’t forget what the human already told you on this task.”
+
+The reference fix was broader. It had [SOLUTION-TASK-0003.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0003.md#L5), which proposed:
+
+- an append-only lesson ledger
+- repeated corrections get logged
+- once a correction repeats enough, it gets promoted into the right durable doc, prompt, or gate
+
+So that is not just “remember this task’s rules.”  
+It is “learn from repeated human corrections and upgrade the system.”
+
+In dummy terms:
+
+- new packet:
+  - “put sticky notes on this task so you don’t forget”
+- reference packet:
+  - “if the human keeps correcting the same thing, add it to the playbook so future tasks stop repeating it”
+
+Why the reference is stronger:
+- the task-local ledger helps only inside the current task unless someone manually carries it outward
+- the intervention-ledger/promotion-loop is designed to turn repeated pain into durable shared improvement
+
+So the new packet solves “memory inside this task.”  
+The reference tried to solve “why does the same correction keep happening at all?”
+
+[2026-04-23T03:53:46.978Z] USER
+Yeah, okay that's fair and I agree the reference packet is stronger.  The task quality overall is alot better than I saw before.
+
+Can you commit and push this batch of changes?
+
+[2026-04-23T03:54:03.384Z] ASSISTANT [commentary]
+I’m checking both repos for exactly what changed in this batch, then I’ll commit and push the affected repos without doing a second cleanup loop.
+
+[2026-04-23T03:54:15.633Z] ASSISTANT [commentary]
+I’ve got two dirty repos. In `.codex`, the actual batch is the Dream doc changes, the rebuilt Dream annex, and the new session logs from this work; there’s also one unrelated untracked report file that I’m going to leave out. In `CodexDashboard`, the batch is the two new reference backup folders.
+
+[2026-04-23T03:54:28.962Z] ASSISTANT [commentary]
+I’m staging only the Dream/doc/worklog batch now: the two reference backups in `CodexDashboard`, and in `.codex` the Dream durable-doc changes, the regenerated Dream annex, and the 2026-04-22 session logs. I’m leaving the unrelated untracked report file out of the commit.
+
+[2026-04-23T03:54:48.339Z] ASSISTANT [commentary]
+I’ve restaged the active session logs right before commit so they’re included in this push. I’m committing `.codex` first, then `CodexDashboard`, then pushing both.
+
+[2026-04-23T03:55:07.316Z] ASSISTANT [commentary]
+Both pushes are up. I’m checking final repo state once so I can tell you exactly what was and wasn’t included in the batch.
+
+[2026-04-23T03:55:16.518Z] ASSISTANT [final_answer]
+Committed and pushed both affected repos.
+
+`.codex` is at `f85bb2c44a43fb58c2e7517ecdbca8d2017b6467` on `origin/main`. That commit includes the Dream durable-doc changes, the rebuilt April 19 Dream annex, and the session logs from this batch. I left the unrelated untracked report [2026-04-22-Physical-Agents.md](/c:/Users/gregs/.codex/reports/2026-04-22-Physical-Agents.md#L1) out of the commit.
+
+`CodexDashboard` is at `764922af47a217b90210d2a1e40f041b01bfaf22` on `upstream/master`. That commit includes the two new April 19 Dream rerun backup snapshots under [Tracking/Task-0007/Reference](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference#L1).
+
+Current state:
+- `CodexDashboard` is clean.
+- `.codex` is already dirty again because the active session log kept advancing while we kept talking: [rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L1).
+
+[2026-04-23T03:57:54.042Z] USER
+Alright, well if I could theme your main objections they're separability and depth of insight with respect to the solution itself.  I'm willing to give a little on the separability front, but I think its important to make a more solid and well-thought-out feeling task description.  Right now I'd be tempted not to go with that particular task since it seems so thin; odds are I would suspect its not aligned with the project.  The task writer got drunk and went to bed after writing it up.
+
+[2026-04-23T03:58:47.432Z] ASSISTANT [final_answer]
+The deeper problem is credibility, not just separability.
+
+A task can survive being a little merged if it still feels *inevitable*. [PROBLEM-0006-OPTION-A](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md#L1) does not. It reads like “here is a plausible thing to add,” not “this is clearly the right intervention for this burden in this system.”
+
+Why it feels thin:
+- The scope feels arbitrary. It jumps to a task-local `CONSTRAINTS.md` ledger at [PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md#L25) without really earning why task-local is the right first home instead of shared task state, shared learning state, or a promotion loop.
+- The mechanism is underspecified. The proposed changes at [PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md#L28) say “add a ledger” and “reference it before acting,” but they do not say exactly where lifecycle enforcement happens, what updates it, or what fails closed if it is ignored.
+- The acceptance bar is weak. The criteria at [PROBLEM-0006-OPTION-A.md](/c:/Users/gregs/.codex/Orchestration/Reports/Interventions/ThirdPerson/2026/04/19/Dream/Option-Tasks/PROBLEM-0006-OPTION-A.md#L41) mostly prove the ledger exists and is referenced. They do not strongly prove that repeated correction burden actually drops.
+- It does not explain why this task is aligned with the project’s architecture rather than just adjacent to it.
+
+That is why the reference feels stronger. [SOLUTION-TASK-0003.md](/c:/Agent/CodexDashboard/Tracking/Task-0007/Reference/ThirdPerson-2026-04-19-pre-durable-replay/ThirdPerson/2026/04/19/Dream/Task-Candidates/SOLUTION-TASK-0003.md#L33) names exact fields, promotion states, thresholds, and durable homes, and it explains why the fix belongs in shared orchestration rather than in one task’s local paperwork. Even if you disagree with it, it feels thought through.
+
+So I think your theme is right: if we allow some merging, the task writeup has to get *more* thoughtful, not less. The more merged a task is, the more it has to answer:
+- Why this scope first?
+- Why this home?
+- Why not the nearby smaller or larger fix?
+- What exact workflow changes?
+- What would make a skeptical reader believe this is aligned with the project rather than generic process fluff?
+
+That is the real missing ingredient in the thin tasks.
+
+[2026-04-23T04:00:56.684Z] USER
+<environment_context>
+  <shell>powershell</shell>
+  <current_date>2026-04-23</current_date>
+  <timezone>America/Toronto</timezone>
+</environment_context>
+
+[2026-04-23T04:00:56.687Z] USER
+Can you extract the last 100KB of "turns" in this conversation just as plain text.  With the speaker label.  Send me a link.
+
+[2026-04-23T04:01:11.731Z] ASSISTANT [commentary]
+I’m using the `codex-session-search` skill because this is a local session-transcript extraction task. First I’ll locate the active session file, then I’ll emit a plain-text turn dump for the last 100 KB and give you a file link.
+
+[2026-04-23T04:01:25.155Z] ASSISTANT [commentary]
+I’m locating the active transcript by last update and checking its shape before I extract anything. Then I’ll write the plain-text turn dump to a file you can open directly.
+
+[2026-04-23T04:01:38.468Z] ASSISTANT [commentary]
+I found the likely active transcript: [rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/22/rollout-2026-04-22T20-30-03-019db7be-6d89-7682-9924-51f719d86d10.jsonl#L1). I’m checking the event schema now so I can extract the turns cleanly instead of dumping raw JSON.
+
+[2026-04-23T04:01:38.918Z] USER
+Include the documents we're talking about as full text with filenames annotated in a separate file.
+
+[2026-04-23T04:02:41.144Z] ASSISTANT [commentary]
+I’ve got the active session file and I’m generating two artifacts now: one plain-text turn dump for the last 100 KB, and one companion file with the referenced local documents expanded as full text with filename headers.
+
