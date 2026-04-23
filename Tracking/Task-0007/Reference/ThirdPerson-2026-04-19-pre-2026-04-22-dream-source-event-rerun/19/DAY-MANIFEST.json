@@ -1,0 +1,34 @@
+{
+  "schema_version": "interventions.day_manifest.v0",
+  "repo": "ThirdPerson",
+  "local_date": "2026-04-19",
+  "packet_root": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19",
+  "domains": {
+    "HumanInputEvents": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19\\HumanInputEvents",
+    "HumanNeeds": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19\\HumanNeeds",
+    "HumanInterventionTime": "C:\\Users\\gregs\\.codex\\Orchestration\\Reports\\Interventions\\ThirdPerson\\2026\\04\\19\\HumanInterventionTime"
+  },
+  "canonical_outputs": {
+    "HumanInputEvents": [
+      "SOURCE-PACKET.jsonl",
+      "SOURCE-SESSIONS.json",
+      "INDEX.json",
+      "PROMPT-INPUT.md"
+    ],
+    "HumanNeeds": [
+      "PACKET-TRIAGE.json",
+      "PACKET-RECORD.json",
+      "REPRESENTATIVE-EVENTS.json",
+      "PROMPT-INPUT.md",
+      "LOCAL-CONTEXT.json"
+    ],
+    "HumanInterventionTime": [
+      "EVENT-MEASUREMENTS.jsonl",
+      "STALL-EVENTS.json",
+      "SUMMARY.json",
+      "PROMPT-INPUT.md",
+      "LOCAL-CONTEXT.json"
+    ]
+  },
+  "regenerated_at": "2026-04-22T20:03:16.2954345-04:00"
+}

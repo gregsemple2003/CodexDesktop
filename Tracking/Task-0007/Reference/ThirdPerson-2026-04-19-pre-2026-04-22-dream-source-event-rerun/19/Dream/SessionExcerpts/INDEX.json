@@ -1,0 +1,220 @@
+{
+  "schema_version": "dream.session_excerpts.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "excerpt_count": 6,
+  "excerpts": [
+    {
+      "excerpt_id": "EXCERPT-0001",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "source_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3392",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3473",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3482"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 3325,
+      "source_line_end": 3482,
+      "reason_kept": "The packet-traced first-session turns show the human forcing proof back onto the default lane after a false regression claim.",
+      "entries": [
+        {
+          "source_line": 3325,
+          "role": "user",
+          "excerpt": "Task failed my basic regression test. I booted Development Editor and see an invisible pawn. Why did you not see this when you ran a regression test?"
+        },
+        {
+          "source_line": 3392,
+          "role": "user",
+          "excerpt": "STOP. I asked you a question."
+        },
+        {
+          "source_line": 3431,
+          "role": "user",
+          "excerpt": "Regression must exercise the human default lane, not just whatever one-off you're working on. Agree or disagree?"
+        },
+        {
+          "source_line": 3473,
+          "role": "user",
+          "excerpt": "We require regression tests to use the human default lane. The operator can use a different lane, but that does not substitute as proof of regression."
+        },
+        {
+          "source_line": 3482,
+          "role": "user",
+          "excerpt": "Propose durable fix."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0002",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+      "source_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4399",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4522",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4571"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 4379,
+      "source_line_end": 4571,
+      "reason_kept": "These packet-traced turns show approval breaking down because the reply surface lacked diffs, links with context, and visible pass structure.",
+      "entries": [
+        {
+          "source_line": 4379,
+          "role": "user",
+          "excerpt": "I don't have a diff for PLAN.md so how am I supposed to approve."
+        },
+        {
+          "source_line": 4399,
+          "role": "user",
+          "excerpt": "Give me links."
+        },
+        {
+          "source_line": 4421,
+          "role": "user",
+          "excerpt": "Put all new work under a new pass."
+        },
+        {
+          "source_line": 4512,
+          "role": "user",
+          "excerpt": "For later analysis: the dropped ball here is that the model has no idea to reconstruct a human-suitable diff. No links. Links without context. Links to headers with no indication of what changed."
+        },
+        {
+          "source_line": 4522,
+          "role": "user",
+          "excerpt": "Where is pass 6?"
+        },
+        {
+          "source_line": 4571,
+          "role": "user",
+          "excerpt": "WHERE ARE THE NEW PASSES"
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0003",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5001",
+      "source_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5001",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5010",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5020",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5030",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5073",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 5001,
+      "source_line_end": 5090,
+      "reason_kept": "The packet-traced runtime-feet exchange shows repeated direct-answer repair requests after the reply drifted away from the exact question.",
+      "entries": [
+        {
+          "source_line": 5001,
+          "role": "user",
+          "excerpt": "Use small words. Were the feet distorted in your analysis or not?"
+        },
+        {
+          "source_line": 5010,
+          "role": "user",
+          "excerpt": "Incorrect. Does the original screenshot I just gave you show rounded feet or not?"
+        },
+        {
+          "source_line": 5020,
+          "role": "user",
+          "excerpt": "I didn't say the mesh is deformed. I asked if the feet were distorted."
+        },
+        {
+          "source_line": 5030,
+          "role": "user",
+          "excerpt": "Use small words. Why?"
+        },
+        {
+          "source_line": 5073,
+          "role": "user",
+          "excerpt": "Now answer my questions."
+        },
+        {
+          "source_line": 5090,
+          "role": "user",
+          "excerpt": "I'm asking if the geometry of the foot is wrong. Not just in that picture. Stop evading the question."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0004",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl",
+      "source_line_start": 4429,
+      "source_line_end": 4433,
+      "reason_kept": "This transcript neighborhood shows a confident checkpoint immediately followed by a reopen for planning only, which is why the packet later treats ownership and stop-state as burden.",
+      "entries": [
+        {
+          "source_line": 4429,
+          "role": "assistant",
+          "excerpt": "The remaining editor PIE gate is cleared ... durable closure is updated ... I committed and pushed the checkpoint."
+        },
+        {
+          "source_line": 4432,
+          "role": "user",
+          "excerpt": "Reopen Task-0006 immediately ... the human default lane still fails the acceptance bar: the pawn appears present but animation is not proven working to human satisfaction. Do not implement a fix yet. This is a research and planning gate only."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0005",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl",
+      "source_line_start": 6555,
+      "source_line_end": 7039,
+      "reason_kept": "The lead session shows two separate moments where a checkpoint or stop was followed by a human wake-up to continue owned work and keep the goal post on the runtime lane.",
+      "entries": [
+        {
+          "source_line": 6555,
+          "role": "assistant",
+          "excerpt": "Replacement evidence is now task-owned and pushed ... corrected root cause ... I updated BUG-0004, HANDOFF, and TASK-STATE accordingly."
+        },
+        {
+          "source_line": 6558,
+          "role": "user",
+          "excerpt": "Continue Task-0006 PASS-0009 now ... update durable artifacts immediately ... keep the goal post pinned to the human default runtime lane only."
+        },
+        {
+          "source_line": 7035,
+          "role": "assistant",
+          "excerpt": "PASS-0009 is still open ... the simple runtime retune helped but did not fix the human default lane ... the remaining seam is now the single-node runtime animation contract."
+        },
+        {
+          "source_line": 7038,
+          "role": "user",
+          "excerpt": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0006",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "source_event_ids": [
+        "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446"
+      ],
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl",
+      "source_line_start": 7446,
+      "source_line_end": 7447,
+      "reason_kept": "The late-session debugging directive turns a vague 'make it look better' effort into an explicit first-disagreement tracing method with concrete acceptable seams.",
+      "entries": [
+        {
+          "source_line": 7446,
+          "role": "user",
+          "excerpt": "Identify the first concrete disagreement in runtime default-lane state, then trace that exact bad state upstream through the code and data that write or advance it until root cause is proven."
+        }
+      ]
+    }
+  ]
+}

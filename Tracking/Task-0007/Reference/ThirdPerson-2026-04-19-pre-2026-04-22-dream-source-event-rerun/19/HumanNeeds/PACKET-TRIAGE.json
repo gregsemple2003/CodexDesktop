@@ -1,0 +1,81 @@
+{
+  "schema_version": "needs.packet.triage.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Summarize the recurring human needs behind the April 19 ThirdPerson intervention packet without widening beyond the seeded scope.",
+  "needs": [
+    {
+      "need_id": "need-001",
+      "label": "Default-lane truthful proof",
+      "description": "The human needs regression claims, screenshots, and closeout proof to stay anchored to the repo-defined human default lane instead of automation-only or non-default surrogates.",
+      "weight": 5,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-002",
+      "label": "Persistent ownership and continuity",
+      "description": "The human needs the system to keep working under its own ownership, resume dropped work without prompting, and avoid offloading intermediate failure back to the human.",
+      "weight": 5,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "need-003",
+      "label": "Direct answer discipline",
+      "description": "The human needs explicit questions answered directly, briefly, and in the requested shape without evasion, deflection, or unnecessary reframing.",
+      "weight": 4,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-004",
+      "label": "Approval-ready review surface",
+      "description": "The human needs plan and pass changes presented with diffs, links, and enough context to approve them quickly instead of reconstructing the state by hand.",
+      "weight": 4,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "need-005",
+      "label": "Root-cause debugging discipline",
+      "description": "The human needs the system to follow the first-disagreement, repo-local debugging method rather than bounded tweaks, surface polish, or symptom-only adjustments.",
+      "weight": 4,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "need-006",
+      "label": "Durable constraint retention",
+      "description": "The human needs new constraints, local wording rules, and pass-structure decisions to become durable state immediately so they do not need to be restated.",
+      "weight": 3,
+      "preventability_score": 4
+    }
+  ],
+  "suffering_signals": [
+    {
+      "label": "time loss and repeated correction",
+      "basis": "OBSERVED repeated messages about wasted time, repeated fixes, and reopening after claimed closure.",
+      "severity": "high"
+    },
+    {
+      "label": "trust erosion from invalid proof",
+      "basis": "OBSERVED rejection of screenshots, non-default evidence, and unsupported closure claims.",
+      "severity": "high"
+    },
+    {
+      "label": "approval friction",
+      "basis": "OBSERVED complaints that diffs, links, and pass visibility were missing or unusable.",
+      "severity": "medium"
+    },
+    {
+      "label": "supervision burden",
+      "basis": "INFERRED from repeated wake-up, ownership, and keep-working directives.",
+      "severity": "high"
+    }
+  ],
+  "highest_leverage_context_to_fetch": [],
+  "clarifying_question": {
+    "needed": false,
+    "question": null,
+    "reason": "The packet already converges on recurring failure modes without a blocking ambiguity."
+  },
+  "risk_notes": [
+    "One authoritative source session is transcript_surface=missing, so packet understanding for those events stays closer to source-packet text than full transcript context.",
+    "Repo-local constraints were loaded from the current ThirdPerson docs on disk; those docs may be slightly newer than the packet day itself."
+  ]
+}

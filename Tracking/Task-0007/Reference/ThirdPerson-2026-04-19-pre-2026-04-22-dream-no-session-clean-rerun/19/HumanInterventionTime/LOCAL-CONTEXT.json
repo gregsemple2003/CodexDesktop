@@ -1,0 +1,58 @@
+{
+  "scope": {
+    "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+    "repo_ref": "C:\\Agent\\ThirdPerson",
+    "local_date": "2026-04-19",
+    "timezone": "America/Toronto"
+  },
+  "measurement_parameters": {
+    "typing_rate_chars_per_second": 4.0,
+    "stall_grace_seconds": 60,
+    "manual_chars_source_priority": [
+      "parsed_envelope.request_text",
+      "raw_text"
+    ],
+    "stall_attribution_mode": "conservative"
+  },
+  "classification_hints": {
+    "wake_up_patterns": [
+      "wake up",
+      "continue",
+      "keep working",
+      "you stopped",
+      "don't stop",
+      "resume",
+      "still there",
+      "why did you stop"
+    ],
+    "meaningful_ai_activity_response_item_types": [
+      "message",
+      "reasoning",
+      "function_call",
+      "function_call_output"
+    ],
+    "meaningful_ai_activity_event_types": [
+      "agent_message",
+      "exec_command_begin",
+      "exec_command_end",
+      "collab_spawn_start",
+      "collab_spawn_end",
+      "collab_resume_end",
+      "task_started",
+      "task_complete"
+    ],
+    "non_meaningful_event_types": [
+      "token_count"
+    ]
+  },
+  "input_packet": {
+    "source_packet_path": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-PACKET.jsonl",
+    "source_sessions_path": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-SESSIONS.json"
+  },
+  "notes": [
+    "Use parsed_envelope.request_text when present to estimate manually typed characters.",
+    "Charge stall loss only when the human input is primarily a prod after AI inactivity and the AI was not explicitly waiting on the human.",
+    "If stall attribution is ambiguous, set stall_loss_seconds to 0 and record the ambiguity in notes.",
+    "Normalized to the shared durable intervention-time baseline on 2026-04-22: typing_rate_chars_per_second=4.0 and stall_grace_seconds=60 unless a stronger packet-specific override exists."
+  ]
+}
