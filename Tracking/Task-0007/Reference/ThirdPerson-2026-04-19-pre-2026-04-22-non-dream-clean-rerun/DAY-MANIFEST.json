@@ -1,0 +1,206 @@
+{
+  "schema_version": "intervention_day.manifest.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo": "ThirdPerson",
+  "repo_ref": "c:\\agent\\thirdperson",
+  "local_date": "2026-04-19",
+  "timezone": "America/Toronto",
+  "generated_at_utc": "2026-04-22T22:44:47.526864Z",
+  "seed_inputs": {
+    "task_seed_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007",
+    "source_packet_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-PACKET.jsonl",
+    "source_sessions_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-SESSIONS.json",
+    "intervention_time_local_context_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInterventionTime\\04\\19\\LOCAL-CONTEXT.json"
+  },
+  "durable_docs_used": [
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\INTERVENTION-REPORTS.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanInputEvents\\WORKFLOW.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanInputEvents\\PROMPT.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanNeeds\\WORKFLOW.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanNeeds\\PROMPT.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanInterventionTime\\WORKFLOW.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanInterventionTime\\PROMPT.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Interventions\\HumanInterventionTime\\DISPATCH-PATTERN.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\DREAMING.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\WORKFLOW.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\PROMPT-PASS1.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Prompts\\Dream\\PROMPT-PASS2.md",
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\TASK-CREATE.md"
+  ],
+  "missing_durable_docs": [
+    "C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\FIRST-PRINCIPLES.md"
+  ],
+  "source_sessions": [
+    {
+      "session_id": "019da198-ea2f-7421-8adc-c566da0b6121",
+      "thread_name": "Implement task 6 workflow",
+      "session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "exists": false,
+      "parts_exists": false,
+      "used_for_rerun": false
+    },
+    {
+      "session_id": "019da19b-19c6-7e20-bdd8-f03aea761fb9",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "exists": false,
+      "parts_exists": true,
+      "used_for_rerun": false
+    }
+  ],
+  "artifact_files": [
+    {
+      "path": "Dream/APPROACH.md",
+      "bytes": 2750,
+      "sha256": "766092dd3d950d63182120af9287610ff77fc9257c0cc2bd8f1f28b77668a649"
+    },
+    {
+      "path": "Dream/BURDEN-ANALYSIS.md",
+      "bytes": 7569,
+      "sha256": "74bd502b5e5f174e8e480f4509493653e3ae7f8d0b70d3113ddd5706c343c0c8"
+    },
+    {
+      "path": "Dream/Option-Tasks/INDEX.md",
+      "bytes": 486,
+      "sha256": "ded5b72dc1e7e98d74040ef78801fc88b9b8061f3b16a57e2e68479226ea66eb"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md",
+      "bytes": 3298,
+      "sha256": "8a9d61fbd1f9bec9dcd4b832e6667d00f15536503405ac953d6b402b58e6c55c"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md",
+      "bytes": 3193,
+      "sha256": "99a32633c0d06879c15daa2338baf223a6e267dcedb919ed9e14adaf17ed49fe"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md",
+      "bytes": 3101,
+      "sha256": "eab7d9a48bc1b5728e9632fc1c96b53b74ffab00c3b8512147f202365c96e62c"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md",
+      "bytes": 3087,
+      "sha256": "f49314b50e03409caf33c2f90e6516feca70b957bf1ee6faddfb557ea0cf53b1"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md",
+      "bytes": 3133,
+      "sha256": "e2796b6d8a50d503d1cdd1203afef9f9913986ef361aba0b4a0d20c6a07709be"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md",
+      "bytes": 3177,
+      "sha256": "1de11061ee4aee0a98069962a7e413e1c080297e4bcc2ba51402628c9edf84ba"
+    },
+    {
+      "path": "Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md",
+      "bytes": 1817,
+      "sha256": "f7d5084d7ef47a297eee90098b684b9ffca343aacf1927975c7715187c6f8e18"
+    },
+    {
+      "path": "Dream/README.md",
+      "bytes": 484,
+      "sha256": "d264492107a6d11e0370f26301c7182238c00610afbeb84a0b70a023f459d629"
+    },
+    {
+      "path": "Dream/SessionExcerpts/INDEX.json",
+      "bytes": 5186,
+      "sha256": "6586a7df93920d4cc64eeb604112222d533d212603db329ad401bad84f1ebc72"
+    },
+    {
+      "path": "HumanInputEvents/INDEX.json",
+      "bytes": 40494,
+      "sha256": "75fc9902a32452f9378700453789e0e6ec62169ffa26bc11db498f1fc26f54fc"
+    },
+    {
+      "path": "HumanInputEvents/PROMPT-INPUT.md",
+      "bytes": 807,
+      "sha256": "40dc08fb9d3c31c6861640bfe642fbb2ed0ca255a238e0d98ae725b1816d6f8b"
+    },
+    {
+      "path": "HumanInputEvents/SOURCE-PACKET.jsonl",
+      "bytes": 103355,
+      "sha256": "3cece4f5d6863f8f0d759a317056cdace1ed7fcca88aebaebab37114f47aa3f2"
+    },
+    {
+      "path": "HumanInputEvents/SOURCE-SESSIONS.json",
+      "bytes": 746,
+      "sha256": "2c599ce684502500fd2c33b9a6aef5023f153770c6bf666c911cc6b6f0d2fee7"
+    },
+    {
+      "path": "HumanInterventionTime/EVENT-MEASUREMENTS.jsonl",
+      "bytes": 96247,
+      "sha256": "ddf7e89fd17ac703c0181ac70a9f7ff4c74e06f2d6a991095149297f19379249"
+    },
+    {
+      "path": "HumanInterventionTime/LOCAL-CONTEXT.json",
+      "bytes": 2021,
+      "sha256": "0281427530802b210343d138b9bb9d5d91d54f80ce0dbd1d2940b70b99fd470f"
+    },
+    {
+      "path": "HumanInterventionTime/PROMPT-INPUT.md",
+      "bytes": 1182,
+      "sha256": "faf2bb037f92d1d03fffd575a195afac8255e217e0d49cad0b60eecc0c601526"
+    },
+    {
+      "path": "HumanInterventionTime/STALL-EVENTS.json",
+      "bytes": 179,
+      "sha256": "3db9db8daa424475990d2ec058913dc54feb29ebe821cf74d8a0a47d5399e16c"
+    },
+    {
+      "path": "HumanInterventionTime/SUMMARY.json",
+      "bytes": 1201,
+      "sha256": "21ad7663012ee7fd022a849d7c9483513472961420eaa27899b7c8c48679457b"
+    },
+    {
+      "path": "HumanNeeds/LOCAL-CONTEXT.json",
+      "bytes": 6374,
+      "sha256": "200ef61073db0f028b7f5cc3b4de6c3e078b238a18af864ee330f85ee1ff7130"
+    },
+    {
+      "path": "HumanNeeds/PACKET-RECORD.json",
+      "bytes": 7371,
+      "sha256": "9d9cf7a4620bc322ad8578177ab54f6e785b0e967eb41df1e754af7636896a58"
+    },
+    {
+      "path": "HumanNeeds/PACKET-TRIAGE.json",
+      "bytes": 4678,
+      "sha256": "ac76e44b1e3ed8c2469ea66d307ef60e26e18cfb77dca1532b465d52dc0a4210"
+    },
+    {
+      "path": "HumanNeeds/PROMPT-INPUT.md",
+      "bytes": 1069,
+      "sha256": "e1335e2917fdcecae584e4d0aae34176e6b38e265292d30b6cd3dcace2f57dd1"
+    },
+    {
+      "path": "HumanNeeds/REPRESENTATIVE-EVENTS.json",
+      "bytes": 8785,
+      "sha256": "9369c3aa17076dfbdbbc99b07327e1efe90493e01f6192d962918fc8b6017e59"
+    },
+    {
+      "path": "INDEX.md",
+      "bytes": 984,
+      "sha256": "685c34babc64eb598b1f8491f9e0398922c01bf663022a2fb9f3afd4229f2439"
+    }
+  ],
+  "fidelity_gaps": [
+    {
+      "gap": "missing_session_transcript",
+      "details": "Session transcript referenced for session_id 019da198-ea2f-7421-8adc-c566da0b6121 is missing on disk; 46/62 events are analyzed from the seeded packet without transcript-side neighborhoods."
+    },
+    {
+      "gap": "missing_session_transcript",
+      "details": "Session transcript referenced for session_id 019da19b-19c6-7e20-bdd8-f03aea761fb9 is also missing at its canonical path during this rerun; `.parts` sidecars exist but were not consumed because they are not named in SOURCE-SESSIONS.json."
+    },
+    {
+      "gap": "missing_image_payloads",
+      "details": "Seeded SOURCE-PACKET includes <image> markers without image payloads; visual disputes cannot be re-audited from the seed alone."
+    },
+    {
+      "gap": "missing_first_principles_doc",
+      "details": "Dream workflow references C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\FIRST-PRINCIPLES.md, but that file is absent on disk during this rerun."
+    }
+  ]
+}

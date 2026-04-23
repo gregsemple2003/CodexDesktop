@@ -1,0 +1,157 @@
+{
+  "schema_version": "dream.session_excerpts.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "excerpt_count": 7,
+  "excerpts": [
+    {
+      "excerpt_id": "EXCERPT-0001",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3692",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl",
+      "source_line_start": 3692,
+      "source_line_end": 3692,
+      "reason_kept": "Shows a true hard pause instruction, not just mild course correction.",
+      "entries": [
+        {
+          "source_line": 3692,
+          "role": "user",
+          "excerpt": "Stop active investigation now and pause. Do not make any changes or continue analysis until further instruction from me. Preserve your current context."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0002",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3929",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl",
+      "source_line_start": 3929,
+      "source_line_end": 3930,
+      "reason_kept": "Shows the lead thread forcing durable artifact advancement rather than allowing work to stall at an informal checkpoint.",
+      "entries": [
+        {
+          "source_line": 3929,
+          "role": "user",
+          "excerpt": "Status check. The default-lane runtime repair appears complete in the worktree and logs, but the task artifacts have not advanced yet."
+        },
+        {
+          "source_line": 3930,
+          "role": "user",
+          "excerpt": "Otherwise continue to the next durable milestone now: write/update REGRESSION-RUN-0004.md, PASS-0006 audit/checklist state, HANDOFF.md, and TASK-STATE.json..."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0003",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl",
+      "source_line_start": 4432,
+      "source_line_end": 4433,
+      "reason_kept": "Shows the approval-gated planning reopen and the demand for a reusable unattended checker rather than premature implementation.",
+      "entries": [
+        {
+          "source_line": 4432,
+          "role": "user",
+          "excerpt": "Reopen Task-0006 immediately... the human default lane still fails the acceptance bar: the pawn appears present but animation is not proven working to human satisfaction."
+        },
+        {
+          "source_line": 4433,
+          "role": "user",
+          "excerpt": "The output must be a plan for approval, not implementation... propose a durable animation-checker solution we can reuse on future tasks."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0004",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6451",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0001.jsonl",
+      "source_line_start": 6448,
+      "source_line_end": 6452,
+      "reason_kept": "Shows invalid evidence forcing an honest revision of the root-cause claim.",
+      "entries": [
+        {
+          "source_line": 6448,
+          "role": "assistant",
+          "excerpt": "Root cause... the promoted ZeroMale mesh hangs high and reads as floating. The 'sphere-like feet' read is reinforced by the source/promoted silhouette..."
+        },
+        {
+          "source_line": 6451,
+          "role": "user",
+          "excerpt": "The human rejected part of the PASS-0009 evidence: the earlier ZeroMale mesh screenshot cut off the bottom of the feet, so that evidence is invalid."
+        },
+        {
+          "source_line": 6452,
+          "role": "user",
+          "excerpt": "Re-check the current root-cause claim after replacing the bad evidence... Keep going until you can state the corrected root cause with valid evidence."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0005",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl",
+      "source_line_start": 6555,
+      "source_line_end": 6559,
+      "reason_kept": "Shows the runtime-only remaining defects and the insistence on keeping the goal post pinned to the human default lane.",
+      "entries": [
+        {
+          "source_line": 6555,
+          "role": "assistant",
+          "excerpt": "The earlier 'sphere-like feet' claim is revised downward... The corrected root cause remains the runtime placement mismatch..."
+        },
+        {
+          "source_line": 6558,
+          "role": "user",
+          "excerpt": "Continue Task-0006 PASS-0009 now. Human-approved runtime-only remaining defects to document and fix..."
+        },
+        {
+          "source_line": 6559,
+          "role": "user",
+          "excerpt": "Keep the goal post pinned to the human default runtime lane only. Non-game/source/export renders may support debugging, but they must not be used to dismiss the runtime defect."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0006",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl",
+      "source_line_start": 7035,
+      "source_line_end": 7039,
+      "reason_kept": "Shows the key ownership-continuity burden: keep working under existing ownership and do not hand intermediate failure back to the user.",
+      "entries": [
+        {
+          "source_line": 7035,
+          "role": "assistant",
+          "excerpt": "PASS-0009 is still open... the simple runtime retune helped but did not fix the human default lane."
+        },
+        {
+          "source_line": 7038,
+          "role": "user",
+          "excerpt": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user."
+        },
+        {
+          "source_line": 7039,
+          "role": "user",
+          "excerpt": "Only stop if you reach real closure or a real external block."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0007",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl.parts\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9--local-2026-04-19--chunk-0002.jsonl",
+      "source_line_start": 7446,
+      "source_line_end": 7447,
+      "reason_kept": "Shows the human having to restate the debugging method itself and force first-disagreement tracing.",
+      "entries": [
+        {
+          "source_line": 7446,
+          "role": "user",
+          "excerpt": "The task is not 'improve the look'... identify the first concrete disagreement in runtime default-lane state, then trace that exact bad state upstream... until root cause is proven."
+        },
+        {
+          "source_line": 7447,
+          "role": "user",
+          "excerpt": "Do not stop at 'single-node seam' as a category... Continue until you can state confirmed cause or a tightly bounded remaining branch..."
+        }
+      ]
+    }
+  ]
+}

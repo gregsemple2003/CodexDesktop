@@ -1,0 +1,112 @@
+{
+  "schema_version": "dream.session_excerpts.v0",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "excerpt_count": 7,
+  "excerpts": [
+    {
+      "excerpt_id": "EXCERPT-0001",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 3431,
+      "source_line_end": 3431,
+      "reason_kept": "Pins the human default lane as the regression truth surface.",
+      "entries": [
+        {
+          "source_line": 3431,
+          "role": "user",
+          "excerpt": "Regression must exercise the human default lane, not just whatever one-off you're working on. Agree/disagree?"
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0002",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4015",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 4015,
+      "source_line_end": 4015,
+      "reason_kept": "Shows the human rejecting premature takeover and exported supervision.",
+      "entries": [
+        {
+          "source_line": 4015,
+          "role": "user",
+          "excerpt": "Do not take over work from the subagent. Be extremely generous with time; at least 15 minutes of doing nothing before intervention."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0003",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 4379,
+      "source_line_end": 4379,
+      "reason_kept": "Shows the approval-surface burden directly.",
+      "entries": [
+        {
+          "source_line": 4379,
+          "role": "user",
+          "excerpt": "I don't have a diff for plan.md so how am i supposed to approve. Do better."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0004",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 4909,
+      "source_line_end": 4909,
+      "reason_kept": "Shows invalid evidence forcing a proof-surface reset.",
+      "entries": [
+        {
+          "source_line": 4909,
+          "role": "user",
+          "excerpt": "Your picture cut off the bottom of the ZeroMale meshes feet. Evidence invalid; re-take screenshot with feet in full view. They are clearly not spheres. Jackass."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0005",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 5090,
+      "source_line_end": 5090,
+      "reason_kept": "Shows direct-answer burden and question evasion pressure.",
+      "entries": [
+        {
+          "source_line": 5090,
+          "role": "user",
+          "excerpt": "I'm asking if the geometry of the foot is wrong. Not just in that picture. Stop evading the question."
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0006",
+      "focus_event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "source_line_start": 5310,
+      "source_line_end": 5310,
+      "reason_kept": "Shows the no-homework-back ownership burden in plain language.",
+      "entries": [
+        {
+          "source_line": 5310,
+          "role": "user",
+          "excerpt": "I'm trying to discern how I can just get you to keep working without throwing your homework at my feet, expecting me to do it. You're a big boy, you"
+        }
+      ]
+    },
+    {
+      "excerpt_id": "EXCERPT-0007",
+      "focus_event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "source_session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "source_line_start": 7446,
+      "source_line_end": 7446,
+      "reason_kept": "Shows the human restating the debugging method itself with concrete disagreement seams.",
+      "entries": [
+        {
+          "source_line": 7446,
+          "role": "user",
+          "excerpt": "Tighten PASS-0009 to the shared debugging method from C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\DEBUGGING.md. The task is not 'improve the look' and not 'another bounded tweak.' It is: identify the first concrete disagreement in runtime"
+        }
+      ]
+    }
+  ]
+}

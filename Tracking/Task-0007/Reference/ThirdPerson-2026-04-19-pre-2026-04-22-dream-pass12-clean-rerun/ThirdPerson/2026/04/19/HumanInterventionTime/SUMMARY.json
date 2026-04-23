@@ -1,0 +1,57 @@
+{
+  "schema_version": "intervention_time.summary.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "event_count": 62,
+  "stall_event_count": 3,
+  "typing_rate_chars_per_second": 4.0,
+  "stall_grace_seconds": 60,
+  "totals": {
+    "manual_chars": 21775,
+    "typing_seconds_estimate": 5443.75,
+    "stall_loss_seconds": 2422.637,
+    "intervention_time_seconds": 7866.387
+  },
+  "counts_by_intervention_kind": {
+    "new_request": 12,
+    "correction": 15,
+    "boundary_reset": 12,
+    "answer_to_question": 19,
+    "wake_up": 3,
+    "other": 1
+  },
+  "counts_by_burden_tag": {
+    "target": 35,
+    "answer": 19,
+    "approval": 11,
+    "evidence": 15,
+    "ownership": 14,
+    "learning": 14,
+    "debugging": 2
+  },
+  "top_stall_events": [
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-6558",
+      "stall_loss_seconds": 1647.027,
+      "captured_at_local": "2026-04-19T14:56:15.912000-04:00",
+      "preview": "Continue Task-0006 PASS-0009 now."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "stall_loss_seconds": 452.282,
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "preview": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Stay inside the runtime human default lane only; do not use source/export/non-runtime images to dismiss runtime defects. The active defects to keep grounded are: (1) feet read round/blob-like at runtime, (2) feet look offset and the run reads with side-to-side rocking/tilt in the animated mesh/pose, and (3) both feet hover above the ground. Your last pass proved MaxSpeed=500 and mesh Z=-106 helped but did not fix it. Narrow the remaining cause beyond that retune, likely around the default pawn's single-node animation / pose-state grounding seam, implement the next justified repo-local fix, rerun default-lane proof, and keep durable state current at each checkpoint. Commit and push meaningful checkpoints. Only stop if you reach real closure or a real external block."
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4432",
+      "stall_loss_seconds": 323.328,
+      "captured_at_local": "2026-04-19T11:35:56.437000-04:00",
+      "preview": "Reopen Task-0006 immediately. Before anything else, update durable task state and task artifacts to reflect that the task is reopened because the human default lane still fails the acceptance bar: the pawn appears present but animation is not proven working to human satisfaction. Do not implement a fix yet. This is a research + planning gate only."
+    }
+  ],
+  "notes": [
+    "Three restart-supervision events were charged stall loss because the human restarted dropped work after idle time and the prior AI state was not an explicit wait gate.",
+    "The first seeded session remained transcript_surface=missing, so its events keep zero stall attribution and explicit ambiguity notes."
+  ]
+}

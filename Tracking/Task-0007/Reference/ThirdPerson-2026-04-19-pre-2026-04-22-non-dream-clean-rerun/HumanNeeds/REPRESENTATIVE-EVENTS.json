@@ -1,0 +1,114 @@
+{
+  "schema_version": "needs.packet.events.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "selected_events": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Task faileed my basic regression test.  I booted development editor and ran and see an invisible pawn.  Why did you not see this when you ran a regression test?  You're wasting my time.",
+      "need_tag": "default_lane_truth",
+      "selection_reason": "Core default-lane truth break and explicit time-loss complaint.",
+      "priority_rank": 1
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Regression must exercise the human default lane, not just whatever one-off you're working on.  Agree/disagree?",
+      "need_tag": "default_lane_truth",
+      "selection_reason": "Pins the repo-specific regression contract to the human default lane.",
+      "priority_rank": 2
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463",
+      "captured_at_local": "2026-04-19T10:35:23.084000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "You said you agree.  Your lack of judgement has cost the human time and required course correction.  This is a major failure.  Propose a fix for the process failure first.  Do not apply.",
+      "need_tag": "durable_learning",
+      "selection_reason": "Escalates a repeated miss into a durable-learning demand rather than a one-off correction.",
+      "priority_rank": 3
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4015",
+      "captured_at_local": "2026-04-19T10:58:00.270000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Do not take over work from the subagent.  Be extremely generous with time; at least 15 minutes of doing nothing before intervention.",
+      "need_tag": "agent_continuity",
+      "selection_reason": "States the ownership burden directly: do not take work back from the subagent too early.",
+      "priority_rank": 4
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "captured_at_local": "2026-04-19T12:01:36.884000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I don't have a diff for plan.md so how am i supposed to approve.  Do better.",
+      "need_tag": "approval_surface",
+      "selection_reason": "Shows approval friction caused by a missing diff surface.",
+      "priority_rank": 5
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4512",
+      "captured_at_local": "2026-04-19T12:10:50.637000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "For later analysis: the dropped ball here is that the model has no idea to reconstruct a human-suitable diff.  No links.  Links without context.  Links to headers with no indication of what changed.  Drivel.",
+      "need_tag": "approval_surface",
+      "selection_reason": "Names the review-surface failure in durable-analysis terms.",
+      "priority_rank": 6
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "captured_at_local": "2026-04-19T14:22:07.173000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Your picture cut off the bottom of the ZeroMale meshes feet.  Evidence invalid; re-take screenshot with feet in full view.  They are clearly not spheres.  Jackass.",
+      "need_tag": "proof_surface_integrity",
+      "selection_reason": "Invalidates bad proof and forces evidence-quality repair.",
+      "priority_rank": 7
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "captured_at_local": "2026-04-19T14:44:16.328000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I'm asking if the geometry of the foot is wrong.  Not just in that picture.  Stop evading the question.",
+      "need_tag": "answer_shape",
+      "selection_reason": "Demands a direct answer to the actual runtime question rather than evasive framing.",
+      "priority_rank": 8
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+      "captured_at_local": "2026-04-19T16:17:45.502000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I'm trying to discern how I can just get you to keep working without throwing your homework at my feet, expecting me to do it.  You're a big boy, you fix it.",
+      "need_tag": "agent_continuity",
+      "selection_reason": "Names the no-homework-back expectation explicitly.",
+      "priority_rank": 9
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "captured_at_local": "2026-04-19T16:34:23.765000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "What I'm looking for you to do is determine root case.  Following the disagreement in state upstream until you determine root cause.",
+      "need_tag": "root_cause_debugging",
+      "selection_reason": "Restates root-cause debugging as first-disagreement tracing.",
+      "priority_rank": 10
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7038",
+      "captured_at_local": "2026-04-19T16:19:18.859000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Continue PASS-0009 now under your existing ownership. Do not stop after a failed incremental attempt and do not hand intermediate failure back to the user. Stay inside the runtime human default lane only; do not use source/export/non-runtime images to dismiss runtime defects. The active defects to keep grounded are: (1) feet read round/blob-like at runtime, (2) feet look offset and the run reads with side-to-side rocking/tilt in the animated mesh/pose, and (3) both feet hover above the ground. Your last pass proved MaxSpeed=500 and mesh Z=-106 helped but did not fix it. Narrow the remaining cause beyond that retune, likely around the default pawn's single-node animation / pose-state grounding seam, implement the next justified repo-local fix, rerun default-lane proof, and keep durable state current at each checkpoint. Commit and push meaningful checkpoints. Only stop if you reach real closure or a real external block.",
+      "need_tag": "agent_continuity",
+      "selection_reason": "Reasserts ownership continuity and runtime-only grounding late in the day.",
+      "priority_rank": 11
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "captured_at_local": "2026-04-19T16:35:27.989000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Tighten PASS-0009 to the shared debugging method from C:\\Users\\gregs\\.codex\\Orchestration\\Processes\\DEBUGGING.md. The task is not 'improve the look' and not 'another bounded tweak.' It is: identify the first concrete disagreement in runtime default-lane state, then trace that exact bad state upstream through the code and data that write or advance it until root cause is proven. Do not stop at 'single-node seam' as a category. Name the concrete disagreement with values. Examples of acceptable disagreement seams: left/right foot world Z or toe world Z vs ground/capsule bottom at a frame where the human says both feet are hovering; unexpected pelvis/mesh/root roll or lateral offset at a frame where the run reads like side-to-side rocking; unexpected component-space foot transforms while the capsule remains upright. Then trace writers/updaters upstream one boundary at a time: runtime bone/component/world transforms -> mesh relative transform / component transform -> animation asset/time/playback state or runtime pose evaluation -> whichever exact writer makes the state wrong. Update BUG-0004 and REGRESSION-RUN artifacts around that narrowing path. Keep all evidence on the human default lane. Do not use source/export renders to dismiss runtime defects. Continue until you can state confirmed cause or a tightly bounded remaining branch with contradictory evidence preserved.",
+      "need_tag": "root_cause_debugging",
+      "selection_reason": "Locks the work onto the shared debugging method with concrete disagreement seams.",
+      "priority_rank": 12
+    }
+  ]
+}

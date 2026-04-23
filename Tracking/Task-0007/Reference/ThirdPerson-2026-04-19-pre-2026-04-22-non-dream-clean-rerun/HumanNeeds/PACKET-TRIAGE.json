@@ -1,0 +1,96 @@
+{
+  "schema_version": "needs.packet.triage.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Reduce human intervention burden by keeping ThirdPerson regression proof on the human default lane, preserving hard stop/go and ownership boundaries, answering explicit questions directly, and using valid runtime evidence and root-cause discipline.",
+  "needs": [
+    {
+      "need_id": "NEED-01",
+      "label": "Trustworthy default-lane proof",
+      "description": "Regression closure must name a repo-canonical human lane and rely on that lane's runtime proof rather than adjacent support-lane artifacts.",
+      "weight": 0.28,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-02",
+      "label": "Hard stop/go and ownership continuity",
+      "description": "STOP, PAUSE, continue-under-existing-ownership, and no-homework-back instructions must behave like hard execution state rather than soft tone cues.",
+      "weight": 0.2,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-03",
+      "label": "Direct answers in the requested shape",
+      "description": "Agree/disagree, yes/no, and simple factual questions need a direct line-one answer before continued work narration.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-04",
+      "label": "Approval-ready review surfaces",
+      "description": "Plan and pass approval asks must include diffs, links, and scope so the human can approve without reconstructing state.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-05",
+      "label": "Valid runtime evidence surfaces",
+      "description": "Claims about runtime defects must stay grounded in admissible in-lane evidence and narrow or withdraw when that evidence is invalidated.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-06",
+      "label": "First-disagreement root-cause tracing",
+      "description": "Debugging must name the first concrete bad state and trace writers upstream instead of stalling at symptom-level tweaking.",
+      "weight": 0.1,
+      "preventability_score": 2
+    }
+  ],
+  "suffering_signals": [
+    {
+      "signal": "time_loss",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463"
+      ],
+      "notes": "OBSERVED: the human explicitly says time was wasted and course correction was required."
+    },
+    {
+      "signal": "high_frustration",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4399",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909"
+      ],
+      "notes": "OBSERVED: profanity and sharp escalation indicate acute friction without implying diagnosis."
+    },
+    {
+      "signal": "trust_break",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310"
+      ],
+      "notes": "OBSERVED: the human frames judgment and supervision failures as unacceptable and recurring."
+    }
+  ],
+  "highest_leverage_context_to_fetch": [
+    {
+      "context": "Repo-local lane and proof contract from ThirdPerson/REGRESSION.md plus Manual PIE expectations from ThirdPerson/TESTING.md",
+      "why": "The packet repeatedly turns on what counts as valid default-lane proof and what does not."
+    },
+    {
+      "context": "Exact stop/go and ownership language already present in the packet",
+      "why": "The repeated continuity burden is explicit enough that extra context fetch is lower value than enforcing the rule."
+    }
+  ],
+  "clarifying_question": {
+    "needed": false,
+    "question": null,
+    "reason": "The packet already contains repeated explicit constraints; asking more during this rerun would add burden without resolving a blocker."
+  },
+  "risk_notes": [
+    "The implementation-thread transcript named in SOURCE-SESSIONS.json is missing on disk for 46/62 events, so assistant-side neighborhoods cannot be re-read directly.",
+    "The lifecycle-thread transcript path is also missing at its canonical location during this rerun; packet-derived user messages remain available, but transcript-side neighborhoods were not used.",
+    "<image> markers survive in SOURCE-PACKET.jsonl without image payloads, so visual disputes cannot be re-audited from the seed alone."
+  ]
+}

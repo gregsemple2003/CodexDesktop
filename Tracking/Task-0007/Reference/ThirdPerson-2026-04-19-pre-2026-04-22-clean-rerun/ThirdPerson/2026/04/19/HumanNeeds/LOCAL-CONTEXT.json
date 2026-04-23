@@ -1,0 +1,212 @@
+{
+  "schema_version": "needs.local_context.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "docs": [
+    {
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "exists": true,
+      "sha256": "5b1389da1de987ca20bae89507e048fa9f02ac9822d55c2d3920739baeea7414",
+      "excerpts": [
+        {
+          "start_line": 28,
+          "end_line": 32,
+          "text": "- project layout and durable folder ownership\n- build and launch commands\n- regression lane definitions\n- art promotion flow\n- automation and artifact-output expectations specific to this sandbox"
+        },
+        {
+          "start_line": 53,
+          "end_line": 57,
+          "text": "  - promoted Blender, Unreal, and project-setup scripts for the current character pipeline\n- `Tracking/Task-<id>/`\n  - task-owned plans, research, audits, bugs, and regression runs\n\nBinary Unreal assets are tracked in git:"
+        },
+        {
+          "start_line": 69,
+          "end_line": 73,
+          "text": "2. keep inspection and DCC outputs under `Art/`\n3. import the Unreal-ready result into `Content/Experimental/`\n4. only promote an experimental lane into the default playable surface when the repo can explain what the runtime result is doing\n\nDo not treat imported Unreal content as the only source of truth for the asset. Source, provenance, and reproducible exports stay in `Art/`."
+        },
+        {
+          "start_line": 75,
+          "end_line": 79,
+          "text": "See [Art/README.md](/c:/Agent/ThirdPerson/Art/README.md#L1) for the art-specific structure.\n\n## Current Sandbox Defaults\n\nCurrent default map and game mode are configured in [DefaultEngine.ini](/c:/Agent/ThirdPerson/Config/DefaultEngine.ini#L1):"
+        },
+        {
+          "start_line": 77,
+          "end_line": 81,
+          "text": "## Current Sandbox Defaults\n\nCurrent default map and game mode are configured in [DefaultEngine.ini](/c:/Agent/ThirdPerson/Config/DefaultEngine.ini#L1):\n\n- startup map: `/Game/ThirdPerson/Lvl_ThirdPerson`"
+        },
+        {
+          "start_line": 80,
+          "end_line": 84,
+          "text": "\n- startup map: `/Game/ThirdPerson/Lvl_ThirdPerson`\n- default game mode: `/Script/ThirdPerson.ThirdPersonGameMode`\n\nThe current experimental pawn blueprint is:"
+        },
+        {
+          "start_line": 88,
+          "end_line": 92,
+          "text": "The current Mover-backed playable surface is:\n\n- default game mode: `/Script/ThirdPerson.ThirdPersonGameMode`\n- default player controller: `/Script/ThirdPerson.ThirdPersonPlayerController`\n- default pawn: `/Script/ThirdPerson.ThirdPersonPawn`"
+        },
+        {
+          "start_line": 89,
+          "end_line": 93,
+          "text": "\n- default game mode: `/Script/ThirdPerson.ThirdPersonGameMode`\n- default player controller: `/Script/ThirdPerson.ThirdPersonPlayerController`\n- default pawn: `/Script/ThirdPerson.ThirdPersonPawn`\n"
+        },
+        {
+          "start_line": 90,
+          "end_line": 94,
+          "text": "- default game mode: `/Script/ThirdPerson.ThirdPersonGameMode`\n- default player controller: `/Script/ThirdPerson.ThirdPersonPlayerController`\n- default pawn: `/Script/ThirdPerson.ThirdPersonPawn`\n\nIf these defaults change temporarily during task work, the task handoff and regression artifacts own that churn. Keep this section for the repo's intended stable default, not minute-by-minute debugging state."
+        },
+        {
+          "start_line": 92,
+          "end_line": 96,
+          "text": "- default pawn: `/Script/ThirdPerson.ThirdPersonPawn`\n\nIf these defaults change temporarily during task work, the task handoff and regression artifacts own that churn. Keep this section for the repo's intended stable default, not minute-by-minute debugging state.\n\n## Build And Launch"
+        },
+        {
+          "start_line": 122,
+          "end_line": 126,
+          "text": "- prefer durable runtime instrumentation over one-off editor guesses when debugging live PIE behavior\n- prefer first-class in-repo automation surfaces over permanent dependence on ad hoc Unreal Python scripts\n- treat editor Python as a bridge or support lane, not as the final runtime automation substrate for this sandbox\n\n## Guardrails"
+        },
+        {
+          "start_line": 124,
+          "end_line": 128,
+          "text": "- treat editor Python as a bridge or support lane, not as the final runtime automation substrate for this sandbox\n\n## Guardrails\n\n- keep engine work in `C:\\Agent\\UnrealEngine` and project work in `C:\\Agent\\ThirdPerson`"
+        }
+      ]
+    },
+    {
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "exists": true,
+      "sha256": "3b31fb34c7191037370c76d6657b937c50957837855dd51776d61357bc985a1f",
+      "excerpts": [
+        {
+          "start_line": 1,
+          "end_line": 3,
+          "text": "# Product Regression Checklist\n\nThis file is the canonical regression matrix for this repo."
+        },
+        {
+          "start_line": 1,
+          "end_line": 5,
+          "text": "# Product Regression Checklist\n\nThis file is the canonical regression matrix for this repo.\n\nThis repo follows the shared glossary in `C:\\Users\\gregs\\.codex\\AGENTS.md`."
+        },
+        {
+          "start_line": 5,
+          "end_line": 9,
+          "text": "This repo follows the shared glossary in `C:\\Users\\gregs\\.codex\\AGENTS.md`.\n\nExecuted regression results belong under the owning task:\n\n- `Tracking/Task-<id>/Testing/REGRESSION-RUN-<NNNN>.md`"
+        },
+        {
+          "start_line": 7,
+          "end_line": 11,
+          "text": "Executed regression results belong under the owning task:\n\n- `Tracking/Task-<id>/Testing/REGRESSION-RUN-<NNNN>.md`\n\n## Environment Bootstrap"
+        },
+        {
+          "start_line": 11,
+          "end_line": 15,
+          "text": "## Environment Bootstrap\n\n### Bootstrap 1: Build The Editor Target\n\n```powershell"
+        },
+        {
+          "start_line": 14,
+          "end_line": 18,
+          "text": "\n```powershell\n& 'C:\\Agent\\UnrealEngine\\Engine\\Build\\BatchFiles\\Build.bat' ThirdPersonEditor Win64 Development 'C:\\Agent\\ThirdPerson\\ThirdPerson.uproject' -WaitMutex -NoHotReloadFromIDE\n```\n"
+        },
+        {
+          "start_line": 17,
+          "end_line": 21,
+          "text": "```\n\nSuccess means the `ThirdPersonEditor` target compiles without code errors.\n\n### Bootstrap 2: Launch The Project"
+        },
+        {
+          "start_line": 22,
+          "end_line": 26,
+          "text": "\n```powershell\n& 'C:\\Agent\\UnrealEngine\\Engine\\Binaries\\Win64\\UnrealEditor.exe' 'C:\\Agent\\ThirdPerson\\ThirdPerson.uproject'\n```\n"
+        },
+        {
+          "start_line": 25,
+          "end_line": 29,
+          "text": "```\n\nSuccess means the editor opens to the default map.\n\n## Release Bar Before Manual Regression"
+        },
+        {
+          "start_line": 27,
+          "end_line": 31,
+          "text": "Success means the editor opens to the default map.\n\n## Release Bar Before Manual Regression\n\nThe following should already be green before calling a manual regression pass trustworthy:"
+        },
+        {
+          "start_line": 29,
+          "end_line": 33,
+          "text": "## Release Bar Before Manual Regression\n\nThe following should already be green before calling a manual regression pass trustworthy:\n\n- `ThirdPersonEditor` build succeeds"
+        },
+        {
+          "start_line": 31,
+          "end_line": 35,
+          "text": "The following should already be green before calling a manual regression pass trustworthy:\n\n- `ThirdPersonEditor` build succeeds\n- relevant supporting diagnostics complete without crashing the editor process\n"
+        }
+      ]
+    },
+    {
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "exists": true,
+      "sha256": "e224f3592a9c8b5c4185d34b4b098d5ad010efe115b55d54fb09b636829bd66c",
+      "excerpts": [
+        {
+          "start_line": 11,
+          "end_line": 15,
+          "text": "\n- lifecycle placement of testing\n- the distinction between a regression matrix and an executed run artifact\n- the shared meanings of `unit test`, `regression test`, and `end-to-end regression`\n"
+        },
+        {
+          "start_line": 12,
+          "end_line": 16,
+          "text": "- lifecycle placement of testing\n- the distinction between a regression matrix and an executed run artifact\n- the shared meanings of `unit test`, `regression test`, and `end-to-end regression`\n\nUse this file for ThirdPerson-specific commands, proof surfaces, and artifact routing."
+        },
+        {
+          "start_line": 14,
+          "end_line": 18,
+          "text": "- the shared meanings of `unit test`, `regression test`, and `end-to-end regression`\n\nUse this file for ThirdPerson-specific commands, proof surfaces, and artifact routing.\n\n## Local Entry Points"
+        },
+        {
+          "start_line": 18,
+          "end_line": 22,
+          "text": "## Local Entry Points\n\n- regression matrix: [REGRESSION.md](/c:/Agent/ThirdPerson/REGRESSION.md#L1)\n- repo-local debugging adapter: [DEBUGGING.md](/c:/Agent/ThirdPerson/DEBUGGING.md#L1)\n- repo-local automation guide: [AUTOMATION.md](/c:/Agent/ThirdPerson/AUTOMATION.md#L1)"
+        },
+        {
+          "start_line": 29,
+          "end_line": 33,
+          "text": "\n- `unit test` includes project compilation and headless Unreal verification scripts\n- `regression test` means running the real Unreal project in PIE and observing the gameplay surface\n- `end-to-end regression` is reserved for later `GameAutomation`-driven runs that capture artifacts from the real game surface automatically\n"
+        },
+        {
+          "start_line": 30,
+          "end_line": 34,
+          "text": "- `unit test` includes project compilation and headless Unreal verification scripts\n- `regression test` means running the real Unreal project in PIE and observing the gameplay surface\n- `end-to-end regression` is reserved for later `GameAutomation`-driven runs that capture artifacts from the real game surface automatically\n\n## Build Verification"
+        },
+        {
+          "start_line": 40,
+          "end_line": 44,
+          "text": "```\n\nThis is supporting proof. It is not regression by itself.\n\n## Headless Diagnostics Lane"
+        },
+        {
+          "start_line": 42,
+          "end_line": 46,
+          "text": "This is supporting proof. It is not regression by itself.\n\n## Headless Diagnostics Lane\n\nUse this lane when you need evidence but not a real played surface."
+        },
+        {
+          "start_line": 44,
+          "end_line": 48,
+          "text": "## Headless Diagnostics Lane\n\nUse this lane when you need evidence but not a real played surface.\n\nCurrent examples:"
+        },
+        {
+          "start_line": 56,
+          "end_line": 60,
+          "text": "\n- preserve the generated JSON reports or the relevant log lines\n- do not label this lane as regression by itself\n- use this lane to support a task, narrow a bug, or validate asset state without pretending it proves the playable surface\n"
+        },
+        {
+          "start_line": 57,
+          "end_line": 61,
+          "text": "- preserve the generated JSON reports or the relevant log lines\n- do not label this lane as regression by itself\n- use this lane to support a task, narrow a bug, or validate asset state without pretending it proves the playable surface\n\n## Manual PIE Lane"
+        },
+        {
+          "start_line": 59,
+          "end_line": 63,
+          "text": "- use this lane to support a task, narrow a bug, or validate asset state without pretending it proves the playable surface\n\n## Manual PIE Lane\n\nUse this lane for real gameplay proof."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Excerpts are heuristic keyword neighborhoods for the packet; absence of a keyword does not imply absence of a constraint."
+  ]
+}

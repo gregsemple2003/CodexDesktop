@@ -1,0 +1,183 @@
+{
+  "schema_version": "intervention_day.manifest.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo": "ThirdPerson",
+  "repo_ref": "c:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "timezone": "America/Toronto",
+  "generated_at_utc": "2026-04-22T19:23:00.157376Z",
+  "seed_inputs": {
+    "task_seed_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007",
+    "source_packet_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-PACKET.jsonl",
+    "source_sessions_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInputEvents\\04\\19\\SOURCE-SESSIONS.json",
+    "intervention_time_local_context_seed": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HumanInterventionTime\\04\\19\\LOCAL-CONTEXT.json"
+  },
+  "source_sessions": [
+    {
+      "session_id": "019da198-ea2f-7421-8adc-c566da0b6121",
+      "thread_name": "Implement task 6 workflow",
+      "session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-17-26-019da198-ea2f-7421-8adc-c566da0b6121.jsonl",
+      "exists": false,
+      "parts_exists": false
+    },
+    {
+      "session_id": "019da19b-19c6-7e20-bdd8-f03aea761fb9",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "session_file": "C:\\Users\\gregs\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T13-19-49-019da19b-19c6-7e20-bdd8-f03aea761fb9.jsonl",
+      "exists": false,
+      "parts_exists": true
+    }
+  ],
+  "artifact_files": [
+    {
+      "path": "DAY-MANIFEST.json",
+      "bytes": 6648,
+      "sha256": "73cbd1b3264618134e41d93730621f95e0889bd00c7bcfdaff700d51d39e6719"
+    },
+    {
+      "path": "Dream/APPROACH.md",
+      "bytes": 1122,
+      "sha256": "6fa914c7342c353e5de8fe573fd636bfc7a483b4c2e1294d55d4a33af66842e3"
+    },
+    {
+      "path": "Dream/BURDEN-ANALYSIS.md",
+      "bytes": 1996,
+      "sha256": "4e240b2bc192300d667e51fbd2a5a6341ffd98eaff79efbed15b88aeef968f1e"
+    },
+    {
+      "path": "Dream/ORTHOGONAL-SOLUTIONS-MATRIX.md",
+      "bytes": 1481,
+      "sha256": "4819ce4cd2c63e105029731ce468adc1017bb06a773f10efb88db0080d31f53b"
+    },
+    {
+      "path": "Dream/Option-Tasks/INDEX.md",
+      "bytes": 486,
+      "sha256": "ded5b72dc1e7e98d74040ef78801fc88b9b8061f3b16a57e2e68479226ea66eb"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0001-OPTION-A.md",
+      "bytes": 2684,
+      "sha256": "8cf96fdcb8e645ff82ea1cad7b953c785067e486fb8cd5af853cbebf16a9d8ca"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0001-OPTION-B.md",
+      "bytes": 2566,
+      "sha256": "5d0013f656e9199eed653fc3030891db17f31026e29a92e370a25779dc06d0ce"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0002-OPTION-A.md",
+      "bytes": 2608,
+      "sha256": "19f1dae697310ffaf804e5da6a71af55d839ef365192fdd1bd19babb3371574f"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0002-OPTION-B.md",
+      "bytes": 2548,
+      "sha256": "8bee86d66da3f4d2d9378d45835e47d9753ec256a10a4c450ec5d757dd5b4347"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0003-OPTION-A.md",
+      "bytes": 2502,
+      "sha256": "b86265076eb5c2a17813345cb247f583ea34a500c64483fcbbb39fd7079e177c"
+    },
+    {
+      "path": "Dream/Option-Tasks/PROBLEM-0003-OPTION-B.md",
+      "bytes": 2483,
+      "sha256": "636808e1cdb99cbfabb880508b9ced26be84b883bd7c8a86b88d7461f1cf2223"
+    },
+    {
+      "path": "Dream/README.md",
+      "bytes": 431,
+      "sha256": "d3b4190b91bfa3fedd562d32606ef74949c687aac7d3b3b357ee3d4c4293c627"
+    },
+    {
+      "path": "Dream/SessionExcerpts/INDEX.json",
+      "bytes": 7465,
+      "sha256": "42406c91f5fd7ffb5ab4bf86f71ddbc3477097274abb90f86c396efafe1e72bb"
+    },
+    {
+      "path": "HumanInputEvents/INDEX.json",
+      "bytes": 38037,
+      "sha256": "84eb2931db7b895f1ecc3e9ded57ff27889ec71a81afb9bc6f9f8805a508ce60"
+    },
+    {
+      "path": "HumanInputEvents/PROMPT-INPUT.md",
+      "bytes": 654,
+      "sha256": "bdb842144c1221b6e3cc9a4df993a3a2584fa67cdd3522fe046135cf4e594eac"
+    },
+    {
+      "path": "HumanInputEvents/SOURCE-PACKET.jsonl",
+      "bytes": 101332,
+      "sha256": "ab2b920d0a013d2b8ae2375d279f4d7c0cbeb103e9dd90f9866079a5027066bd"
+    },
+    {
+      "path": "HumanInputEvents/SOURCE-SESSIONS.json",
+      "bytes": 746,
+      "sha256": "2c599ce684502500fd2c33b9a6aef5023f153770c6bf666c911cc6b6f0d2fee7"
+    },
+    {
+      "path": "HumanInterventionTime/EVENT-MEASUREMENTS.jsonl",
+      "bytes": 93052,
+      "sha256": "9c6eadf080eba9545675463b9a1ba71a7ec7e59b6637d422c7acdaada2868a4d"
+    },
+    {
+      "path": "HumanInterventionTime/LOCAL-CONTEXT.json",
+      "bytes": 2021,
+      "sha256": "0281427530802b210343d138b9bb9d5d91d54f80ce0dbd1d2940b70b99fd470f"
+    },
+    {
+      "path": "HumanInterventionTime/PROMPT-INPUT.md",
+      "bytes": 817,
+      "sha256": "f296fbcdeb0dbdc9031b9c40427f1c64f4fdbdf0b7c97a294f30830846cd3eab"
+    },
+    {
+      "path": "HumanInterventionTime/STALL-EVENTS.json",
+      "bytes": 179,
+      "sha256": "3db9db8daa424475990d2ec058913dc54feb29ebe821cf74d8a0a47d5399e16c"
+    },
+    {
+      "path": "HumanInterventionTime/SUMMARY.json",
+      "bytes": 1125,
+      "sha256": "60e4e9cabcd2c5cea539057d6cca9bcd6ca927adc71e352c273baaa5b4fe9550"
+    },
+    {
+      "path": "HumanNeeds/LOCAL-CONTEXT.json",
+      "bytes": 12288,
+      "sha256": "264c029dbc5b6911562469efad28fb8ec76a41db2036f6452c636f26bfa9e10f"
+    },
+    {
+      "path": "HumanNeeds/PACKET-RECORD.json",
+      "bytes": 5811,
+      "sha256": "ca3c30ea699b33a04d2e7fda024a242b395fe68b21481098d8846c07ada1ec9f"
+    },
+    {
+      "path": "HumanNeeds/PACKET-TRIAGE.json",
+      "bytes": 3436,
+      "sha256": "569f4a14f281b99c1b711cca2bf23b7f1a20622938e35f35dde569452b0b781c"
+    },
+    {
+      "path": "HumanNeeds/PROMPT-INPUT.md",
+      "bytes": 659,
+      "sha256": "45a1a27d3d04b5ef27aabd2e2becde7036a6a16925553c4d35cdbbb5d175f48a"
+    },
+    {
+      "path": "HumanNeeds/REPRESENTATIVE-EVENTS.json",
+      "bytes": 5897,
+      "sha256": "4dc909aadbfe0b6ff8e9d5ec2ce6ee8921482e24c424ae12930dc20c71d221e9"
+    },
+    {
+      "path": "INDEX.md",
+      "bytes": 771,
+      "sha256": "fb4673f8ba966a3f7a4a4c52e38e10c4af2d5f520d98bcd6f626e8e2f020ad88"
+    }
+  ],
+  "fidelity_gaps": [
+    {
+      "gap": "missing_session_transcript",
+      "details": "Session transcript referenced for session_id 019da198-ea2f-7421-8adc-c566da0b6121 is missing on disk; assistant-side context and stall attribution are limited."
+    },
+    {
+      "gap": "missing_image_payloads",
+      "details": "Seeded SOURCE-PACKET includes <image> markers without image payloads; visual evidence cannot be re-audited."
+    }
+  ]
+}

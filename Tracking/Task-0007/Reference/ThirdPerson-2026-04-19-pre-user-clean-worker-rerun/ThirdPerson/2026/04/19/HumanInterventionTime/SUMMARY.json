@@ -1,0 +1,38 @@
+{
+  "schema_version": "intervention_time.summary.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "c:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "event_count": 62,
+  "stall_event_count": 0,
+  "typing_rate_chars_per_second": 4.0,
+  "stall_grace_seconds": 60,
+  "totals": {
+    "manual_chars": 21775,
+    "typing_seconds_estimate": 5443.75,
+    "stall_loss_seconds": 0.0,
+    "intervention_time_seconds": 5443.75
+  },
+  "counts_by_intervention_kind": {
+    "new_request": 38,
+    "correction": 9,
+    "boundary_reset": 6,
+    "answer_to_question": 9,
+    "wake_up": 0,
+    "other": 0
+  },
+  "counts_by_burden_tag": {
+    "target": 42,
+    "answer": 13,
+    "approval": 8,
+    "evidence": 21,
+    "ownership": 13,
+    "learning": 4,
+    "debugging": 8
+  },
+  "top_stall_events": [],
+  "notes": [
+    "Fidelity gap: session transcript for 46/62 events is missing; stall attribution is conservative and often zeroed.",
+    "If 'other' is non-trivial, revisit the classification ladder; this rebuild attempts to keep 'other' minimal."
+  ]
+}

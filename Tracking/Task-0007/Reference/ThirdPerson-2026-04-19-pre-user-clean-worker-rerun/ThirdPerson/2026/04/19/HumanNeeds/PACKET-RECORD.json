@@ -1,0 +1,122 @@
+{
+  "schema_version": "needs.packet.record.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Reduce human intervention burden by enforcing the ThirdPerson human default-lane regression contract, using valid evidence surfaces, answering direct questions directly, and honoring stop/go gates.",
+  "needs": [
+    {
+      "need_id": "NEED-01",
+      "label": "Trustworthy default-lane proof",
+      "description": "When 'regression' is claimed, proof must exercise the repo's human default lane and use valid in-runtime evidence.",
+      "weight": 0.34,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-02",
+      "label": "Hard stop/go semantics",
+      "description": "STOP/PAUSE and approval gates must be treated as hard execution state; no tools run past the stop without a resume.",
+      "weight": 0.24,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-03",
+      "label": "Direct answers in the requested shape",
+      "description": "For agree/disagree and yes/no questions, answer first and explicitly before continuing work.",
+      "weight": 0.17,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-04",
+      "label": "Low-friction approval surfaces",
+      "description": "When asking for plan approval, provide a diff and concrete links so the human can review without reconstructing state.",
+      "weight": 0.15,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-05",
+      "label": "Root-cause debugging discipline",
+      "description": "Follow first-disagreement tracing to root cause rather than repeated symptom-level iteration.",
+      "weight": 0.10,
+      "preventability_score": 2
+    }
+  ],
+  "suffering_assessment": {
+    "observed": [
+      "time_loss",
+      "high_frustration",
+      "trust_break"
+    ],
+    "inferred": [
+      "high cognitive load due to proof-surface mismatch and repeated re-asking"
+    ],
+    "notes": "INFERRED elements are conservative and anchored to repeated boundary resets and evidence disputes."
+  },
+  "evidence": [
+    {
+      "event_id": "hie-...-3325",
+      "excerpt": "Task failed my basic regression test... invisible pawn.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-...-3431",
+      "excerpt": "Regression must exercise the human default lane... Agree/disagree?",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-...-3392",
+      "excerpt": "STOP. I asked you a question.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-...-4379",
+      "excerpt": "I don't have a diff for plan.md... how am i supposed to approve.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-...-4909",
+      "excerpt": "Evidence invalid; re-take screenshot with feet in full view.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-...-5340",
+      "excerpt": "Determine root cause... follow the disagreement upstream.",
+      "observed_or_inferred": "OBSERVED"
+    }
+  ],
+  "local_constraints_applied": [
+    {
+      "doc": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "note": "Treat REGRESSION.md as canonical for lane definitions and regression closure criteria."
+    }
+  ],
+  "assumptions": [
+    "INFERRED: lane-proof burden is currently the most central burden, but it coexists with stop/go, answer-shape, approval, and debugging burdens rather than replacing them.",
+    "OBSERVED: the packet contains repeated explicit stop/go and approval gating instructions."
+  ],
+  "recommended_next_step": {
+    "type": "gates_and_artifacts",
+    "summary": "Implement a default-lane regression proof gate (lane id + artifact contract) and a STOP/PAUSE protocol that prevents tool work past explicit stops. Make approval requests include diffs and links by default."
+  },
+  "self_sufficiency_improvements": [
+    {
+      "improvement": "Answer direct questions first (yes/no or agree/disagree in line 1).",
+      "why": "Reduces re-asking burden."
+    },
+    {
+      "improvement": "Never claim regression without naming the lane and attaching a lane-appropriate artifact.",
+      "why": "Prevents proof mismatch."
+    },
+    {
+      "improvement": "When requesting approval, include diff + links + one explicit approval question.",
+      "why": "Reduces approval friction."
+    }
+  ],
+  "values_check": {
+    "truthfulness": "Explicitly records missing transcripts and avoids claiming tests were run.",
+    "compassion": "Treats interventions as signals of burden and aims to reduce burden without blaming the human.",
+    "tolerance": "Keeps multiple orthogonal solution options and sequences winners instead of forcing a single bet."
+  },
+  "how_could_the_system_have_inferred_the_need_for_the_input": {
+    "answer": "Mechanism: require lane selection from ThirdPerson/REGRESSION.md for any regression claim. Emit lane id and artifact root in a durable proof file, and refuse to claim closure without it. Additionally: detect STOP/PAUSE keywords as state transitions that disable tools and switch into 'wait' mode, and detect question prompts ('Agree/disagree', '?' forms) to force a direct answer-first response.",
+    "preventability_score": 4
+  }
+}

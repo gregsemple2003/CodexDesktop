@@ -1,0 +1,38 @@
+{
+  "schema_version": "intervention_time.summary.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "c:\\agent\\thirdperson",
+  "local_date": "2026-04-19",
+  "event_count": 62,
+  "stall_event_count": 0,
+  "typing_rate_chars_per_second": 4.0,
+  "stall_grace_seconds": 60,
+  "totals": {
+    "manual_chars": 21775,
+    "typing_seconds_estimate": 5443.75,
+    "stall_loss_seconds": 0.0,
+    "intervention_time_seconds": 5443.75
+  },
+  "counts_by_intervention_kind": {
+    "new_request": 21,
+    "correction": 13,
+    "boundary_reset": 9,
+    "answer_to_question": 19,
+    "wake_up": 0,
+    "other": 0
+  },
+  "counts_by_burden_tag": {
+    "target": 31,
+    "answer": 11,
+    "approval": 11,
+    "evidence": 18,
+    "ownership": 9,
+    "learning": 8,
+    "debugging": 5
+  },
+  "top_stall_events": [],
+  "notes": [
+    "Session transcript paths named in SOURCE-SESSIONS.json were missing on disk during this rerun, so stall attribution stayed conservative and zeroed.",
+    "Wake-like phrasing appears in some continue/resume messages, but no transcript-backed idle-gap proof was available under the allowed-input contract."
+  ]
+}

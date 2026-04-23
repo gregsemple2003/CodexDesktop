@@ -1,0 +1,149 @@
+{
+  "schema_version": "needs.packet.record.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Reduce human intervention burden by keeping ThirdPerson regression proof on the human default lane, preserving hard stop/go and ownership boundaries, answering explicit questions directly, and using valid runtime evidence and root-cause discipline.",
+  "needs": [
+    {
+      "need_id": "NEED-01",
+      "label": "Trustworthy default-lane proof",
+      "description": "Regression closure must name a repo-canonical human lane and rely on that lane's runtime proof rather than adjacent support-lane artifacts.",
+      "weight": 0.28,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-02",
+      "label": "Hard stop/go and ownership continuity",
+      "description": "STOP, PAUSE, continue-under-existing-ownership, and no-homework-back instructions must behave like hard execution state rather than soft tone cues.",
+      "weight": 0.2,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-03",
+      "label": "Direct answers in the requested shape",
+      "description": "Agree/disagree, yes/no, and simple factual questions need a direct line-one answer before continued work narration.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-04",
+      "label": "Approval-ready review surfaces",
+      "description": "Plan and pass approval asks must include diffs, links, and scope so the human can approve without reconstructing state.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-05",
+      "label": "Valid runtime evidence surfaces",
+      "description": "Claims about runtime defects must stay grounded in admissible in-lane evidence and narrow or withdraw when that evidence is invalidated.",
+      "weight": 0.14,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-06",
+      "label": "First-disagreement root-cause tracing",
+      "description": "Debugging must name the first concrete bad state and trace writers upstream instead of stalling at symptom-level tweaking.",
+      "weight": 0.1,
+      "preventability_score": 2
+    }
+  ],
+  "suffering_assessment": {
+    "observed": [
+      "time_loss",
+      "high_frustration",
+      "trust_break",
+      "review_friction"
+    ],
+    "inferred": [
+      "exported supervision load",
+      "high cognitive load from repeated proof-surface and answer-shape correction"
+    ],
+    "notes": "OBSERVED vs INFERRED are kept separate because transcript-side assistant context is incomplete during this rerun."
+  },
+  "evidence": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "excerpt": "Task failed my basic regression test... invisible pawn.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "excerpt": "Regression must exercise the human default lane...",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "excerpt": "I don't have a diff for plan.md...",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "excerpt": "Evidence invalid; re-take screenshot with feet in full view.",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5310",
+      "excerpt": "...keep working without throwing your homework at my feet...",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "excerpt": "determine root case... follow the disagreement in state upstream...",
+      "observed_or_inferred": "OBSERVED"
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-7446",
+      "excerpt": "identify the first concrete disagreement in runtime default-lane state...",
+      "observed_or_inferred": "OBSERVED"
+    }
+  ],
+  "local_constraints_applied": [
+    {
+      "doc": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "note": "AGENTS.md fixes the stable default map/game mode/pawn path and says task artifacts own transient churn."
+    },
+    {
+      "doc": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "note": "REGRESSION.md makes the human default lane canonical and disqualifies operator-lane proof as regression closure by itself."
+    },
+    {
+      "doc": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "note": "TESTING.md separates headless diagnostics from real gameplay regression and points back to the repo regression matrix."
+    }
+  ],
+  "assumptions": [
+    "INFERRED: default-lane truth and evidence-surface integrity stay analytically distinct even when one event carries both burdens.",
+    "INFERRED: ownership continuity and stop/go semantics are coupled enough to share a packet-level need, though Dream may still split them when comparing remedies.",
+    "OBSERVED: the packet contains recurring need_tag clusters for default_lane_truth, agent_continuity, answer_shape, approval_surface, proof_surface_integrity, durable_learning, and root_cause_debugging."
+  ],
+  "recommended_next_step": {
+    "type": "durable_gates_and_contracts",
+    "summary": "Prioritize durable gates that block weak regression closure, soft pause violations, and non-answering behavior before adding more local workaround logic or narrower prompts."
+  },
+  "self_sufficiency_improvements": [
+    {
+      "improvement": "Require lane id plus lane-valid artifact before any regression-closeout claim.",
+      "why": "Prevents default-lane truth drift and reduces evidence relitigation."
+    },
+    {
+      "improvement": "Treat STOP/PAUSE/continue-under-existing-ownership as hard state transitions.",
+      "why": "Reduces exported scheduling and supervision work."
+    },
+    {
+      "improvement": "Answer extracted direct questions on line one before continuing.",
+      "why": "Removes repeated answer-shape re-asks."
+    },
+    {
+      "improvement": "Package approval requests with diff, links, scope, and one explicit approval question.",
+      "why": "Turns review from archaeology into a bounded gate."
+    }
+  ],
+  "values_check": {
+    "truthfulness": "Records missing transcript and image fidelity gaps instead of pretending full source context was available.",
+    "compassion": "Treats the interventions as burden signals and exported repair work, not as the human being the problem.",
+    "tolerance": "Keeps multiple orthogonal need clusters in scope instead of collapsing the day into one simplistic failure story."
+  },
+  "how_could_the_system_have_inferred_the_need_for_the_input": {
+    "answer": "Mechanistically: require the repo's REGRESSION.md lane selection and artifact contract before regression claims; detect explicit STOP/PAUSE and ownership phrases as hard execution state; extract and answer explicit questions before tool narration; and invalidate claims automatically when the cited proof surface is outside the active runtime lane or is explicitly rejected.",
+    "preventability_score": 4
+  }
+}

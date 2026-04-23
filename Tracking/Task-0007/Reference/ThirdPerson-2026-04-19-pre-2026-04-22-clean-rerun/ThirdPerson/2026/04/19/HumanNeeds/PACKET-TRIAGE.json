@@ -1,0 +1,82 @@
+{
+  "schema_version": "needs.packet.triage.v2",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "explicit_request": "Reduce human intervention burden by enforcing the ThirdPerson human default-lane regression contract, using valid evidence surfaces, answering direct questions directly, and honoring stop/go gates.",
+  "needs": [
+    {
+      "need_id": "NEED-01",
+      "label": "Trustworthy default-lane proof",
+      "description": "When 'regression' is claimed, proof must exercise the repo's human default lane and use valid in-runtime evidence.",
+      "weight": 0.34,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-02",
+      "label": "Hard stop/go semantics",
+      "description": "STOP/PAUSE and approval gates must be treated as hard execution state; no tools run past the stop without a resume.",
+      "weight": 0.24,
+      "preventability_score": 4
+    },
+    {
+      "need_id": "NEED-03",
+      "label": "Direct answers in the requested shape",
+      "description": "For agree/disagree and yes/no questions, answer first and explicitly before continuing work.",
+      "weight": 0.17,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-04",
+      "label": "Low-friction approval surfaces",
+      "description": "When asking for plan approval, provide a diff and concrete links so the human can review without reconstructing state.",
+      "weight": 0.15,
+      "preventability_score": 3
+    },
+    {
+      "need_id": "NEED-05",
+      "label": "Root-cause debugging discipline",
+      "description": "Follow first-disagreement tracing to root cause rather than repeated symptom-level iteration.",
+      "weight": 0.10,
+      "preventability_score": 2
+    }
+  ],
+  "suffering_signals": [
+    {
+      "signal": "time_loss",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463"
+      ],
+      "notes": "OBSERVED: explicit statement that wrong lane/proof wasted time and required course correction."
+    },
+    {
+      "signal": "high_frustration",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4399",
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421"
+      ],
+      "notes": "OBSERVED: profanity/escalated language consistent with acute frustration; not a diagnosis."
+    },
+    {
+      "signal": "trust_break",
+      "evidence_event_ids": [
+        "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463"
+      ],
+      "notes": "OBSERVED: the human frames agent judgment as a major failure demanding a durable fix."
+    }
+  ],
+  "highest_leverage_context_to_fetch": [
+    {
+      "context": "Repo-local regression contract and lane definition (ThirdPerson/REGRESSION.md)",
+      "why": "The packet's core recurring burden is regression proof-lane mismatch."
+    }
+  ],
+  "clarifying_question": {
+    "needed": false,
+    "question": null,
+    "reason": "The packet provides explicit constraints and repeated interventions; incremental clarification would likely add burden."
+  },
+  "risk_notes": [
+    "Fidelity gap: session transcript for session_id 019da198-ea2f-7421-8adc-c566da0b6121 is missing on disk; assistant-side context for 46/62 events cannot be re-read.",
+    "Image payloads referenced by <image> markers do not survive in the seeded packet; visual evidence disputes cannot be re-audited visually."
+  ]
+}

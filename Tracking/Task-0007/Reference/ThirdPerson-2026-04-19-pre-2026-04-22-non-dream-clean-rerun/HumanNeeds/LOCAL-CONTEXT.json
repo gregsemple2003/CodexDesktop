@@ -1,0 +1,78 @@
+{
+  "schema_version": "needs.local_context.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "repo_ref": "C:\\Agent\\ThirdPerson",
+  "local_date": "2026-04-19",
+  "docs": [
+    {
+      "path": "C:\\Agent\\ThirdPerson\\AGENTS.md",
+      "exists": true,
+      "sha256": "5b1389da1de987ca20bae89507e048fa9f02ac9822d55c2d3920739baeea7414",
+      "excerpts": [
+        {
+          "start_line": 77,
+          "end_line": 81,
+          "text": "## Current Sandbox Defaults\n\nCurrent default map and game mode are configured in [DefaultEngine.ini](/c:/Agent/ThirdPerson/Config/DefaultEngine.ini#L1):\n\n- startup map: `/Game/ThirdPerson/Lvl_ThirdPerson`"
+        },
+        {
+          "start_line": 88,
+          "end_line": 94,
+          "text": "The current Mover-backed playable surface is:\n\n- default game mode: `/Script/ThirdPerson.ThirdPersonGameMode`\n- default player controller: `/Script/ThirdPerson.ThirdPersonPlayerController`\n- default pawn: `/Script/ThirdPerson.ThirdPersonPawn`\n\nIf these defaults change temporarily during task work, the task handoff and regression artifacts own that churn. Keep this section for the repo's intended stable default, not minute-by-minute debugging state."
+        },
+        {
+          "start_line": 122,
+          "end_line": 128,
+          "text": "- prefer durable runtime instrumentation over one-off editor guesses when debugging live PIE behavior\n- prefer first-class in-repo automation surfaces over permanent dependence on ad hoc Unreal Python scripts\n- treat editor Python as a bridge or support lane, not as the final runtime automation substrate for this sandbox\n\n## Guardrails\n\n- keep engine work in `C:\\Agent\\UnrealEngine` and project work in `C:\\Agent\\ThirdPerson`"
+        }
+      ]
+    },
+    {
+      "path": "C:\\Agent\\ThirdPerson\\REGRESSION.md",
+      "exists": true,
+      "sha256": "3b31fb34c7191037370c76d6657b937c50957837855dd51776d61357bc985a1f",
+      "excerpts": [
+        {
+          "start_line": 35,
+          "end_line": 44,
+          "text": "\nSupporting diagnostics are described in [TESTING.md](/c:/Agent/ThirdPerson/TESTING.md#L1). They do not replace regression by themselves.\n\n## Human Default Lane Rule\n\nRegression in this repo uses the human default lane.\n\nFor ThirdPerson, that means launching the project normally, letting the default map load, and exercising PIE in Selected Viewport with the repo-default map, game mode, pawn, and camera path unless this file explicitly says otherwise.\n\nOperator lanes such as command-line overrides, alternate `?game=` values, alternate maps, automation-only launch flags, proof views, or other non-default harnesses may support setup, diagnosis, or specialized evidence."
+        },
+        {
+          "start_line": 47,
+          "end_line": 59,
+          "text": "\n## Canonical Lanes\n\n### Lane A: Sandbox Baseline Lane\n\nUse this lane to prove the repo still behaves like a playable third-person sandbox.\n\nFlow:\n\n1. launch the real Unreal project\n2. allow the default map to load\n3. PIE in Selected Viewport\n4. verify the currently configured default pawn and camera path from the playable surface"
+        },
+        {
+          "start_line": 147,
+          "end_line": 158,
+          "text": "\nGoal:\n\n- verify the project defaults are being applied during PIE\n\nSteps:\n\n1. start PIE in Selected Viewport\n2. review the live behavior and the editor log\n\nExpected result:"
+        }
+      ]
+    },
+    {
+      "path": "C:\\Agent\\ThirdPerson\\TESTING.md",
+      "exists": true,
+      "sha256": "e224f3592a9c8b5c4185d34b4b098d5ad010efe115b55d54fb09b636829bd66c",
+      "excerpts": [
+        {
+          "start_line": 27,
+          "end_line": 34,
+          "text": "\nIn this repo:\n\n- `unit test` includes project compilation and headless Unreal verification scripts\n- `regression test` means running the real Unreal project in PIE and observing the gameplay surface\n- `end-to-end regression` is reserved for later `GameAutomation`-driven runs that capture artifacts from the real game surface automatically\n\n## Build Verification"
+        },
+        {
+          "start_line": 42,
+          "end_line": 60,
+          "text": "This is supporting proof. It is not regression by itself.\n\n## Headless Diagnostics Lane\n\nUse this lane when you need evidence but not a real played surface.\n\nCurrent examples:\n\n```powershell\n& 'C:\\Agent\\UnrealEngine\\Engine\\Binaries\\Win64\\UnrealEditor.exe' 'C:\\Agent\\ThirdPerson\\ThirdPerson.uproject' -unattended -nop4 -nosplash -nullrhi -NoSound -ExecutePythonScript='C:\\Agent\\ThirdPerson\\Tools\\CharacterPipeline\\Unreal\\ue_diagnose_experimental_character.py'\n& 'C:\\Agent\\UnrealEngine\\Engine\\Binaries\\Win64\\UnrealEditor.exe' 'C:\\Agent\\ThirdPerson\\ThirdPerson.uproject' -unattended -nop4 -nosplash -nullrhi -NoSound -ExecutePythonScript='C:\\Agent\\ThirdPerson\\Tools\\CharacterPipeline\\Unreal\\ue_probe_experimental_subobjects.py'\n```\n\nRules:\n\n- preserve the generated JSON reports or the relevant log lines\n- do not label this lane as regression by itself\n- use this lane to support a task, narrow a bug, or validate asset state without pretending it proves the playable surface"
+        },
+        {
+          "start_line": 61,
+          "end_line": 76,
+          "text": "## Manual PIE Lane\n\nUse this lane for real gameplay proof.\n\nFlow:\n\n1. launch the project in the Unreal Editor\n2. let `Lvl_ThirdPerson` load\n3. run PIE in Selected Viewport\n4. verify the possessed pawn, camera, and current default game mode behavior\n\nThis is the default regression surface for the repo. The exact pass bar lives in [REGRESSION.md](/c:/Agent/ThirdPerson/REGRESSION.md#L1).\n\n## GameAutomation Lane\n\nUse this lane when the task specifically needs runtime evidence generated by the in-repo automation foundation rather than manual operator notes alone."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Repo-local constraints are grounded in the packet repo C:\\Agent\\ThirdPerson, not the current workspace repo.",
+    "No named session transcript from SOURCE-SESSIONS.json is available on disk at its canonical path during this rerun; packet-level needs therefore rely more heavily on SOURCE-PACKET.jsonl and repo docs."
+  ]
+}

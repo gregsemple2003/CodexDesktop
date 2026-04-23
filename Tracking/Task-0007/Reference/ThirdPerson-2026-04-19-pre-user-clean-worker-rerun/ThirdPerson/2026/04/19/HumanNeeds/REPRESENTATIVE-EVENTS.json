@@ -1,0 +1,102 @@
+{
+  "schema_version": "needs.packet.events.v1",
+  "packet_label": "ThirdPerson human inputs on 2026-04-19 local time",
+  "selected_events": [
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3094",
+      "captured_at_local": "2026-04-19T09:59:16.240000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "can you regenerate ThirdPerson.sln (and keep it updated anytime a file is added)",
+      "selection_reason": "Representative of recurring intervention burden patterns.",
+      "priority_rank": 1
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3197",
+      "captured_at_local": "2026-04-19T10:05:26.992000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "no stop i don't want a file watcher just for this, i'll make it part of the prompt just do a one off now",
+      "selection_reason": "Method correction: rejects an invented mechanism and forces a one-off change.",
+      "priority_rank": 2
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3325",
+      "captured_at_local": "2026-04-19T10:30:31.679000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Task faileed my basic regression test.  I booted development editor and ran and see an invisible pawn.  Why did you not see this when you ran a regression test?  You're wasting my time.",
+      "selection_reason": "Core defect and trust break: human reports regression failure in the default lane.",
+      "priority_rank": 3
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3431",
+      "captured_at_local": "2026-04-19T10:33:41.752000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Regression must exercise the human default lane, not just whatever one-off you're working on.  Agree/disagree?",
+      "selection_reason": "Defines the core 'human default lane' constraint for regression proof.",
+      "priority_rank": 4
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-3463",
+      "captured_at_local": "2026-04-19T10:35:23.084000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "You said you agree.  Your lack of judgement has cost the human time and required course correction.  This is a major failure.  Propose a fix for the process failure first.  Do not apply.",
+      "selection_reason": "Representative of recurring intervention burden patterns.",
+      "priority_rank": 5
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4379",
+      "captured_at_local": "2026-04-19T12:01:36.884000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I don't have a diff for plan.md so how am i supposed to approve.  Do better.",
+      "selection_reason": "Approval friction: missing review surface forces extra human work.",
+      "priority_rank": 6
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4421",
+      "captured_at_local": "2026-04-19T12:04:22.397000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Put all new work under a new pass.  Fuck you.",
+      "selection_reason": "Representative of recurring intervention burden patterns.",
+      "priority_rank": 7
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-4909",
+      "captured_at_local": "2026-04-19T14:22:07.173000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "Your picture cut off the bottom of the ZeroMale meshes feet.  Evidence invalid; re-take screenshot with feet in full view.  They are clearly not spheres.  Jackass.",
+      "selection_reason": "Proof-surface dispute: evidence quality invalidates a claimed conclusion.",
+      "priority_rank": 8
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5090",
+      "captured_at_local": "2026-04-19T14:44:16.328000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "I'm asking if the geometry of the foot is wrong.  Not just in that picture.  Stop evading the question.",
+      "selection_reason": "Proof-surface dispute: evidence quality invalidates a claimed conclusion.",
+      "priority_rank": 9
+    },
+    {
+      "event_id": "hie-20260419-019da198-ea2f-7421-8adc-c566da0b6121-5340",
+      "captured_at_local": "2026-04-19T16:34:23.765000-04:00",
+      "thread_name": "Implement task 6 workflow",
+      "explicit_request": "What I'm looking for you to do is determine root case.  Following the disagreement in state upstream until you determine root cause.",
+      "selection_reason": "Approval friction: missing review surface forces extra human work.",
+      "priority_rank": 10
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-3692",
+      "captured_at_local": "2026-04-19T10:34:33.661000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Stop active investigation now and pause. Do not make any changes or continue analysis until further instruction from me. Preserve your current context.",
+      "selection_reason": "Boundary/gate event: stop/go semantics and explicit pause expectations.",
+      "priority_rank": 11
+    },
+    {
+      "event_id": "hie-20260419-019da19b-19c6-7e20-bdd8-f03aea761fb9-4919",
+      "captured_at_local": "2026-04-19T12:16:11.010000-04:00",
+      "thread_name": "Lead Task-0006 lifecycle",
+      "explicit_request": "Human approved the revised plan. Start PASS-0007 now.",
+      "selection_reason": "Approval friction: missing review surface forces extra human work.",
+      "priority_rank": 12
+    }
+  ]
+}
