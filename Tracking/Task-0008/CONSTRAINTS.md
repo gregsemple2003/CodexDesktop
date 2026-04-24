@@ -32,3 +32,7 @@ Add new constraints here as they are given.
 - Use `state_summary` for the current run or state summary.
 - `completed` must mean no further human judgment, review, or approval is required.
 - If review or approval is still required, the state must surface as `waiting_for_human` with an explicit approval target.
+
+### 2026-04-24 Constraint Memory
+
+- Write a markdown file `CONSTRAINTS.md` and put that in there, along with any other constraint i give you.

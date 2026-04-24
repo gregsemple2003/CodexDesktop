@@ -81,6 +81,47 @@ func (f *fakeRuntime) ReconcileTaskSnapshot(_ context.Context, runID string, sna
 	return run, nil
 }
 
+func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return TaskRunView{}, ErrRunNotFound
+	}
+	if update.State != "" {
+		run.StateEnvelope.State = update.State
+	}
+	if update.ReasonCode != "" {
+		run.StateEnvelope.ReasonCode = update.ReasonCode
+	}
+	if update.StateSummary != "" {
+		run.StateEnvelope.StateSummary = update.StateSummary
+	}
+	if update.NextOwner != "" {
+		run.StateEnvelope.NextOwner = update.NextOwner
+	}
+	if update.NextExpectedEvent != "" {
+		run.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+	}
+	if !update.SuspiciousAfter.IsZero() {
+		run.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+	}
+	if update.WaitContract != nil {
+		run.WaitContract = update.WaitContract
+	}
+	if update.Attention != nil {
+		run.Attention = *update.Attention
+	}
+	if update.Actions != nil {
+		run.Actions = update.Actions
+	}
+	if update.LastProgressSummary != "" {
+		run.LastProgressSummary = update.LastProgressSummary
+		run.LastProgressAt = time.Now().UTC()
+	}
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
+
 func TestListTasksParsesMeaningAndReadyState(t *testing.T) {
 	worktreeRoot := writeTaskTrackingRoot(t, map[string]taskFixture{
 		"Task-0008": {
@@ -241,6 +282,75 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if run.RunID != ActiveRunID("Task-0008") {
 		t.Fatalf("run id = %q", run.RunID)
+	}
+}
+
+func TestUpdateRunAppliesRicherStateContract(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0001",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T16:44:31-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	runsRoot := filepath.Join(worktreeRoot, ".runs")
+	service := NewService(worktreeRoot, runsRoot, runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	updated, err := service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:               StateWaitingForHuman,
+		ReasonCode:          "review_required",
+		StateSummary:        "Run is waiting for human review.",
+		NextOwner:           "human",
+		NextExpectedEvent:   "Approve the next backend action.",
+		LastProgressSummary: "Run recorded a review checkpoint.",
+		WaitContract: &WaitContract{
+			WaitingOn:           "human_review",
+			WhyBlocked:          "The next backend action needs human approval.",
+			ResumeWhen:          "The human approves the next backend action.",
+			HumanActionRequired: true,
+			HumanActionTarget: &HumanActionTarget{
+				Kind:  "approval_action",
+				Label: "Approve backend review step",
+				URI:   "approval://taskrun/Task-0008",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("update run: %v", err)
+	}
+
+	if updated.StateEnvelope.State != StateWaitingForHuman {
+		t.Fatalf("updated state = %q", updated.StateEnvelope.State)
+	}
+	if updated.WaitContract == nil || updated.WaitContract.HumanActionTarget == nil {
+		t.Fatal("expected wait contract with explicit human action target")
+	}
+	if updated.Attention.Level != AttentionNeedsAttention {
+		t.Fatalf("attention level = %q, want %q", updated.Attention.Level, AttentionNeedsAttention)
 	}
 }
 

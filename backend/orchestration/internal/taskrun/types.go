@@ -169,6 +169,7 @@ type Runtime interface {
 	GetTaskRun(ctx context.Context, runID string) (TaskRunView, error)
 	GetActiveTaskRun(ctx context.Context, taskID string) (TaskRunView, error)
 	ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error)
+	UpdateTaskRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error)
 }
 
 type StartTaskRunRequest struct {
@@ -179,4 +180,20 @@ type StartTaskRunRequest struct {
 	CapturedTaskSnapshot TaskDefinitionSnapshot `json:"captured_task_snapshot"`
 	RepoLane             RepoLane               `json:"repo_lane"`
 	DispatchRequestedAt  time.Time              `json:"dispatch_requested_at"`
+}
+
+type TaskRunUpdate struct {
+	State               string                        `json:"state"`
+	ReasonCode          string                        `json:"reason_code"`
+	StateSummary        string                        `json:"state_summary"`
+	NextOwner           string                        `json:"next_owner,omitempty"`
+	NextExpectedEvent   string                        `json:"next_expected_event,omitempty"`
+	SuspiciousAfter     time.Time                     `json:"suspicious_after,omitempty"`
+	LastProgressSummary string                        `json:"last_progress_summary,omitempty"`
+	WaitContract        *WaitContract                 `json:"wait_contract,omitempty"`
+	Attention           *AttentionPriority            `json:"attention,omitempty"`
+	RepoLane            *RepoLane                     `json:"repo_lane,omitempty"`
+	Actions             map[string]ActionAvailability `json:"actions,omitempty"`
+	CompletedAt         time.Time                     `json:"completed_at,omitempty"`
+	FailureSummary      string                        `json:"failure_summary,omitempty"`
 }

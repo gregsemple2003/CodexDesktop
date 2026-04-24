@@ -69,7 +69,14 @@ The repo already has:
 - baseline-commit capture and initial restore-baseline capture
 - backend smoke evidence in [Testing/PASS-0001-BACKEND-SMOKE-0001.md](./Testing/PASS-0001-BACKEND-SMOKE-0001.md)
 
-What is still missing is richer live execution-state evolution after dispatch, plus supervision, poke, interrupt, and cleanup behavior over those durable runs.
+`PASS-0001` now also has the first richer runtime-state slice after dispatch:
+
+- `POST /api/v1/task-runs/{run_id}/state`
+- Temporal signal handling for post-dispatch task-run state mutation
+- task-level readback that reflects live active-run state updates
+- live validation-lane proof in [Testing/PASS-0001-BACKEND-SMOKE-0002.md](./Testing/PASS-0001-BACKEND-SMOKE-0002.md)
+
+What is still missing is supervision, poke, interrupt, cleanup behavior, and real task execution over those durable runs.
 
 ## Current Gate
 
@@ -87,10 +94,10 @@ Continue `PASS-0001` by extending the initial dispatch slice into a fuller runti
 
 The next implementation slice should:
 
-- move task runs beyond initial `dispatching` into richer durable runtime states
-- add more live run detail to readback beyond the initial snapshot and owned-lane baseline
+- turn the current runtime-state update path into real backend-owned supervision behavior instead of manual API-only mutation
+- add durable transitions for poke, interrupt, cleanup, and later restore-to-commit reporting
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
-- prepare the runtime shape that later `PASS-0002` supervision, poke, interrupt, and cleanup logic will act on
+- prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
 
 ## Watchouts

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,34 @@ func (f *fakeTaskRuntime) ReconcileTaskSnapshot(_ context.Context, runID string,
 	return run, nil
 }
 
+func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}
+	if update.State != "" {
+		run.StateEnvelope.State = update.State
+	}
+	if update.ReasonCode != "" {
+		run.StateEnvelope.ReasonCode = update.ReasonCode
+	}
+	if update.StateSummary != "" {
+		run.StateEnvelope.StateSummary = update.StateSummary
+	}
+	if update.WaitContract != nil {
+		run.WaitContract = update.WaitContract
+	}
+	if update.Attention != nil {
+		run.Attention = *update.Attention
+	}
+	if update.Actions != nil {
+		run.Actions = update.Actions
+	}
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
+
 func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	root := writeJobsRoot(t, []jobs.Spec{
 		{
@@ -249,6 +278,32 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(taskRunResponse, taskRunRequest)
 	if taskRunResponse.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/task-runs/{id} status = %d, want 200", taskRunResponse.Code)
+	}
+
+	updateBody := strings.NewReader(`{
+  "state": "waiting_for_human",
+  "reason_code": "review_required",
+  "state_summary": "Run is waiting for human review.",
+  "next_owner": "human",
+  "next_expected_event": "Approve the next backend action.",
+  "wait_contract": {
+    "waiting_on": "human_review",
+    "why_blocked": "The next backend action needs human approval.",
+    "resume_when": "The human approves the next backend action.",
+    "human_action_required": true,
+    "human_action_target": {
+      "kind": "approval_action",
+      "label": "Approve backend review step",
+      "uri": "approval://taskrun/Task-0008"
+    }
+  }
+}`)
+	updateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+taskrun.ActiveRunID("Task-0008")+"/state", updateBody)
+	updateRequest.Header.Set("Content-Type", "application/json")
+	updateResponse := httptest.NewRecorder()
+	mux.ServeHTTP(updateResponse, updateRequest)
+	if updateResponse.Code != http.StatusAccepted {
+		t.Fatalf("POST /api/v1/task-runs/{id}/state status = %d, want 202", updateResponse.Code)
 	}
 
 	runsRequest := httptest.NewRequest(http.MethodGet, "/runs?job_id=codex-daily-ue-determinism-digest", nil)

@@ -169,11 +169,52 @@ func handleTaskAPIRoute(w http.ResponseWriter, r *http.Request, taskService *tas
 }
 
 func handleTaskRunDetail(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	trimmed := strings.TrimPrefix(r.URL.Path, "/api/v1/task-runs/")
+	if trimmed == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if strings.HasSuffix(trimmed, "/state") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		runID := strings.TrimSuffix(trimmed, "/state")
+		runID = strings.TrimSuffix(runID, "/")
+		if runID == "" || strings.Contains(runID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		var update taskrun.TaskRunUpdate
+		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.UpdateRun(ctx, runID, update)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
+
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	runID := strings.TrimPrefix(r.URL.Path, "/api/v1/task-runs/")
+	runID := strings.TrimSuffix(trimmed, "/")
 	if runID == "" || strings.Contains(runID, "/") {
 		http.NotFound(w, r)
 		return

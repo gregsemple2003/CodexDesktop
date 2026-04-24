@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -48,7 +49,7 @@ func NewService(declaredWorktreeRoot string, runsRoot string, runtime Runtime) *
 	return &Service{
 		declaredWorktreeRoot: declaredWorktreeRoot,
 		trackingRoot:         filepath.Join(declaredWorktreeRoot, "Tracking"),
-		ownedLaneRoot:        filepath.Join(runsRoot, "task-owned-checkouts"),
+		ownedLaneRoot:        defaultOwnedLaneRoot(runsRoot),
 		runtime:              runtime,
 		now: func() time.Time {
 			return time.Now().UTC()
@@ -146,6 +147,20 @@ func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
 		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
 	}
 	return s.runtime.GetTaskRun(ctx, runID)
+}
+
+func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
+	if s.runtime == nil {
+		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
+	}
+	if update.Actions == nil && update.State != "" {
+		update.Actions = actionsForRunState(update.State)
+	}
+	if update.Attention == nil && update.State != "" {
+		attention := attentionForRunState(update.State)
+		update.Attention = &attention
+	}
+	return s.runtime.UpdateTaskRun(ctx, runID, update)
 }
 
 func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, error) {
@@ -445,13 +460,18 @@ func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
 		return RepoLane{}, fmt.Errorf("resolve baseline commit for %s", taskID)
 	}
 
-	stamp := strings.NewReplacer(":", "", ".", "").Replace(s.now().Format("20060102T150405.000000000Z07:00"))
-	ownedRepoRoot := filepath.Join(s.ownedLaneRoot, sanitizePathSegment(taskID), stamp, "worktree")
+	stamp := fmt.Sprintf("%x", s.now().UnixNano())
+	ownedRepoRoot := filepath.Join(s.ownedLaneRoot, shortTaskSegment(taskID), stamp, "w")
 	if err := os.MkdirAll(filepath.Dir(ownedRepoRoot), 0o755); err != nil {
 		return RepoLane{}, fmt.Errorf("create owned lane parent: %w", err)
 	}
 
-	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "add", "--detach", ownedRepoRoot, baselineCommit)
+	args := []string{"-C", s.declaredWorktreeRoot}
+	if runtime.GOOS == "windows" {
+		args = append([]string{"-c", "core.longpaths=true"}, args...)
+	}
+	args = append(args, "worktree", "add", "--detach", ownedRepoRoot, baselineCommit)
+	cmd := exec.Command("git", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return RepoLane{}, fmt.Errorf("create owned worktree: %w: %s", err, strings.TrimSpace(string(output)))
 	}
@@ -496,6 +516,76 @@ func defaultActions(readiness DispatchReadiness) map[string]ActionAvailability {
 				Summary: "Interrupt is unavailable until a task run exists.",
 			}},
 		},
+	}
+}
+
+func actionsForRunState(state string) map[string]ActionAvailability {
+	dispatchBlocked := []ActionBlockReason{{
+		Code:    "active_run_exists",
+		Summary: "Dispatch is blocked while this run owns the current live story.",
+	}}
+	pokeUnavailable := []ActionBlockReason{{
+		Code:    "poke_not_implemented",
+		Summary: "Poke is not implemented yet for task runs.",
+	}}
+	interruptUnavailable := []ActionBlockReason{{
+		Code:    "interrupt_not_implemented",
+		Summary: "Interrupt is not implemented yet for task runs.",
+	}}
+
+	switch state {
+	case StateRunning, StateDispatching, StateSleepingOrStalled:
+		return map[string]ActionAvailability{
+			ActionDispatch:  {Allowed: false, BlockReasons: dispatchBlocked},
+			ActionPoke:      {Allowed: false, BlockReasons: pokeUnavailable},
+			ActionInterrupt: {Allowed: false, BlockReasons: interruptUnavailable},
+		}
+	case StateWaitingForHuman, StateBlocked, StateCompleted, StateFailed, StateInterrupted:
+		return map[string]ActionAvailability{
+			ActionDispatch: {
+				Allowed:      false,
+				BlockReasons: dispatchBlocked,
+			},
+			ActionPoke: {
+				Allowed: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "poke_not_allowed_for_state",
+					Summary: "Poke is not allowed in the current run state.",
+				}},
+			},
+			ActionInterrupt: {
+				Allowed: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "interrupt_not_allowed_for_state",
+					Summary: "Interrupt is not allowed in the current run state.",
+				}},
+			},
+		}
+	default:
+		return map[string]ActionAvailability{
+			ActionDispatch:  {Allowed: false, BlockReasons: dispatchBlocked},
+			ActionPoke:      {Allowed: false, BlockReasons: pokeUnavailable},
+			ActionInterrupt: {Allowed: false, BlockReasons: interruptUnavailable},
+		}
+	}
+}
+
+func attentionForRunState(state string) AttentionPriority {
+	switch state {
+	case StateWaitingForHuman:
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Run is waiting on a human action.", SortKey: "20-waiting_for_human"}
+	case StateBlocked:
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Run is blocked and needs review.", SortKey: "30-blocked"}
+	case StateSleepingOrStalled:
+		return AttentionPriority{Level: AttentionUrgent, Reason: "Run appears stalled.", SortKey: "10-stalled"}
+	case StateCompleted:
+		return AttentionPriority{Level: AttentionNone, Reason: "Run is complete.", SortKey: "90-complete"}
+	case StateFailed:
+		return AttentionPriority{Level: AttentionUrgent, Reason: "Run failed.", SortKey: "15-failed"}
+	case StateInterrupted:
+		return AttentionPriority{Level: AttentionWatch, Reason: "Run was interrupted.", SortKey: "60-interrupted"}
+	default:
+		return AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-active"}
 	}
 }
 
@@ -587,4 +677,16 @@ func gitRevision(worktreeRoot string) string {
 func sanitizePathSegment(value string) string {
 	replacer := strings.NewReplacer("\\", "_", "/", "_", ":", "_", " ", "_")
 	return replacer.Replace(value)
+}
+
+func defaultOwnedLaneRoot(runsRoot string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(os.TempDir(), "cdxow")
+	}
+	return filepath.Join(runsRoot, "task-owned-checkouts")
+}
+
+func shortTaskSegment(taskID string) string {
+	hash := sha256.Sum256([]byte(taskID))
+	return sanitizePathSegment(taskID) + "-" + hex.EncodeToString(hash[:4])
 }

@@ -13,6 +13,7 @@ const (
 	TaskRunWorkflowName         = "codex.task.run"
 	TaskRunStateQueryName       = "taskrun.current_state"
 	ReconcileSnapshotSignalName = "taskrun.reconcile_snapshot"
+	UpdateRunSignalName         = "taskrun.update_state"
 )
 
 func Register(w worker.Worker) {
@@ -35,15 +36,25 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 	}
 
 	reconcileCh := workflow.GetSignalChannel(ctx, ReconcileSnapshotSignalName)
+	updateCh := workflow.GetSignalChannel(ctx, UpdateRunSignalName)
 	for {
-		var snapshot taskrun.TaskDefinitionSnapshot
-		reconcileCh.Receive(ctx, &snapshot)
-		view.CapturedTaskSnapshot = snapshot
-		view.DocRuntimeDivergenceStatus = "reconciled"
-		view.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
-		view.LastProgressAt = workflow.Now(ctx).UTC()
-		view.LastProgressSummary = "Reconciled declared task docs into runtime state."
-		view.StateEnvelope.SuspiciousAfter = workflow.Now(ctx).UTC().Add(15 * time.Minute)
+		selector := workflow.NewSelector(ctx)
+		selector.AddReceive(reconcileCh, func(c workflow.ReceiveChannel, more bool) {
+			var snapshot taskrun.TaskDefinitionSnapshot
+			c.Receive(ctx, &snapshot)
+			view.CapturedTaskSnapshot = snapshot
+			view.DocRuntimeDivergenceStatus = "reconciled"
+			view.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+			view.LastProgressAt = workflow.Now(ctx).UTC()
+			view.LastProgressSummary = "Reconciled declared task docs into runtime state."
+			view.StateEnvelope.SuspiciousAfter = workflow.Now(ctx).UTC().Add(15 * time.Minute)
+		})
+		selector.AddReceive(updateCh, func(c workflow.ReceiveChannel, more bool) {
+			var update taskrun.TaskRunUpdate
+			c.Receive(ctx, &update)
+			applyUpdate(&view, update, workflow.Now(ctx).UTC())
+		})
+		selector.Select(ctx)
 	}
 }
 
@@ -117,4 +128,58 @@ func collectActionBlockReasons(actions map[string]taskrun.ActionAvailability) ma
 		blockReasons[action] = append([]taskrun.ActionBlockReason(nil), availability.BlockReasons...)
 	}
 	return blockReasons
+}
+
+func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now time.Time) {
+	if update.State != "" {
+		view.StateEnvelope.State = update.State
+	}
+	if update.ReasonCode != "" {
+		view.StateEnvelope.ReasonCode = update.ReasonCode
+	}
+	if update.StateSummary != "" {
+		view.StateEnvelope.StateSummary = update.StateSummary
+	}
+	if update.NextOwner != "" {
+		view.StateEnvelope.NextOwner = update.NextOwner
+	}
+	if update.NextExpectedEvent != "" {
+		view.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+	}
+	if !update.SuspiciousAfter.IsZero() {
+		view.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+	}
+	if update.LastProgressSummary != "" {
+		view.LastProgressSummary = update.LastProgressSummary
+		view.LastProgressAt = now
+	}
+	if update.WaitContract != nil {
+		view.WaitContract = update.WaitContract
+	}
+	if update.Attention != nil {
+		view.Attention = *update.Attention
+	}
+	if update.RepoLane != nil {
+		view.RepoLane = *update.RepoLane
+	}
+	if update.Actions != nil {
+		view.Actions = update.Actions
+		view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(update.Actions)
+	}
+	if update.CompletedAt.IsZero() {
+		view.Status = "active"
+	} else {
+		view.LastProgressAt = update.CompletedAt
+	}
+	switch view.StateEnvelope.State {
+	case taskrun.StateCompleted:
+		view.Status = "completed"
+	case taskrun.StateFailed:
+		view.Status = "failed"
+	case taskrun.StateInterrupted:
+		view.Status = "interrupted"
+	}
+	if update.FailureSummary != "" {
+		view.DocRuntimeDivergenceSummary = update.FailureSummary
+	}
 }

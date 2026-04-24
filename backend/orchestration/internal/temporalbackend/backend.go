@@ -185,6 +185,16 @@ func (b *Backend) ReconcileTaskSnapshot(ctx context.Context, runID string, snaps
 	return b.GetTaskRun(ctx, runID)
 }
 
+func (b *Backend) UpdateTaskRun(ctx context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
+	if err := b.client.SignalWorkflow(ctx, runID, "", taskexec.UpdateRunSignalName, update); err != nil {
+		if isTemporalNotFound(err) {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return taskrun.TaskRunView{}, fmt.Errorf("signal update for task run %s: %w", runID, err)
+	}
+	return b.GetTaskRun(ctx, runID)
+}
+
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {
 	return client.ScheduleOptions{
 		ID:            desired.ScheduleID,
