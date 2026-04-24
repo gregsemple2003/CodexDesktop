@@ -1,8 +1,17 @@
 package taskexec
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 
@@ -14,10 +23,12 @@ const (
 	TaskRunStateQueryName       = "taskrun.current_state"
 	ReconcileSnapshotSignalName = "taskrun.reconcile_snapshot"
 	UpdateRunSignalName         = "taskrun.update_state"
+	RunExecutionPreflightName   = "taskrun.execution_preflight"
 )
 
 func Register(w worker.Worker) {
 	w.RegisterWorkflowWithOptions(TaskRunWorkflow, workflow.RegisterOptions{Name: TaskRunWorkflowName})
+	w.RegisterActivityWithOptions(runExecutionPreflight, activity.RegisterOptions{Name: RunExecutionPreflightName})
 }
 
 func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
@@ -33,6 +44,58 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 		return view, nil
 	}); err != nil {
 		return taskrun.TaskRunView{}, err
+	}
+
+	if request.RepoLane.RunArtifactRoot != "" {
+		activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+			StartToCloseTimeout: 2 * time.Minute,
+			RetryPolicy: &temporal.RetryPolicy{
+				MaximumAttempts: 1,
+			},
+		})
+		var preflight executionPreflightResult
+		if err := workflow.ExecuteActivity(activityCtx, RunExecutionPreflightName, request).Get(activityCtx, &preflight); err != nil {
+			applyUpdate(&view, taskrun.TaskRunUpdate{
+				State:               taskrun.StateBlocked,
+				ReasonCode:          "execution_preflight_failed",
+				StateSummary:        "Run could not complete owned-lane execution preflight.",
+				NextOwner:           "human_or_supervisor",
+				NextExpectedEvent:   "Review the preflight failure before continuing execution.",
+				SuspiciousAfter:     workflow.Now(ctx).UTC(),
+				LastProgressSummary: "Execution preflight failed before the first workload step.",
+				Attention: &taskrun.AttentionPriority{
+					Level:   taskrun.AttentionUrgent,
+					Reason:  "Run could not prepare the owned lane for execution.",
+					SortKey: "14-execution_preflight_failed",
+				},
+				Actions:        actionsForState(taskrun.StateBlocked),
+				FailureSummary: err.Error(),
+			}, workflow.Now(ctx).UTC())
+		} else {
+			repoLane := view.RepoLane
+			if preflight.CurrentCommit != "" {
+				repoLane.CurrentCommit = preflight.CurrentCommit
+			}
+			if preflight.PreflightArtifactPath != "" {
+				repoLane.PreflightArtifactPath = preflight.PreflightArtifactPath
+			}
+			applyUpdate(&view, taskrun.TaskRunUpdate{
+				State:               taskrun.StateRunning,
+				ReasonCode:          "execution_preflight_complete",
+				StateSummary:        "Run completed owned-lane execution preflight.",
+				NextOwner:           "backend_worker",
+				NextExpectedEvent:   "Execution worker records the first workload step.",
+				SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+				LastProgressSummary: preflight.ProgressSummary,
+				Attention: &taskrun.AttentionPriority{
+					Level:   taskrun.AttentionWatch,
+					Reason:  "Run completed execution preflight and is ready for the first workload step.",
+					SortKey: "44-execution_preflight_complete",
+				},
+				RepoLane: &repoLane,
+				Actions:  actionsForState(taskrun.StateRunning),
+			}, workflow.Now(ctx).UTC())
+		}
 	}
 
 	reconcileCh := workflow.GetSignalChannel(ctx, ReconcileSnapshotSignalName)
@@ -153,6 +216,89 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 	}
 }
 
+type executionPreflightResult struct {
+	CurrentCommit         string          `json:"current_commit"`
+	PreflightArtifactPath string          `json:"preflight_artifact_path"`
+	OwnedTaskRoot         string          `json:"owned_task_root"`
+	GitStatusShort        string          `json:"git_status_short,omitempty"`
+	DocPresence           map[string]bool `json:"doc_presence,omitempty"`
+	ProgressSummary       string          `json:"progress_summary"`
+}
+
+type executionPreflightArtifact struct {
+	TaskID               string          `json:"task_id"`
+	RunID                string          `json:"run_id"`
+	OwnedRepoRoot        string          `json:"owned_repo_root"`
+	OwnedTaskRoot        string          `json:"owned_task_root"`
+	DeclaredWorktreeRoot string          `json:"declared_worktree_root"`
+	DeclaredTaskRoot     string          `json:"declared_task_root"`
+	DeclaredTaskRevision string          `json:"declared_task_revision"`
+	DeclaredGitRevision  string          `json:"declared_git_revision,omitempty"`
+	CurrentCommit        string          `json:"current_commit"`
+	GitStatusShort       string          `json:"git_status_short,omitempty"`
+	DocPresence          map[string]bool `json:"doc_presence,omitempty"`
+	RecordedAt           time.Time       `json:"recorded_at"`
+}
+
+func runExecutionPreflight(ctx context.Context, request taskrun.StartTaskRunRequest) (executionPreflightResult, error) {
+	if request.RepoLane.OwnedRepoRoot == "" {
+		return executionPreflightResult{}, fmt.Errorf("owned repo root is missing")
+	}
+	if request.RepoLane.RunArtifactRoot == "" {
+		return executionPreflightResult{}, fmt.Errorf("run artifact root is missing")
+	}
+
+	ownedTaskRoot, err := ownedTaskRoot(request.CapturedTaskSnapshot, request.RepoLane)
+	if err != nil {
+		return executionPreflightResult{}, err
+	}
+	currentCommit, err := gitRevParse(request.RepoLane.OwnedRepoRoot, "HEAD")
+	if err != nil {
+		return executionPreflightResult{}, err
+	}
+	gitStatusShort, err := gitStatusShort(request.RepoLane.OwnedRepoRoot)
+	if err != nil {
+		return executionPreflightResult{}, err
+	}
+	docPresence := map[string]bool{
+		"TASK.md":         pathExists(filepath.Join(ownedTaskRoot, "TASK.md")),
+		"PLAN.md":         pathExists(filepath.Join(ownedTaskRoot, "PLAN.md")),
+		"HANDOFF.md":      pathExists(filepath.Join(ownedTaskRoot, "HANDOFF.md")),
+		"TASK-STATE.json": pathExists(filepath.Join(ownedTaskRoot, "TASK-STATE.json")),
+	}
+
+	if err := os.MkdirAll(request.RepoLane.RunArtifactRoot, 0o755); err != nil {
+		return executionPreflightResult{}, fmt.Errorf("create run artifact root: %w", err)
+	}
+	artifactPath := filepath.Join(request.RepoLane.RunArtifactRoot, "execution-preflight.json")
+	artifact := executionPreflightArtifact{
+		TaskID:               request.TaskID,
+		RunID:                request.RunID,
+		OwnedRepoRoot:        request.RepoLane.OwnedRepoRoot,
+		OwnedTaskRoot:        ownedTaskRoot,
+		DeclaredWorktreeRoot: request.CapturedTaskSnapshot.DeclaredWorktreeRoot,
+		DeclaredTaskRoot:     request.CapturedTaskSnapshot.DeclaredTaskRoot,
+		DeclaredTaskRevision: request.CapturedTaskSnapshot.DeclaredTaskRevision,
+		DeclaredGitRevision:  request.CapturedTaskSnapshot.DeclaredGitRevision,
+		CurrentCommit:        currentCommit,
+		GitStatusShort:       gitStatusShort,
+		DocPresence:          docPresence,
+		RecordedAt:           time.Now().UTC(),
+	}
+	if err := writeJSONArtifact(artifactPath, artifact); err != nil {
+		return executionPreflightResult{}, err
+	}
+
+	return executionPreflightResult{
+		CurrentCommit:         currentCommit,
+		PreflightArtifactPath: artifactPath,
+		OwnedTaskRoot:         ownedTaskRoot,
+		GitStatusShort:        gitStatusShort,
+		DocPresence:           docPresence,
+		ProgressSummary:       "Execution preflight inspected the owned task docs and recorded owned-lane readiness.",
+	}, nil
+}
+
 func collectActionBlockReasons(actions map[string]taskrun.ActionAvailability) map[string][]taskrun.ActionBlockReason {
 	blockReasons := map[string][]taskrun.ActionBlockReason{}
 	for action, availability := range actions {
@@ -240,6 +386,71 @@ func shouldExit(view taskrun.TaskRunView) bool {
 	return isTerminalStatus(view.Status)
 }
 
+func actionsForState(state string) map[string]taskrun.ActionAvailability {
+	switch state {
+	case taskrun.StateRunning, taskrun.StateDispatching:
+		return map[string]taskrun.ActionAvailability{
+			taskrun.ActionDispatch: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "active_run_exists",
+					Summary: "Dispatch is blocked while this run owns the current live story.",
+				}},
+			},
+			taskrun.ActionPoke: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "run_not_suspicious_yet",
+					Summary: "Poke stays blocked until the run misses its next expected progress deadline.",
+				}},
+			},
+			taskrun.ActionInterrupt: {Allowed: true},
+		}
+	case taskrun.StateBlocked:
+		return map[string]taskrun.ActionAvailability{
+			taskrun.ActionDispatch: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "active_run_exists",
+					Summary: "Dispatch is blocked while this run owns the current live story.",
+				}},
+			},
+			taskrun.ActionPoke: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "poke_not_allowed_for_state",
+					Summary: "Poke is not allowed in the current run state.",
+				}},
+			},
+			taskrun.ActionInterrupt: {Allowed: true},
+		}
+	default:
+		return map[string]taskrun.ActionAvailability{
+			taskrun.ActionDispatch: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "active_run_exists",
+					Summary: "Dispatch is blocked while this run owns the current live story.",
+				}},
+			},
+			taskrun.ActionPoke: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "poke_not_implemented",
+					Summary: "Poke is not implemented yet for task runs.",
+				}},
+			},
+			taskrun.ActionInterrupt: {
+				Allowed: false,
+				BlockReasons: []taskrun.ActionBlockReason{{
+					Code:    "interrupt_not_implemented",
+					Summary: "Interrupt is not implemented yet for task runs.",
+				}},
+			},
+		}
+	}
+}
+
 func hasPendingInterruptReview(view taskrun.TaskRunView) bool {
 	return view.FollowUp != nil &&
 		view.FollowUp.Kind == "interrupt_review" &&
@@ -255,4 +466,48 @@ func isEmptyFollowUp(followUp *taskrun.RunFollowUp) bool {
 		followUp.RequestedAt.IsZero() &&
 		followUp.DueAt.IsZero() &&
 		followUp.CompletedAt.IsZero()
+}
+
+func ownedTaskRoot(snapshot taskrun.TaskDefinitionSnapshot, repoLane taskrun.RepoLane) (string, error) {
+	rel, err := filepath.Rel(snapshot.DeclaredWorktreeRoot, snapshot.DeclaredTaskRoot)
+	if err != nil {
+		return "", fmt.Errorf("resolve task root relative path: %w", err)
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("declared task root %q is outside declared worktree root %q", snapshot.DeclaredTaskRoot, snapshot.DeclaredWorktreeRoot)
+	}
+	return filepath.Join(repoLane.OwnedRepoRoot, rel), nil
+}
+
+func gitRevParse(worktreeRoot string, ref string) (string, error) {
+	out, err := exec.Command("git", "-C", worktreeRoot, "rev-parse", ref).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("git rev-parse %s: %w: %s", ref, err, strings.TrimSpace(string(out)))
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func gitStatusShort(worktreeRoot string) (string, error) {
+	out, err := exec.Command("git", "-C", worktreeRoot, "status", "--short").CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("git status --short: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func writeJSONArtifact(path string, value any) error {
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
 }

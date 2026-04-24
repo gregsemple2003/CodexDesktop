@@ -108,6 +108,7 @@ type RepoLane struct {
 	ApprovedRestoreCommit string    `json:"approved_restore_commit,omitempty"`
 	RunArtifactRoot       string    `json:"run_artifact_root,omitempty"`
 	BootstrapArtifactPath string    `json:"bootstrap_artifact_path,omitempty"`
+	PreflightArtifactPath string    `json:"preflight_artifact_path,omitempty"`
 	ResetStatus           string    `json:"reset_status,omitempty"`
 	LastResetTargetCommit string    `json:"last_reset_target_commit,omitempty"`
 	ResetFailureSummary   string    `json:"reset_failure_summary,omitempty"`

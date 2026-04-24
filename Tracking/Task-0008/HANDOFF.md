@@ -132,7 +132,15 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - the created run starts in backend-produced `running` state with `reason_code = owned_lane_bootstrapped`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0006.md](./Testing/PASS-0002-BACKEND-SMOKE-0006.md)
 
-What is still missing is actual task workload execution inside the owned lane and richer backend-owned worker behavior after bootstrap.
+`PASS-0002` now also has the first worker-side execution preflight slice:
+
+- after dispatch, the Temporal task-run workflow runs an execution preflight activity against the owned checkout
+- the preflight resolves the owned task root inside the owned lane
+- the preflight writes `execution-preflight.json` under the backend run-artifact root
+- the run advances automatically to `reason_code = execution_preflight_complete` without `POST /state`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0007.md](./Testing/PASS-0002-BACKEND-SMOKE-0007.md)
+
+What is still missing is the first actual task workload step after preflight.
 
 ## Current Gate
 
@@ -150,7 +158,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from owned-lane bootstrap into the first real backend-driven workload step after dispatch
+- move from execution preflight into the first actual backend-driven workload step after dispatch
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -161,6 +169,7 @@ The next implementation slice should:
 - do not let context recovery remain a manual search workflow
 - do not split runtime truth between backend and any client memory
 - validation-lane runner restarts on `14318` can serve stale binaries or fail on stdout-log locks; use a clean manual listener when live proof needs trustworthy current code
+- when replaying the fixed active task-run id after workflow-shape changes, reset the disposable validation Temporal volume or the proof lane will correctly fail on old workflow history
 - do not broaden this task into dashboard implementation work
 
 ## References

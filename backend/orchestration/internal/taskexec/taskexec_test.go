@@ -1,6 +1,12 @@
 package taskexec
 
 import (
+	"context"
+	"encoding/json"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -322,4 +328,103 @@ func TestShouldExitKeepsInterruptReviewPendingRunAlive(t *testing.T) {
 	if !shouldExit(view) {
 		t.Fatal("shouldExit returned false after interrupt review completed")
 	}
+}
+
+func TestRunExecutionPreflightWritesArtifactFromOwnedLane(t *testing.T) {
+	worktreeRoot := t.TempDir()
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK.md"), "# task\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "PLAN.md"), "# plan\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "HANDOFF.md"), "# handoff\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK-STATE.json"), "{\"task_id\":\"Task-0008\"}\n")
+	runTaskExecCommand(t, worktreeRoot, "git", "init")
+	runTaskExecCommand(t, worktreeRoot, "git", "config", "user.email", "taskexec-tests@example.com")
+	runTaskExecCommand(t, worktreeRoot, "git", "config", "user.name", "TaskExec Tests")
+	runTaskExecCommand(t, worktreeRoot, "git", "add", ".")
+	runTaskExecCommand(t, worktreeRoot, "git", "commit", "-m", "initial")
+
+	ownedRoot := filepath.Join(t.TempDir(), "owned")
+	runTaskExecCommand(t, worktreeRoot, "git", "worktree", "add", "--detach", ownedRoot, "HEAD")
+
+	runArtifactRoot := filepath.Join(t.TempDir(), "artifacts")
+	request := taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: worktreeRoot,
+			DeclaredTaskRoot:     filepath.Join(worktreeRoot, "Tracking", "Task-0008"),
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  stringsTrim(runTaskExecOutput(t, worktreeRoot, "git", "rev-parse", "HEAD")),
+			CapturedAt:           time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC),
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         ownedRoot,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        stringsTrim(runTaskExecOutput(t, worktreeRoot, "git", "rev-parse", "HEAD")),
+			CurrentCommit:         stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
+			ApprovedRestoreCommit: stringsTrim(runTaskExecOutput(t, worktreeRoot, "git", "rev-parse", "HEAD")),
+			RunArtifactRoot:       runArtifactRoot,
+			BootstrapArtifactPath: filepath.Join(runArtifactRoot, "owned-lane-bootstrap.json"),
+		},
+		DispatchRequestedAt: time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC),
+	}
+
+	result, err := runExecutionPreflight(context.Background(), request)
+	if err != nil {
+		t.Fatalf("runExecutionPreflight: %v", err)
+	}
+	if result.PreflightArtifactPath == "" {
+		t.Fatal("expected preflight artifact path")
+	}
+	if !result.DocPresence["TASK.md"] || !result.DocPresence["PLAN.md"] || !result.DocPresence["HANDOFF.md"] || !result.DocPresence["TASK-STATE.json"] {
+		t.Fatalf("doc presence = %#v", result.DocPresence)
+	}
+	raw, err := os.ReadFile(result.PreflightArtifactPath)
+	if err != nil {
+		t.Fatalf("read preflight artifact: %v", err)
+	}
+	var artifact executionPreflightArtifact
+	if err := json.Unmarshal(raw, &artifact); err != nil {
+		t.Fatalf("decode preflight artifact: %v", err)
+	}
+	if artifact.OwnedTaskRoot != filepath.Join(ownedRoot, "Tracking", "Task-0008") {
+		t.Fatalf("owned task root = %q", artifact.OwnedTaskRoot)
+	}
+	if artifact.CurrentCommit != request.RepoLane.CurrentCommit {
+		t.Fatalf("current commit = %q, want %q", artifact.CurrentCommit, request.RepoLane.CurrentCommit)
+	}
+}
+
+func writeTaskFile(t *testing.T, path string, contents string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
+func runTaskExecCommand(t *testing.T, dir string, exe string, args ...string) {
+	t.Helper()
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
+	}
+}
+
+func runTaskExecOutput(t *testing.T, dir string, exe string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
+	}
+	return string(output)
+}
+
+func stringsTrim(value string) string {
+	return strings.TrimSpace(value)
 }
