@@ -225,3 +225,61 @@ func TestApplyUpdateClearsExplicitEmptyFollowUp(t *testing.T) {
 		t.Fatalf("follow-up should be cleared, got %#v", view.FollowUp)
 	}
 }
+
+func TestApplyUpdateStoresRunResolution(t *testing.T) {
+	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
+	view := InitialView(taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: `C:\Agent\CodexDashboard`,
+			DeclaredTaskRoot:     `C:\Agent\CodexDashboard\Tracking\Task-0008`,
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  "abc123",
+			CapturedAt:           dispatchAt,
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         `C:\Temp\owned`,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        "abc123",
+			ApprovedRestoreCommit: "abc123",
+			ResetStatus:           "not_run",
+		},
+		DispatchRequestedAt: dispatchAt,
+	}, "workflow-id", "run-id")
+
+	applyUpdate(&view, taskrun.TaskRunUpdate{
+		State: taskrun.StateInterrupted,
+		Resolution: &taskrun.RunResolution{
+			Kind:       "interrupt_review",
+			Decision:   "redispatch_ready",
+			Summary:    "Human review approved another dispatch attempt.",
+			ResolvedBy: "human",
+			ResolvedAt: dispatchAt.Add(9 * time.Minute),
+		},
+	}, dispatchAt.Add(9*time.Minute))
+
+	if view.Resolution == nil || view.Resolution.Decision != "redispatch_ready" {
+		t.Fatalf("resolution = %#v", view.Resolution)
+	}
+}
+
+func TestShouldExitKeepsInterruptReviewPendingRunAlive(t *testing.T) {
+	view := taskrun.TaskRunView{
+		Status: "interrupted",
+		FollowUp: &taskrun.RunFollowUp{
+			Kind:   "interrupt_review",
+			Status: "pending",
+		},
+	}
+
+	if shouldExit(view) {
+		t.Fatal("shouldExit returned true for interrupted run with pending interrupt review")
+	}
+
+	view.FollowUp.Status = "completed"
+	if !shouldExit(view) {
+		t.Fatal("shouldExit returned false after interrupt review completed")
+	}
+}

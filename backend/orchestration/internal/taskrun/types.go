@@ -121,6 +121,14 @@ type RunFollowUp struct {
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 }
 
+type RunResolution struct {
+	Kind       string    `json:"kind"`
+	Decision   string    `json:"decision"`
+	Summary    string    `json:"summary"`
+	ResolvedBy string    `json:"resolved_by,omitempty"`
+	ResolvedAt time.Time `json:"resolved_at,omitempty"`
+}
+
 type TaskDefinitionSnapshot struct {
 	DeclaredWorktreeRoot string               `json:"declared_worktree_root"`
 	DeclaredTaskRoot     string               `json:"declared_task_root"`
@@ -147,6 +155,7 @@ type TaskRunView struct {
 	Attention                   AttentionPriority             `json:"attention"`
 	Actions                     map[string]ActionAvailability `json:"actions,omitempty"`
 	FollowUp                    *RunFollowUp                  `json:"follow_up,omitempty"`
+	Resolution                  *RunResolution                `json:"resolution,omitempty"`
 	RepoLane                    RepoLane                      `json:"repo_lane"`
 	LastProgressAt              time.Time                     `json:"last_progress_at,omitempty"`
 	LastProgressSummary         string                        `json:"last_progress_summary,omitempty"`
@@ -196,6 +205,12 @@ type StartTaskRunRequest struct {
 	DispatchRequestedAt  time.Time              `json:"dispatch_requested_at"`
 }
 
+type InterruptReviewResolution struct {
+	Decision   string `json:"decision"`
+	Summary    string `json:"summary,omitempty"`
+	ResolvedBy string `json:"resolved_by,omitempty"`
+}
+
 type TaskRunUpdate struct {
 	State               string                        `json:"state"`
 	ReasonCode          string                        `json:"reason_code"`
@@ -209,6 +224,7 @@ type TaskRunUpdate struct {
 	RepoLane            *RepoLane                     `json:"repo_lane,omitempty"`
 	Actions             map[string]ActionAvailability `json:"actions,omitempty"`
 	FollowUp            *RunFollowUp                  `json:"follow_up,omitempty"`
+	Resolution          *RunResolution                `json:"resolution,omitempty"`
 	CompletedAt         time.Time                     `json:"completed_at,omitempty"`
 	FailureSummary      string                        `json:"failure_summary,omitempty"`
 }

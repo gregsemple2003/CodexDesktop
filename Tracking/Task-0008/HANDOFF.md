@@ -115,7 +115,16 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - cleanup repair and interrupt review now use the same durable `follow_up` envelope already used by `poke`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0004.md](./Testing/PASS-0002-BACKEND-SMOKE-0004.md)
 
-What is still missing is a dedicated interrupt-review resolution path and real task execution over those durable runs.
+`PASS-0002` now also has the interrupt-review resolution slice:
+
+- `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
+- pending `interrupt_review` blocks task-level redispatch until the review is resolved
+- resolved interrupt review records an explicit `resolution` on the run
+- resolved interrupt review returns the task to `dispatch_readiness.ready = true`
+- Temporal-backed run updates now fall back to the closed workflow result when a successful resolution closes the workflow before the immediate query returns
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0005.md](./Testing/PASS-0002-BACKEND-SMOKE-0005.md)
+
+What is still missing is real task execution over those durable runs and richer backend-owned worker behavior beyond manual state updates.
 
 ## Current Gate
 
@@ -133,7 +142,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- turn interrupt review from a durable pending follow-up into a more explicit decision path
+- move beyond manual runtime state mutation toward real worker-side execution or backend-driven runtime progress
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -143,6 +152,7 @@ The next implementation slice should:
 - do not treat silence as success
 - do not let context recovery remain a manual search workflow
 - do not split runtime truth between backend and any client memory
+- validation-lane runner restarts on `14318` can serve stale binaries or fail on stdout-log locks; use a clean manual listener when live proof needs trustworthy current code
 - do not broaden this task into dashboard implementation work
 
 ## References

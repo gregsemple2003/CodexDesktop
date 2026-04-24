@@ -284,6 +284,36 @@ func handleTaskRunDetail(w http.ResponseWriter, r *http.Request, taskService *ta
 		writeJSON(w, http.StatusAccepted, run)
 		return
 	}
+	if strings.HasSuffix(trimmed, "/resolve-interrupt-review") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		runID := strings.TrimSuffix(trimmed, "/resolve-interrupt-review")
+		runID = strings.TrimSuffix(runID, "/")
+		if runID == "" || strings.Contains(runID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		var resolution taskrun.InterruptReviewResolution
+		if err := json.NewDecoder(r.Body).Decode(&resolution); err != nil {
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.ResolveInterruptReview(ctx, runID, resolution)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

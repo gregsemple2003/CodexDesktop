@@ -27,6 +27,7 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `POST /api/v1/task-runs/{run_id}/poke`
 - expose `POST /api/v1/task-runs/{run_id}/interrupt`
 - expose `POST /api/v1/task-runs/{run_id}/retry-cleanup`
+- expose `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
 
 Task-0008 also starts the first durable dispatch slice:
@@ -41,9 +42,11 @@ Task-0008 also starts the first durable dispatch slice:
 - interrupt cleanup failures surface through dedicated repo-lane reset failure fields
 - `poke` creates a durable backend-worker follow-up that later runtime progress can complete
 - cleanup retry can restore a cleanup-blocked owned checkout and convert the run into `interrupt_review`
+- pending `interrupt_review` blocks redispatch until the review is explicitly resolved
+- interrupt review resolution records a durable decision and returns the task to dispatch-ready state
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Dedicated interrupt-review resolution and real task execution inside the owned checkout remain future slices.
+Real task execution inside the owned checkout remains a future slice.
 
 ## Scheduling Boundary
 
@@ -89,6 +92,7 @@ The current backend slice proves:
 - `POST /api/v1/task-runs/{run_id}/poke`
 - `POST /api/v1/task-runs/{run_id}/interrupt`
 - `POST /api/v1/task-runs/{run_id}/retry-cleanup`
+- `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - task dispatch API:
   - `POST /api/v1/tasks/{task_id}/dispatch`
 - `codex exec` command assembly with per-run artifact paths for JSONL events and final-message capture

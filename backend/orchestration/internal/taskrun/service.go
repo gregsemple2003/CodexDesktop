@@ -319,6 +319,86 @@ func (s *Service) RetryCleanupRun(ctx context.Context, runID string) (TaskRunVie
 	return s.UpdateRun(ctx, runID, update)
 }
 
+func (s *Service) ResolveInterruptReview(ctx context.Context, runID string, resolution InterruptReviewResolution) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	if !hasPendingInterruptReview(run) {
+		return TaskRunView{}, fmt.Errorf("interrupt review resolution blocked: run is not waiting on interrupt review")
+	}
+
+	now := s.now()
+	resolvedBy := strings.TrimSpace(resolution.ResolvedBy)
+	if resolvedBy == "" {
+		resolvedBy = "human_or_supervisor"
+	}
+
+	decision := strings.TrimSpace(resolution.Decision)
+	switch decision {
+	case "redispatch_ready":
+		summary := strings.TrimSpace(resolution.Summary)
+		if summary == "" {
+			summary = "Interrupt review approved the run for a later redispatch."
+		}
+		return s.UpdateRun(ctx, runID, TaskRunUpdate{
+			State:               StateInterrupted,
+			ReasonCode:          "interrupt_review_resolved_redispatch_ready",
+			StateSummary:        "Interrupt review approved the run for redispatch.",
+			NextOwner:           "backend",
+			NextExpectedEvent:   "Dispatch a new run when the task is ready.",
+			LastProgressSummary: summary,
+			FollowUp: &RunFollowUp{
+				Kind:        "interrupt_review",
+				Owner:       "human_or_supervisor",
+				Status:      "completed",
+				Summary:     summary,
+				RequestedAt: run.FollowUp.RequestedAt,
+				DueAt:       run.FollowUp.DueAt,
+				CompletedAt: now,
+			},
+			Resolution: &RunResolution{
+				Kind:       "interrupt_review",
+				Decision:   decision,
+				Summary:    summary,
+				ResolvedBy: resolvedBy,
+				ResolvedAt: now,
+			},
+		})
+	case "keep_closed":
+		summary := strings.TrimSpace(resolution.Summary)
+		if summary == "" {
+			summary = "Interrupt review closed this interrupted attempt without redispatch."
+		}
+		return s.UpdateRun(ctx, runID, TaskRunUpdate{
+			State:               StateInterrupted,
+			ReasonCode:          "interrupt_review_resolved_keep_closed",
+			StateSummary:        "Interrupt review closed this interrupted attempt.",
+			NextOwner:           "none",
+			NextExpectedEvent:   "No further action is required for this run.",
+			LastProgressSummary: summary,
+			FollowUp: &RunFollowUp{
+				Kind:        "interrupt_review",
+				Owner:       "human_or_supervisor",
+				Status:      "completed",
+				Summary:     summary,
+				RequestedAt: run.FollowUp.RequestedAt,
+				DueAt:       run.FollowUp.DueAt,
+				CompletedAt: now,
+			},
+			Resolution: &RunResolution{
+				Kind:       "interrupt_review",
+				Decision:   decision,
+				Summary:    summary,
+				ResolvedBy: resolvedBy,
+				ResolvedAt: now,
+			},
+		})
+	default:
+		return TaskRunView{}, fmt.Errorf("interrupt review resolution blocked: unsupported decision %q", decision)
+	}
+}
+
 func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, error) {
 	metadata, err := s.loadTask(taskRoot)
 	if err != nil {
@@ -391,9 +471,31 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 			Status: "no_active_run",
 			Reason: "The latest task run is terminal and no run currently owns the live story.",
 		}
-		view.DispatchReadiness = s.deriveDispatchReadiness(metadata, false)
-		view.Actions = defaultActions(view.DispatchReadiness)
-		view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+		if hasPendingInterruptReview(run) {
+			view.StateEnvelope = StateEnvelope{
+				State:             StateWaitingForHuman,
+				ReasonCode:        "interrupt_review_pending",
+				StateSummary:      "Task is waiting for interrupt review before redispatch.",
+				EvidenceRefs:      metadata.evidenceRef,
+				NextOwner:         "human_or_supervisor",
+				NextExpectedEvent: "Resolve the interrupted run review decision.",
+				SuspiciousAfter:   run.FollowUp.DueAt,
+			}
+			view.DispatchReadiness = DispatchReadiness{
+				Ready: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "interrupt_review_pending",
+					Summary: "Dispatch stays blocked until the interrupted run review is resolved.",
+				}},
+			}
+			view.Attention = attentionForRun(run, s.now())
+			view.Actions = defaultActions(view.DispatchReadiness)
+			view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+		} else {
+			view.DispatchReadiness = s.deriveDispatchReadiness(metadata, false)
+			view.Actions = defaultActions(view.DispatchReadiness)
+			view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+		}
 	}
 
 	return view, nil
@@ -890,6 +992,12 @@ func attentionForRun(run TaskRunView, now time.Time) AttentionPriority {
 	if run.StateEnvelope.State == StateWaitingForHuman && run.WaitContract != nil && !run.WaitContract.StaleAfter.IsZero() && now.After(run.WaitContract.StaleAfter) {
 		return AttentionPriority{Level: AttentionUrgent, Reason: "Run is still waiting on a human action past its stale deadline.", SortKey: "12-waiting_stale"}
 	}
+	if hasPendingInterruptReview(run) {
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Interrupted run is still waiting on review resolution.", SortKey: "25-interrupt_review_pending"}
+	}
+	if run.StateEnvelope.State == StateInterrupted && run.Resolution != nil {
+		return AttentionPriority{Level: AttentionNone, Reason: "Interrupted run review is resolved.", SortKey: "85-interrupt_review_resolved"}
+	}
 	return attentionForRunState(run.StateEnvelope.State)
 }
 
@@ -903,6 +1011,13 @@ func desiredFollowUp(run TaskRunView, now time.Time) *RunFollowUp {
 		return &followUp
 	}
 	return run.FollowUp
+}
+
+func hasPendingInterruptReview(run TaskRunView) bool {
+	return run.StateEnvelope.State == StateInterrupted &&
+		run.FollowUp != nil &&
+		run.FollowUp.Kind == "interrupt_review" &&
+		(run.FollowUp.Status == "pending" || run.FollowUp.Status == "overdue")
 }
 
 func staleRunUpdate(run TaskRunView, now time.Time, actions map[string]ActionAvailability, attention AttentionPriority) (TaskRunUpdate, bool) {
@@ -975,6 +1090,9 @@ func projectRun(current TaskRunView, update TaskRunUpdate, now time.Time) TaskRu
 		} else {
 			projected.FollowUp = update.FollowUp
 		}
+	}
+	if update.Resolution != nil {
+		projected.Resolution = update.Resolution
 	}
 	if update.LastProgressSummary != "" {
 		projected.LastProgressSummary = update.LastProgressSummary

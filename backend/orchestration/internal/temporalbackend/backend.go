@@ -186,13 +186,52 @@ func (b *Backend) ReconcileTaskSnapshot(ctx context.Context, runID string, snaps
 }
 
 func (b *Backend) UpdateTaskRun(ctx context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
+	current, err := b.GetTaskRun(ctx, runID)
+	if err != nil {
+		return taskrun.TaskRunView{}, err
+	}
+
 	if err := b.client.SignalWorkflow(ctx, runID, "", taskexec.UpdateRunSignalName, update); err != nil {
 		if isTemporalNotFound(err) {
 			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
 		}
 		return taskrun.TaskRunView{}, fmt.Errorf("signal update for task run %s: %w", runID, err)
 	}
-	return b.GetTaskRun(ctx, runID)
+	return readUpdatedTaskRun(func() (taskrun.TaskRunView, error) {
+		return b.GetTaskRun(ctx, runID)
+	}, func() (taskrun.TaskRunView, error) {
+		if current.TemporalExecutionRunID == "" {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return b.getClosedTaskRunResult(ctx, runID, current.TemporalExecutionRunID)
+	})
+}
+
+func (b *Backend) getClosedTaskRunResult(ctx context.Context, workflowID string, executionRunID string) (taskrun.TaskRunView, error) {
+	workflowRun := b.client.GetWorkflow(ctx, workflowID, executionRunID)
+
+	var view taskrun.TaskRunView
+	if err := workflowRun.Get(ctx, &view); err != nil {
+		if isTemporalNotFound(err) {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return taskrun.TaskRunView{}, fmt.Errorf("get closed task run %s/%s result: %w", workflowID, executionRunID, err)
+	}
+	return view, nil
+}
+
+func readUpdatedTaskRun(
+	queryCurrent func() (taskrun.TaskRunView, error),
+	queryClosed func() (taskrun.TaskRunView, error),
+) (taskrun.TaskRunView, error) {
+	view, err := queryCurrent()
+	if err == nil {
+		return view, nil
+	}
+	if !errors.Is(err, taskrun.ErrRunNotFound) {
+		return taskrun.TaskRunView{}, err
+	}
+	return queryClosed()
 }
 
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {

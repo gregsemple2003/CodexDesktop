@@ -40,3 +40,9 @@ Add new constraints here as they are given.
 ### 2026-04-24 Continuous Ownership
 
 - Plan approved. Start implementation immediately. Do not stop until blocked or done.
+
+### 2026-04-24 Bounded PASS-0002 Slice
+
+- Keep the current slice bounded.
+- Prefer explicit interrupt-review decision and resolution behavior over widening scope into real worker-side execution unless execution becomes the smaller honest next step.
+- Do not widen scope unnecessarily.

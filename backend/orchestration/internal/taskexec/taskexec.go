@@ -55,7 +55,7 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 			applyUpdate(&view, update, workflow.Now(ctx).UTC())
 		})
 		selector.Select(ctx)
-		if isTerminalStatus(view.Status) {
+		if shouldExit(view) {
 			return view, nil
 		}
 	}
@@ -171,6 +171,9 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 			view.FollowUp = update.FollowUp
 		}
 	}
+	if update.Resolution != nil {
+		view.Resolution = update.Resolution
+	}
 	if update.RepoLane != nil {
 		view.RepoLane = *update.RepoLane
 	}
@@ -200,6 +203,19 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 
 func isTerminalStatus(status string) bool {
 	return status == "completed" || status == "failed" || status == "interrupted"
+}
+
+func shouldExit(view taskrun.TaskRunView) bool {
+	if view.Status == "interrupted" && hasPendingInterruptReview(view) {
+		return false
+	}
+	return isTerminalStatus(view.Status)
+}
+
+func hasPendingInterruptReview(view taskrun.TaskRunView) bool {
+	return view.FollowUp != nil &&
+		view.FollowUp.Kind == "interrupt_review" &&
+		(view.FollowUp.Status == "pending" || view.FollowUp.Status == "overdue")
 }
 
 func isEmptyFollowUp(followUp *taskrun.RunFollowUp) bool {

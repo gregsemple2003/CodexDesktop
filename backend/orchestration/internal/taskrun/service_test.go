@@ -119,6 +119,9 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 			run.FollowUp = update.FollowUp
 		}
 	}
+	if update.Resolution != nil {
+		run.Resolution = update.Resolution
+	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
 		run.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(update.Actions)
@@ -512,8 +515,11 @@ Create the durable backend task-run contract so later clients do not guess state
 	if task.CurrentStory.Status != "no_active_run" {
 		t.Fatalf("current story after interrupt = %q, want no_active_run", task.CurrentStory.Status)
 	}
-	if !task.DispatchReadiness.Ready {
-		t.Fatal("dispatch should be ready again after the latest run is terminal")
+	if task.DispatchReadiness.Ready {
+		t.Fatal("dispatch should stay blocked until interrupt review is resolved")
+	}
+	if task.StateEnvelope.ReasonCode != "interrupt_review_pending" {
+		t.Fatalf("reason code = %q, want interrupt_review_pending", task.StateEnvelope.ReasonCode)
 	}
 }
 
@@ -777,6 +783,173 @@ Create the durable backend task-run contract so later clients do not guess state
 
 	if _, err := service.RetryCleanupRun(context.Background(), run.RunID); err == nil {
 		t.Fatal("expected retry cleanup to reject a non-cleanup-blocked run")
+	}
+}
+
+func TestTaskReadBlocksDispatchWhileInterruptReviewIsPending(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	interrupted, err := service.InterruptRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+	if interrupted.FollowUp == nil || interrupted.FollowUp.Kind != "interrupt_review" {
+		t.Fatalf("follow-up = %#v", interrupted.FollowUp)
+	}
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+	if task.StateEnvelope.ReasonCode != "interrupt_review_pending" {
+		t.Fatalf("reason code = %q", task.StateEnvelope.ReasonCode)
+	}
+	if task.DispatchReadiness.Ready {
+		t.Fatal("dispatch should stay blocked while interrupt review is pending")
+	}
+	if task.Actions[ActionDispatch].Allowed {
+		t.Fatal("dispatch action should stay blocked while interrupt review is pending")
+	}
+	if task.Attention.Level != AttentionNeedsAttention {
+		t.Fatalf("attention level = %q, want %q", task.Attention.Level, AttentionNeedsAttention)
+	}
+}
+
+func TestResolveInterruptReviewUnblocksDispatch(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if _, err := service.InterruptRun(context.Background(), run.RunID); err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+
+	resolved, err := service.ResolveInterruptReview(context.Background(), run.RunID, InterruptReviewResolution{
+		Decision:   "redispatch_ready",
+		Summary:    "Human review approved another dispatch attempt.",
+		ResolvedBy: "human",
+	})
+	if err != nil {
+		t.Fatalf("resolve interrupt review: %v", err)
+	}
+	if resolved.FollowUp == nil || resolved.FollowUp.Status != "completed" {
+		t.Fatalf("follow-up = %#v", resolved.FollowUp)
+	}
+	if resolved.Resolution == nil || resolved.Resolution.Decision != "redispatch_ready" {
+		t.Fatalf("resolution = %#v", resolved.Resolution)
+	}
+	if resolved.Attention.Level != AttentionNone {
+		t.Fatalf("attention level = %q, want %q", resolved.Attention.Level, AttentionNone)
+	}
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+	if !task.DispatchReadiness.Ready {
+		t.Fatal("dispatch should become ready after interrupt review resolves for redispatch")
+	}
+	if !task.Actions[ActionDispatch].Allowed {
+		t.Fatal("dispatch action should be allowed after interrupt review resolution")
+	}
+}
+
+func TestResolveInterruptReviewRejectsRunWithoutPendingReview(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if _, err := service.ResolveInterruptReview(context.Background(), run.RunID, InterruptReviewResolution{Decision: "redispatch_ready"}); err == nil {
+		t.Fatal("expected interrupt review resolution to reject a run without pending review")
 	}
 }
 

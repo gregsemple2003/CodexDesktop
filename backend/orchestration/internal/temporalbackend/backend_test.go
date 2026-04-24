@@ -1,10 +1,12 @@
 package temporalbackend
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobs"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
 )
 
 func TestBuildScheduleOptionsUseManagedCatchupWindow(t *testing.T) {
@@ -27,6 +29,60 @@ func TestBuildScheduleUseManagedCatchupWindow(t *testing.T) {
 	}
 	if schedule.Policy.CatchupWindow != controlplane.ManagedScheduleCatchupWindow {
 		t.Fatalf("catchup window = %v, want %v", schedule.Policy.CatchupWindow, controlplane.ManagedScheduleCatchupWindow)
+	}
+}
+
+func TestReadUpdatedTaskRunReturnsOpenViewWhenQuerySucceeds(t *testing.T) {
+	want := taskrun.TaskRunView{RunID: "taskrun--Task-0008--active", Status: "active"}
+
+	got, err := readUpdatedTaskRun(func() (taskrun.TaskRunView, error) {
+		return want, nil
+	}, func() (taskrun.TaskRunView, error) {
+		t.Fatal("closed fallback should not run when current query succeeds")
+		return taskrun.TaskRunView{}, nil
+	})
+	if err != nil {
+		t.Fatalf("readUpdatedTaskRun returned error: %v", err)
+	}
+	if got.RunID != want.RunID || got.Status != want.Status {
+		t.Fatalf("got %#v, want %#v", got, want)
+	}
+}
+
+func TestReadUpdatedTaskRunFallsBackToClosedResultOnNotFound(t *testing.T) {
+	want := taskrun.TaskRunView{
+		RunID:      "taskrun--Task-0008--active",
+		Status:     "interrupted",
+		Resolution: &taskrun.RunResolution{Kind: "interrupt_review", Decision: "redispatch_ready"},
+	}
+
+	got, err := readUpdatedTaskRun(func() (taskrun.TaskRunView, error) {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}, func() (taskrun.TaskRunView, error) {
+		return want, nil
+	})
+	if err != nil {
+		t.Fatalf("readUpdatedTaskRun returned error: %v", err)
+	}
+	if got.RunID != want.RunID || got.Status != want.Status {
+		t.Fatalf("got %#v, want %#v", got, want)
+	}
+	if got.Resolution == nil || got.Resolution.Decision != "redispatch_ready" {
+		t.Fatalf("resolution = %#v", got.Resolution)
+	}
+}
+
+func TestReadUpdatedTaskRunPreservesNonNotFoundError(t *testing.T) {
+	wantErr := errors.New("query failed")
+
+	_, err := readUpdatedTaskRun(func() (taskrun.TaskRunView, error) {
+		return taskrun.TaskRunView{}, wantErr
+	}, func() (taskrun.TaskRunView, error) {
+		t.Fatal("closed fallback should not run on non-not-found errors")
+		return taskrun.TaskRunView{}, nil
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("error = %v, want %v", err, wantErr)
 	}
 }
 

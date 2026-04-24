@@ -185,6 +185,9 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 			run.FollowUp = update.FollowUp
 		}
 	}
+	if update.Resolution != nil {
+		run.Resolution = update.Resolution
+	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
 		run.StateEnvelope.ActionBlockReasons = map[string][]taskrun.ActionBlockReason{}
@@ -463,6 +466,82 @@ func TestMuxExposesRetryCleanupRoute(t *testing.T) {
 	}
 	if repaired.RepoLane.ResetStatus != "restored" {
 		t.Fatalf("reset status = %q", repaired.RepoLane.ResetStatus)
+	}
+}
+
+func TestMuxExposesInterruptReviewResolutionRoute(t *testing.T) {
+	taskRuntime := newFakeTaskRuntime()
+	worktreeRoot := writeTaskTrackingRoot(t)
+	taskService := taskrun.NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), taskRuntime)
+	mux := NewMux(config.Config{
+		BindAddress:     "127.0.0.1:4318",
+		JobsRoot:        t.TempDir(),
+		WorktreeRoot:    worktreeRoot,
+		TrackingRoot:    filepath.Join(worktreeRoot, "Tracking"),
+		Namespace:       "default",
+		TaskQueue:       "codex-orchestration",
+		TemporalAddress: "127.0.0.1:7233",
+	}, controlplane.NewService(t.TempDir(), newFakeBackend()), taskService)
+
+	dispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(dispatchResponse, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil))
+	if dispatchResponse.Code != http.StatusAccepted {
+		t.Fatalf("dispatch status = %d, want 202", dispatchResponse.Code)
+	}
+
+	runID := taskrun.ActiveRunID("Task-0008")
+	interruptResponse := httptest.NewRecorder()
+	mux.ServeHTTP(interruptResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/interrupt", nil))
+	if interruptResponse.Code != http.StatusAccepted {
+		t.Fatalf("interrupt status = %d, want 202", interruptResponse.Code)
+	}
+
+	taskResponse := httptest.NewRecorder()
+	mux.ServeHTTP(taskResponse, httptest.NewRequest(http.MethodGet, "/api/v1/tasks/Task-0008", nil))
+	if taskResponse.Code != http.StatusOK {
+		t.Fatalf("task detail status = %d, want 200", taskResponse.Code)
+	}
+	var taskView taskrun.TaskView
+	if err := json.Unmarshal(taskResponse.Body.Bytes(), &taskView); err != nil {
+		t.Fatalf("decode task detail: %v", err)
+	}
+	if taskView.DispatchReadiness.Ready {
+		t.Fatal("dispatch should stay blocked while interrupt review is pending")
+	}
+
+	body := strings.NewReader(`{
+  "decision": "redispatch_ready",
+  "summary": "Human review approved another dispatch attempt.",
+  "resolved_by": "human"
+}`)
+	resolveResponse := httptest.NewRecorder()
+	resolveRequest := httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/resolve-interrupt-review", body)
+	resolveRequest.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(resolveResponse, resolveRequest)
+	if resolveResponse.Code != http.StatusAccepted {
+		t.Fatalf("resolve-interrupt-review status = %d, want 202", resolveResponse.Code)
+	}
+	var resolved taskrun.TaskRunView
+	if err := json.Unmarshal(resolveResponse.Body.Bytes(), &resolved); err != nil {
+		t.Fatalf("decode resolve response: %v", err)
+	}
+	if resolved.Resolution == nil || resolved.Resolution.Decision != "redispatch_ready" {
+		t.Fatalf("resolution = %#v", resolved.Resolution)
+	}
+	if resolved.FollowUp == nil || resolved.FollowUp.Status != "completed" {
+		t.Fatalf("follow-up = %#v", resolved.FollowUp)
+	}
+
+	readyTaskResponse := httptest.NewRecorder()
+	mux.ServeHTTP(readyTaskResponse, httptest.NewRequest(http.MethodGet, "/api/v1/tasks/Task-0008", nil))
+	if readyTaskResponse.Code != http.StatusOK {
+		t.Fatalf("task detail status after resolution = %d, want 200", readyTaskResponse.Code)
+	}
+	if err := json.Unmarshal(readyTaskResponse.Body.Bytes(), &taskView); err != nil {
+		t.Fatalf("decode task detail after resolution: %v", err)
+	}
+	if !taskView.DispatchReadiness.Ready {
+		t.Fatal("dispatch should be ready after interrupt review resolution")
 	}
 }
 
