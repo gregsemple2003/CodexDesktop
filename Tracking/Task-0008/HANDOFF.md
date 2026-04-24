@@ -180,7 +180,19 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - the workload result artifact records the owned-lane git status after that mutation
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0011.md](./Testing/PASS-0002-BACKEND-SMOKE-0011.md)
 
-What is still missing is moving from owned-lane task-artifact mutation into the first task-specific owned-lane code mutation or worker-applied implementation change.
+`PASS-0002` now also has the first task-specific owned-lane code mutation:
+
+- after Task-0008 validation and brief generation, the workflow writes:
+  - `backend/orchestration/internal/taskexec/task0008_owned_lane_generated.go`
+  inside the owned lane
+- task readback now advances automatically to:
+  - `reason_code = task_0008_owned_lane_code_written`
+- run readback now exposes:
+  - `repo_lane.workload_code_path`
+- the workload result artifact now records scoped post-execution git status for only the owned-lane outputs this slice wrote
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0012.md](./Testing/PASS-0002-BACKEND-SMOKE-0012.md)
+
+What is still missing is moving from owned-lane scaffold generation into the first worker-applied edit of an existing Task-0008 implementation file.
 
 ## Current Gate
 
@@ -198,7 +210,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from owned-lane task-artifact mutation into the first task-specific owned-lane code mutation or worker-applied implementation change
+- move from owned-lane scaffold generation into the first worker-applied edit of an existing Task-0008 implementation file
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -212,6 +224,7 @@ The next implementation slice should:
 - when replaying the fixed active task-run id after workflow-shape changes, reset the disposable validation Temporal volume or the proof lane will correctly fail on old workflow history
 - after a fresh validation-volume reset, a clean manual listener may need a short Temporal warm-up delay before backend startup or it can fail with `error reading server preface: EOF`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
+- do not mistake an owned-lane scaffold file for a real production-file edit; the next honest step is an edit to an existing Task-0008 implementation file
 - do not broaden this task into dashboard implementation work
 
 ## References

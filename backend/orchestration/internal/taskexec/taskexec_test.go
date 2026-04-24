@@ -607,7 +607,7 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and wrote an owned-lane implementation brief." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and wrote an owned-lane code scaffold." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -615,6 +615,9 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	}
 	if artifact.WorkloadOutputPath == "" {
 		t.Fatalf("expected workload output path, got %#v", artifact)
+	}
+	if artifact.WorkloadCodePath == "" {
+		t.Fatalf("expected workload code path, got %#v", artifact)
 	}
 	if _, err := os.Stat(artifact.StdoutPath); err != nil {
 		t.Fatalf("stat stdout path: %v", err)
@@ -625,6 +628,9 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if _, err := os.Stat(artifact.WorkloadOutputPath); err != nil {
 		t.Fatalf("stat workload output path: %v", err)
 	}
+	if _, err := os.Stat(artifact.WorkloadCodePath); err != nil {
+		t.Fatalf("stat workload code path: %v", err)
+	}
 	rawBrief, err := os.ReadFile(artifact.WorkloadOutputPath)
 	if err != nil {
 		t.Fatalf("read workload output path: %v", err)
@@ -632,7 +638,17 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if !strings.Contains(string(rawBrief), "Task-0008 Owned-Lane Implementation Brief") {
 		t.Fatalf("brief contents = %q", string(rawBrief))
 	}
+	rawCode, err := os.ReadFile(artifact.WorkloadCodePath)
+	if err != nil {
+		t.Fatalf("read workload code path: %v", err)
+	}
+	if !strings.Contains(string(rawCode), "Task0008OwnedLaneGeneratedSummary") {
+		t.Fatalf("code contents = %q", string(rawCode))
+	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
+		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
+	}
+	if !strings.Contains(artifact.GitStatusShortAfter, "task0008_owned_lane_generated.go") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if artifact.ExitCode != 0 {

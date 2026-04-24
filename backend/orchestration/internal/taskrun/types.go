@@ -112,6 +112,7 @@ type RepoLane struct {
 	WorkloadStepPath      string    `json:"workload_step_path,omitempty"`
 	WorkloadResultPath    string    `json:"workload_result_path,omitempty"`
 	WorkloadOutputPath    string    `json:"workload_output_path,omitempty"`
+	WorkloadCodePath      string    `json:"workload_code_path,omitempty"`
 	ResetStatus           string    `json:"reset_status,omitempty"`
 	LastResetTargetCommit string    `json:"last_reset_target_commit,omitempty"`
 	ResetFailureSummary   string    `json:"reset_failure_summary,omitempty"`
