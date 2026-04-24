@@ -169,17 +169,20 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					if execution.WorkloadResultPath != "" {
 						repoLane.WorkloadResultPath = execution.WorkloadResultPath
 					}
+					if execution.WorkloadOutputPath != "" {
+						repoLane.WorkloadOutputPath = execution.WorkloadOutputPath
+					}
 					reasonCode := "workload_step_executed"
 					stateSummary := "Run executed the first backend workload step inside the owned lane."
 					nextExpectedEvent := "Execution worker prepares or executes the next workload step."
 					attentionReason := "Run executed its first workload step and is ready for the next backend step."
 					attentionSortKey := "42-workload_step_executed"
 					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_backend_validation_complete"
-						stateSummary = "Run completed Task-0008 backend validation inside the owned lane."
-						nextExpectedEvent = "Execution worker prepares the next Task-0008-specific backend step."
-						attentionReason = "Run completed Task-0008 backend validation and is ready for the next backend step."
-						attentionSortKey = "41-task_0008_backend_validation_complete"
+						reasonCode = "task_0008_owned_lane_brief_written"
+						stateSummary = "Run completed Task-0008 validation and wrote an owned-lane implementation brief."
+						nextExpectedEvent = "Execution worker applies the next Task-0008-specific owned-lane change."
+						attentionReason = "Run wrote a Task-0008 implementation brief inside the owned lane and is ready for the next backend step."
+						attentionSortKey = "40-task_0008_owned_lane_brief_written"
 					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
@@ -372,6 +375,7 @@ type workloadStepArtifact struct {
 type workloadExecutionResult struct {
 	CurrentCommit      string `json:"current_commit"`
 	WorkloadResultPath string `json:"workload_result_path"`
+	WorkloadOutputPath string `json:"workload_output_path,omitempty"`
 	ProgressSummary    string `json:"progress_summary"`
 }
 
@@ -387,6 +391,8 @@ type workloadExecutionArtifact struct {
 	StdoutPath          string    `json:"stdout_path,omitempty"`
 	StderrPath          string    `json:"stderr_path,omitempty"`
 	ExitCode            int       `json:"exit_code,omitempty"`
+	WorkloadOutputPath  string    `json:"workload_output_path,omitempty"`
+	GitStatusShortAfter string    `json:"git_status_short_after,omitempty"`
 	CurrentCommit       string    `json:"current_commit"`
 	ExecutedAt          time.Time `json:"executed_at"`
 	ExecutionSummary    string    `json:"execution_summary"`
@@ -531,8 +537,10 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	stdoutPath := ""
 	stderrPath := ""
 	exitCode := 0
+	workloadOutputPath := ""
+	gitStatusAfter := ""
 	if step.ExecutionKind == "task_0008_backend_validation" {
-		executionSummary, stdoutPath, stderrPath, exitCode, err = executeTask0008Validation(repoLane, step)
+		executionSummary, stdoutPath, stderrPath, exitCode, workloadOutputPath, gitStatusAfter, err = executeTask0008Validation(repoLane, step)
 		if err != nil {
 			return workloadExecutionResult{}, err
 		}
@@ -549,6 +557,8 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 		StdoutPath:          stdoutPath,
 		StderrPath:          stderrPath,
 		ExitCode:            exitCode,
+		WorkloadOutputPath:  workloadOutputPath,
+		GitStatusShortAfter: gitStatusAfter,
 		CurrentCommit:       currentCommit,
 		ExecutedAt:          time.Now().UTC(),
 		ExecutionSummary:    executionSummary,
@@ -559,34 +569,35 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	return workloadExecutionResult{
 		CurrentCommit:      currentCommit,
 		WorkloadResultPath: resultPath,
+		WorkloadOutputPath: workloadOutputPath,
 		ProgressSummary:    executionSummary,
 	}, nil
 }
 
-func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, string, string, int, error) {
+func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, string, string, int, string, string, error) {
 	if repoLane.RunArtifactRoot == "" {
-		return "", "", "", 0, fmt.Errorf("run artifact root is missing")
+		return "", "", "", 0, "", "", fmt.Errorf("run artifact root is missing")
 	}
 	if len(step.ExecutionCommand) == 0 {
-		return "", "", "", 0, fmt.Errorf("execution command is missing")
+		return "", "", "", 0, "", "", fmt.Errorf("execution command is missing")
 	}
 	workingDir := step.ExecutionWorkingDir
 	if workingDir == "" {
 		workingDir = repoLane.OwnedRepoRoot
 	}
 	if err := os.MkdirAll(repoLane.RunArtifactRoot, 0o755); err != nil {
-		return "", "", "", 0, fmt.Errorf("create run artifact root: %w", err)
+		return "", "", "", 0, "", "", fmt.Errorf("create run artifact root: %w", err)
 	}
 	stdoutPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stdout.txt")
 	stderrPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stderr.txt")
 	stdoutFile, err := os.Create(stdoutPath)
 	if err != nil {
-		return "", "", "", 0, fmt.Errorf("create validation stdout log: %w", err)
+		return "", "", "", 0, "", "", fmt.Errorf("create validation stdout log: %w", err)
 	}
 	defer stdoutFile.Close()
 	stderrFile, err := os.Create(stderrPath)
 	if err != nil {
-		return "", "", "", 0, fmt.Errorf("create validation stderr log: %w", err)
+		return "", "", "", 0, "", "", fmt.Errorf("create validation stderr log: %w", err)
 	}
 	defer stderrFile.Close()
 
@@ -602,11 +613,148 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		} else {
 			exitCode = 1
 		}
-		return "", stdoutPath, stderrPath, exitCode, fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
+		return "", stdoutPath, stderrPath, exitCode, "", "", fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
 	}
 
-	summary := "Executed Task-0008 backend validation inside the owned lane."
-	return summary, stdoutPath, stderrPath, exitCode, nil
+	workloadOutputPath, err := writeTask0008OwnedLaneBrief(step)
+	if err != nil {
+		return "", stdoutPath, stderrPath, exitCode, "", "", err
+	}
+	gitStatusAfter, err := gitStatusShort(repoLane.OwnedRepoRoot)
+	if err != nil {
+		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, "", err
+	}
+
+	summary := "Executed Task-0008 backend validation and wrote an owned-lane implementation brief."
+	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, gitStatusAfter, nil
+}
+
+func writeTask0008OwnedLaneBrief(step workloadStepArtifact) (string, error) {
+	if step.OwnedTaskRoot == "" {
+		return "", fmt.Errorf("owned task root is missing")
+	}
+	taskMarkdown, err := os.ReadFile(filepath.Join(step.OwnedTaskRoot, "TASK.md"))
+	if err != nil {
+		return "", fmt.Errorf("read owned TASK.md: %w", err)
+	}
+	handoffMarkdown, err := os.ReadFile(filepath.Join(step.OwnedTaskRoot, "HANDOFF.md"))
+	if err != nil {
+		return "", fmt.Errorf("read owned HANDOFF.md: %w", err)
+	}
+	constraintsMarkdown, err := os.ReadFile(filepath.Join(step.OwnedTaskRoot, "CONSTRAINTS.md"))
+	if err != nil {
+		return "", fmt.Errorf("read owned CONSTRAINTS.md: %w", err)
+	}
+
+	outputPath := filepath.Join(step.OwnedTaskRoot, "OwnedLane", "IMPLEMENTATION-BRIEF.md")
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
+		return "", fmt.Errorf("create owned-lane brief directory: %w", err)
+	}
+
+	taskSummary := taskexecFirstParagraph(taskexecExtractMarkdownSection(string(taskMarkdown), "Summary"))
+	nextRecommended := strings.TrimSpace(taskexecExtractMarkdownSection(string(handoffMarkdown), "Next Recommended Step"))
+	if nextRecommended == "" {
+		nextRecommended = "Keep the next owned-lane implementation step bounded and task-specific."
+	}
+	constraintReminder := taskexecFirstBulletUnderHeading(string(constraintsMarkdown), "Active Constraints")
+	if constraintReminder == "" {
+		constraintReminder = "Keep the current slice bounded and preserve the declared-doc versus runtime split."
+	}
+
+	brief := strings.Join([]string{
+		"# Task-0008 Owned-Lane Implementation Brief",
+		"",
+		fmt.Sprintf("Generated at `%s` for run `%s`.", time.Now().UTC().Format(time.RFC3339), step.RunID),
+		"",
+		"## Why This Task Exists",
+		"",
+		taskSummary,
+		"",
+		"## Current Task-Specific Worker Action",
+		"",
+		"- Completed owned-lane backend validation for `./internal/taskexec` and `./internal/taskrun`.",
+		"- Wrote this brief inside the owned Task-0008 directory so the run has a real repo-state change to build on.",
+		"",
+		"## Declared Inputs Used",
+		"",
+		fmt.Sprintf("- Declared task revision: `%s`", step.DeclaredTaskRevision),
+		fmt.Sprintf("- Declared git revision: `%s`", step.DeclaredGitRevision),
+		fmt.Sprintf("- Preflight artifact: `%s`", step.PreflightArtifactPath),
+		fmt.Sprintf("- Bootstrap artifact: `%s`", step.BootstrapArtifactPath),
+		"",
+		"## Next Recommended Step From Handoff",
+		"",
+		nextRecommended,
+		"",
+		"## Constraint Reminder",
+		"",
+		fmt.Sprintf("- %s", constraintReminder),
+		"",
+		"## Candidate Owned-Lane Targets",
+		"",
+		"- `backend/orchestration/internal/taskexec/taskexec.go`",
+		"- `backend/orchestration/internal/taskrun/service.go`",
+		"- `backend/orchestration/internal/taskrun/types.go`",
+		"",
+		"## Worker Intent",
+		"",
+		"- Keep the next Task-0008-owned change bounded.",
+		"- Preserve the declared-doc versus runtime split.",
+		"- Prefer a real owned-lane code or task artifact mutation over another marker-only transition.",
+		"",
+	}, "\n")
+	if err := os.WriteFile(outputPath, []byte(brief), 0o644); err != nil {
+		return "", fmt.Errorf("write owned-lane implementation brief: %w", err)
+	}
+	return outputPath, nil
+}
+
+func taskexecExtractMarkdownSection(markdown string, heading string) string {
+	lines := strings.Split(markdown, "\n")
+	header := "## " + heading
+	capture := false
+	section := make([]string, 0)
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == header {
+			capture = true
+			continue
+		}
+		if capture && strings.HasPrefix(trimmed, "## ") {
+			break
+		}
+		if capture {
+			section = append(section, line)
+		}
+	}
+	return strings.TrimSpace(strings.Join(section, "\n"))
+}
+
+func taskexecFirstParagraph(section string) string {
+	lines := strings.Split(section, "\n")
+	paragraph := make([]string, 0)
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			if len(paragraph) > 0 {
+				break
+			}
+			continue
+		}
+		paragraph = append(paragraph, trimmed)
+	}
+	return strings.Join(paragraph, " ")
+}
+
+func taskexecFirstBulletUnderHeading(markdown string, heading string) string {
+	section := taskexecExtractMarkdownSection(markdown, heading)
+	for _, line := range strings.Split(section, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "- ") {
+			return strings.TrimPrefix(trimmed, "- ")
+		}
+	}
+	return ""
 }
 
 func collectActionBlockReasons(actions map[string]taskrun.ActionAvailability) map[string][]taskrun.ActionBlockReason {

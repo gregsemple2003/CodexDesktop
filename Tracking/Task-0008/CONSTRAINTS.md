@@ -50,3 +50,7 @@ Add new constraints here as they are given.
 ### 2026-04-24 Validation Replay Constraint
 
 - When the fixed active task-run workflow id is reused after workflow-shape changes, reset the disposable validation Temporal volume before live proof so replay failures do not masquerade as task logic regressions.
+
+### 2026-04-24 Validation Warm-Up Constraint
+
+- After resetting the disposable validation Temporal volume, allow a short Temporal warm-up window before launching a clean manual listener or Temporal client init can fail with `error reading server preface: EOF`.

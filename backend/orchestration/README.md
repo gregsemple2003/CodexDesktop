@@ -52,6 +52,7 @@ Task-0008 also starts the first durable dispatch slice:
 - the task-run workflow can now advance again to `workload_step_prepared` after writing the first workload packet inside the owned lane
 - the task-run workflow can now execute that prepared workload packet and advance automatically to `workload_step_executed`
 - for `Task-0008`, the task-run workflow can now execute a concrete owned-lane backend validation command and advance automatically to `task_0008_backend_validation_complete`
+- for `Task-0008`, that task-specific execution path can now also write `Tracking/Task-0008/OwnedLane/IMPLEMENTATION-BRIEF.md` inside the owned lane and advance to `task_0008_owned_lane_brief_written`
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.
@@ -209,6 +210,7 @@ Get-Content -Raw $run.repo_lane.preflight_artifact_path
 Get-Content -Raw $run.repo_lane.workload_step_path
 Get-Content -Raw $run.repo_lane.workload_result_path
 $result = Get-Content -Raw $run.repo_lane.workload_result_path | ConvertFrom-Json
+Get-Content -Raw $run.repo_lane.workload_output_path
 Get-Content -Raw $result.stdout_path
 Get-Content -Raw $result.stderr_path
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active | Select-Object -ExpandProperty Content

@@ -543,9 +543,13 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	runTaskExecCommand(t, ownedRoot, "git", "config", "user.email", "taskexec-tests@example.com")
 	runTaskExecCommand(t, ownedRoot, "git", "config", "user.name", "TaskExec Tests")
 	moduleRoot := filepath.Join(ownedRoot, "backend", "orchestration")
+	ownedTaskRoot := filepath.Join(ownedRoot, "Tracking", "Task-0008")
 	writeTaskFile(t, filepath.Join(moduleRoot, "go.mod"), "module example.com/task0008owned/backend/orchestration\n\ngo 1.25.0\n")
 	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), "package taskexec\n\nfunc Name() string { return \"taskexec\" }\n")
 	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "taskrun.go"), "package taskrun\n\nfunc Name() string { return \"taskrun\" }\n")
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "TASK.md"), "## Summary\n\nTask-specific owned lane execution for Task-0008.\n")
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "HANDOFF.md"), "## Next Recommended Step\n\n- Mutate one bounded backend-owned file in the owned lane.\n")
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "CONSTRAINTS.md"), "## Active Constraints\n\n- Keep the slice bounded.\n")
 	writeTaskFile(t, filepath.Join(ownedRoot, "README.txt"), "owned lane\n")
 	runTaskExecCommand(t, ownedRoot, "git", "add", ".")
 	runTaskExecCommand(t, ownedRoot, "git", "commit", "-m", "initial")
@@ -560,6 +564,7 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 		TaskID:              "Task-0008",
 		RunID:               "taskrun--Task-0008--active",
 		OwnedRepoRoot:       ownedRoot,
+		OwnedTaskRoot:       ownedTaskRoot,
 		CurrentCommit:       stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
 		WorkloadInstruction: "Run focused Task-0008 backend validation from the owned checkout.",
 		ExecutionKind:       "task_0008_backend_validation",
@@ -602,17 +607,33 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation inside the owned lane." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and wrote an owned-lane implementation brief." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
 		t.Fatalf("expected stdout/stderr paths, got %#v", artifact)
+	}
+	if artifact.WorkloadOutputPath == "" {
+		t.Fatalf("expected workload output path, got %#v", artifact)
 	}
 	if _, err := os.Stat(artifact.StdoutPath); err != nil {
 		t.Fatalf("stat stdout path: %v", err)
 	}
 	if _, err := os.Stat(artifact.StderrPath); err != nil {
 		t.Fatalf("stat stderr path: %v", err)
+	}
+	if _, err := os.Stat(artifact.WorkloadOutputPath); err != nil {
+		t.Fatalf("stat workload output path: %v", err)
+	}
+	rawBrief, err := os.ReadFile(artifact.WorkloadOutputPath)
+	if err != nil {
+		t.Fatalf("read workload output path: %v", err)
+	}
+	if !strings.Contains(string(rawBrief), "Task-0008 Owned-Lane Implementation Brief") {
+		t.Fatalf("brief contents = %q", string(rawBrief))
+	}
+	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
+		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if artifact.ExitCode != 0 {
 		t.Fatalf("exit code = %d", artifact.ExitCode)
