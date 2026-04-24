@@ -464,6 +464,16 @@ func TestRunWorkloadStepWritesOwnedLaneExecutionPacket(t *testing.T) {
 	if artifact.PreflightArtifactPath != request.RepoLane.PreflightArtifactPath {
 		t.Fatalf("preflight artifact path = %q, want %q", artifact.PreflightArtifactPath, request.RepoLane.PreflightArtifactPath)
 	}
+	if artifact.ExecutionKind != "task_0008_backend_validation" {
+		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
+	}
+	wantWorkingDir := filepath.Join(ownedRoot, "backend", "orchestration")
+	if artifact.ExecutionWorkingDir != wantWorkingDir {
+		t.Fatalf("execution working dir = %q, want %q", artifact.ExecutionWorkingDir, wantWorkingDir)
+	}
+	if len(artifact.ExecutionCommand) != 4 || artifact.ExecutionCommand[0] != "go" {
+		t.Fatalf("execution command = %#v", artifact.ExecutionCommand)
+	}
 }
 
 func TestRunExecuteWorkloadStepWritesResultFromPreparedPacket(t *testing.T) {
@@ -524,6 +534,88 @@ func TestRunExecuteWorkloadStepWritesResultFromPreparedPacket(t *testing.T) {
 	}
 	if artifact.WorkloadStepPath != stepPath {
 		t.Fatalf("workload step path = %q, want %q", artifact.WorkloadStepPath, stepPath)
+	}
+}
+
+func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
+	ownedRoot := t.TempDir()
+	runTaskExecCommand(t, ownedRoot, "git", "init")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.email", "taskexec-tests@example.com")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.name", "TaskExec Tests")
+	moduleRoot := filepath.Join(ownedRoot, "backend", "orchestration")
+	writeTaskFile(t, filepath.Join(moduleRoot, "go.mod"), "module example.com/task0008owned/backend/orchestration\n\ngo 1.25.0\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), "package taskexec\n\nfunc Name() string { return \"taskexec\" }\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "taskrun.go"), "package taskrun\n\nfunc Name() string { return \"taskrun\" }\n")
+	writeTaskFile(t, filepath.Join(ownedRoot, "README.txt"), "owned lane\n")
+	runTaskExecCommand(t, ownedRoot, "git", "add", ".")
+	runTaskExecCommand(t, ownedRoot, "git", "commit", "-m", "initial")
+
+	stepRoot := filepath.Join(ownedRoot, ".codex-taskrun", "taskrun--Task-0008--active")
+	if err := os.MkdirAll(stepRoot, 0o755); err != nil {
+		t.Fatalf("mkdir step root: %v", err)
+	}
+	runArtifactRoot := filepath.Join(t.TempDir(), "artifacts")
+	stepPath := filepath.Join(stepRoot, "workload-step-0001.json")
+	step := workloadStepArtifact{
+		TaskID:              "Task-0008",
+		RunID:               "taskrun--Task-0008--active",
+		OwnedRepoRoot:       ownedRoot,
+		CurrentCommit:       stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
+		WorkloadInstruction: "Run focused Task-0008 backend validation from the owned checkout.",
+		ExecutionKind:       "task_0008_backend_validation",
+		ExecutionWorkingDir: moduleRoot,
+		ExecutionCommand: []string{
+			"go",
+			"test",
+			"./internal/taskexec",
+			"./internal/taskrun",
+		},
+		GeneratedAt: time.Now().UTC(),
+	}
+	rawStep, err := json.Marshal(step)
+	if err != nil {
+		t.Fatalf("marshal step: %v", err)
+	}
+	if err := os.WriteFile(stepPath, append(rawStep, '\n'), 0o644); err != nil {
+		t.Fatalf("write step: %v", err)
+	}
+
+	result, err := runExecuteWorkloadStep(context.Background(), taskrun.StartTaskRunRequest{
+		RunID:  "taskrun--Task-0008--active",
+		TaskID: "Task-0008",
+	}, taskrun.RepoLane{
+		OwnedRepoRoot:    ownedRoot,
+		RunArtifactRoot:  runArtifactRoot,
+		WorkloadStepPath: stepPath,
+	})
+	if err != nil {
+		t.Fatalf("runExecuteWorkloadStep task-specific validation: %v", err)
+	}
+	rawResult, err := os.ReadFile(result.WorkloadResultPath)
+	if err != nil {
+		t.Fatalf("read workload result: %v", err)
+	}
+	var artifact workloadExecutionArtifact
+	if err := json.Unmarshal(rawResult, &artifact); err != nil {
+		t.Fatalf("decode workload result: %v", err)
+	}
+	if artifact.ExecutionKind != "task_0008_backend_validation" {
+		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
+	}
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation inside the owned lane." {
+		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
+	}
+	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
+		t.Fatalf("expected stdout/stderr paths, got %#v", artifact)
+	}
+	if _, err := os.Stat(artifact.StdoutPath); err != nil {
+		t.Fatalf("stat stdout path: %v", err)
+	}
+	if _, err := os.Stat(artifact.StderrPath); err != nil {
+		t.Fatalf("stat stderr path: %v", err)
+	}
+	if artifact.ExitCode != 0 {
+		t.Fatalf("exit code = %d", artifact.ExitCode)
 	}
 }
 

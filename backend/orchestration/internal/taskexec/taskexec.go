@@ -169,18 +169,30 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					if execution.WorkloadResultPath != "" {
 						repoLane.WorkloadResultPath = execution.WorkloadResultPath
 					}
+					reasonCode := "workload_step_executed"
+					stateSummary := "Run executed the first backend workload step inside the owned lane."
+					nextExpectedEvent := "Execution worker prepares or executes the next workload step."
+					attentionReason := "Run executed its first workload step and is ready for the next backend step."
+					attentionSortKey := "42-workload_step_executed"
+					if request.TaskID == "Task-0008" {
+						reasonCode = "task_0008_backend_validation_complete"
+						stateSummary = "Run completed Task-0008 backend validation inside the owned lane."
+						nextExpectedEvent = "Execution worker prepares the next Task-0008-specific backend step."
+						attentionReason = "Run completed Task-0008 backend validation and is ready for the next backend step."
+						attentionSortKey = "41-task_0008_backend_validation_complete"
+					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
-						ReasonCode:          "workload_step_executed",
-						StateSummary:        "Run executed the first backend workload step inside the owned lane.",
+						ReasonCode:          reasonCode,
+						StateSummary:        stateSummary,
 						NextOwner:           "backend_worker",
-						NextExpectedEvent:   "Execution worker prepares or executes the next workload step.",
+						NextExpectedEvent:   nextExpectedEvent,
 						SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
 						LastProgressSummary: execution.ProgressSummary,
 						Attention: &taskrun.AttentionPriority{
 							Level:   taskrun.AttentionWatch,
-							Reason:  "Run executed its first workload step and is ready for the next backend step.",
-							SortKey: "42-workload_step_executed",
+							Reason:  attentionReason,
+							SortKey: attentionSortKey,
 						},
 						RepoLane: &repoLane,
 						Actions:  actionsForState(taskrun.StateRunning),
@@ -352,6 +364,9 @@ type workloadStepArtifact struct {
 	CurrentCommit         string    `json:"current_commit"`
 	GeneratedAt           time.Time `json:"generated_at"`
 	WorkloadInstruction   string    `json:"workload_instruction"`
+	ExecutionKind         string    `json:"execution_kind,omitempty"`
+	ExecutionWorkingDir   string    `json:"execution_working_dir,omitempty"`
+	ExecutionCommand      []string  `json:"execution_command,omitempty"`
 }
 
 type workloadExecutionResult struct {
@@ -366,6 +381,12 @@ type workloadExecutionArtifact struct {
 	OwnedRepoRoot       string    `json:"owned_repo_root"`
 	WorkloadStepPath    string    `json:"workload_step_path"`
 	WorkloadInstruction string    `json:"workload_instruction"`
+	ExecutionKind       string    `json:"execution_kind,omitempty"`
+	ExecutionWorkingDir string    `json:"execution_working_dir,omitempty"`
+	ExecutionCommand    []string  `json:"execution_command,omitempty"`
+	StdoutPath          string    `json:"stdout_path,omitempty"`
+	StderrPath          string    `json:"stderr_path,omitempty"`
+	ExitCode            int       `json:"exit_code,omitempty"`
 	CurrentCommit       string    `json:"current_commit"`
 	ExecutedAt          time.Time `json:"executed_at"`
 	ExecutionSummary    string    `json:"execution_summary"`
@@ -462,6 +483,17 @@ func runWorkloadStep(ctx context.Context, request taskrun.StartTaskRunRequest, r
 		GeneratedAt:           time.Now().UTC(),
 		WorkloadInstruction:   "Use the owned task root and captured task snapshot to execute the next backend-owned task step from inside this owned lane.",
 	}
+	if request.TaskID == "Task-0008" {
+		artifact.WorkloadInstruction = "Run focused Task-0008 backend validation from the owned checkout so the first real task-specific execution step happens inside the backend-owned lane."
+		artifact.ExecutionKind = "task_0008_backend_validation"
+		artifact.ExecutionWorkingDir = filepath.Join(repoLane.OwnedRepoRoot, "backend", "orchestration")
+		artifact.ExecutionCommand = []string{
+			"go",
+			"test",
+			"./internal/taskexec",
+			"./internal/taskrun",
+		}
+	}
 	if err := writeJSONArtifact(stepPath, artifact); err != nil {
 		return workloadStepResult{}, err
 	}
@@ -495,15 +527,31 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	if err != nil {
 		return workloadExecutionResult{}, err
 	}
+	executionSummary := "Executed the first backend workload step packet inside the owned lane."
+	stdoutPath := ""
+	stderrPath := ""
+	exitCode := 0
+	if step.ExecutionKind == "task_0008_backend_validation" {
+		executionSummary, stdoutPath, stderrPath, exitCode, err = executeTask0008Validation(repoLane, step)
+		if err != nil {
+			return workloadExecutionResult{}, err
+		}
+	}
 	artifact := workloadExecutionArtifact{
 		TaskID:              request.TaskID,
 		RunID:               request.RunID,
 		OwnedRepoRoot:       repoLane.OwnedRepoRoot,
 		WorkloadStepPath:    repoLane.WorkloadStepPath,
 		WorkloadInstruction: step.WorkloadInstruction,
+		ExecutionKind:       step.ExecutionKind,
+		ExecutionWorkingDir: step.ExecutionWorkingDir,
+		ExecutionCommand:    append([]string(nil), step.ExecutionCommand...),
+		StdoutPath:          stdoutPath,
+		StderrPath:          stderrPath,
+		ExitCode:            exitCode,
 		CurrentCommit:       currentCommit,
 		ExecutedAt:          time.Now().UTC(),
-		ExecutionSummary:    "Executed the first backend workload step packet inside the owned lane.",
+		ExecutionSummary:    executionSummary,
 	}
 	if err := writeJSONArtifact(resultPath, artifact); err != nil {
 		return workloadExecutionResult{}, err
@@ -511,8 +559,54 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	return workloadExecutionResult{
 		CurrentCommit:      currentCommit,
 		WorkloadResultPath: resultPath,
-		ProgressSummary:    "Executed the first backend workload step inside the owned lane.",
+		ProgressSummary:    executionSummary,
 	}, nil
+}
+
+func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, string, string, int, error) {
+	if repoLane.RunArtifactRoot == "" {
+		return "", "", "", 0, fmt.Errorf("run artifact root is missing")
+	}
+	if len(step.ExecutionCommand) == 0 {
+		return "", "", "", 0, fmt.Errorf("execution command is missing")
+	}
+	workingDir := step.ExecutionWorkingDir
+	if workingDir == "" {
+		workingDir = repoLane.OwnedRepoRoot
+	}
+	if err := os.MkdirAll(repoLane.RunArtifactRoot, 0o755); err != nil {
+		return "", "", "", 0, fmt.Errorf("create run artifact root: %w", err)
+	}
+	stdoutPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stdout.txt")
+	stderrPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stderr.txt")
+	stdoutFile, err := os.Create(stdoutPath)
+	if err != nil {
+		return "", "", "", 0, fmt.Errorf("create validation stdout log: %w", err)
+	}
+	defer stdoutFile.Close()
+	stderrFile, err := os.Create(stderrPath)
+	if err != nil {
+		return "", "", "", 0, fmt.Errorf("create validation stderr log: %w", err)
+	}
+	defer stderrFile.Close()
+
+	cmd := exec.Command(step.ExecutionCommand[0], step.ExecutionCommand[1:]...)
+	cmd.Dir = workingDir
+	cmd.Stdout = stdoutFile
+	cmd.Stderr = stderrFile
+	err = cmd.Run()
+	exitCode := 0
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			exitCode = 1
+		}
+		return "", stdoutPath, stderrPath, exitCode, fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
+	}
+
+	summary := "Executed Task-0008 backend validation inside the owned lane."
+	return summary, stdoutPath, stderrPath, exitCode, nil
 }
 
 func collectActionBlockReasons(actions map[string]taskrun.ActionAvailability) map[string][]taskrun.ActionBlockReason {
