@@ -147,7 +147,15 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - task readback reflects that workload-prepared active story without `POST /state`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0008.md](./Testing/PASS-0002-BACKEND-SMOKE-0008.md)
 
-What is still missing is executing that prepared workload step rather than only materializing it.
+`PASS-0002` now also has the first workload-step execution slice:
+
+- after workload-step preparation, the task-run workflow executes that prepared step inside the owned lane
+- execution writes `workload-step-0001.result.json` next to the prepared workload packet
+- the run advances automatically to `reason_code = workload_step_executed`
+- task readback reflects the executed active-run story without `POST /state`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0009.md](./Testing/PASS-0002-BACKEND-SMOKE-0009.md)
+
+What is still missing is moving from bounded internal workload execution toward a real task-specific execution path.
 
 ## Current Gate
 
@@ -165,7 +173,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from workload-step preparation into executing the first prepared backend workload step
+- move from bounded workload-step execution into the first real task-specific backend execution path
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints

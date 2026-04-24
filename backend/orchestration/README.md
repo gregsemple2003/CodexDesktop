@@ -50,6 +50,7 @@ Task-0008 also starts the first durable dispatch slice:
 - dispatch can now move a run into backend-produced `running` state without requiring a manual `/state` mutation first
 - the task-run workflow can now advance that `running` state automatically to `execution_preflight_complete`
 - the task-run workflow can now advance again to `workload_step_prepared` after writing the first workload packet inside the owned lane
+- the task-run workflow can now execute that prepared workload packet and advance automatically to `workload_step_executed`
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.
@@ -205,6 +206,7 @@ Get-Content -Raw $dispatch.repo_lane.bootstrap_artifact_path
 $run = Invoke-RestMethod http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active
 Get-Content -Raw $run.repo_lane.preflight_artifact_path
 Get-Content -Raw $run.repo_lane.workload_step_path
+Get-Content -Raw $run.repo_lane.workload_result_path
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active | Select-Object -ExpandProperty Content
 $body = '{"state":"waiting_for_human","reason_code":"approval_required","state_summary":"Run is waiting for approval.","next_owner":"human","next_expected_event":"Approve or redirect the next backend step."}'
 Invoke-WebRequest -Method Post -Uri http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/state -ContentType 'application/json' -Body $body | Select-Object -ExpandProperty Content

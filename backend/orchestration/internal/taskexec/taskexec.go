@@ -25,12 +25,14 @@ const (
 	UpdateRunSignalName         = "taskrun.update_state"
 	RunExecutionPreflightName   = "taskrun.execution_preflight"
 	RunWorkloadStepName         = "taskrun.workload_step"
+	RunExecuteWorkloadName      = "taskrun.execute_workload_step"
 )
 
 func Register(w worker.Worker) {
 	w.RegisterWorkflowWithOptions(TaskRunWorkflow, workflow.RegisterOptions{Name: TaskRunWorkflowName})
 	w.RegisterActivityWithOptions(runExecutionPreflight, activity.RegisterOptions{Name: RunExecutionPreflightName})
 	w.RegisterActivityWithOptions(runWorkloadStep, activity.RegisterOptions{Name: RunWorkloadStepName})
+	w.RegisterActivityWithOptions(runExecuteWorkloadStep, activity.RegisterOptions{Name: RunExecuteWorkloadName})
 }
 
 func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
@@ -140,6 +142,50 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					RepoLane: &repoLane,
 					Actions:  actionsForState(taskrun.StateRunning),
 				}, workflow.Now(ctx).UTC())
+
+				var execution workloadExecutionResult
+				if err := workflow.ExecuteActivity(activityCtx, RunExecuteWorkloadName, request, repoLane).Get(activityCtx, &execution); err != nil {
+					applyUpdate(&view, taskrun.TaskRunUpdate{
+						State:               taskrun.StateBlocked,
+						ReasonCode:          "workload_execution_failed",
+						StateSummary:        "Run could not execute the prepared workload step inside the owned lane.",
+						NextOwner:           "human_or_supervisor",
+						NextExpectedEvent:   "Review the workload execution failure before continuing execution.",
+						SuspiciousAfter:     workflow.Now(ctx).UTC(),
+						LastProgressSummary: "The prepared workload step failed during execution inside the owned lane.",
+						Attention: &taskrun.AttentionPriority{
+							Level:   taskrun.AttentionUrgent,
+							Reason:  "Run could not execute the prepared workload step inside the owned lane.",
+							SortKey: "13-workload_execution_failed",
+						},
+						RepoLane:       &repoLane,
+						Actions:        actionsForState(taskrun.StateBlocked),
+						FailureSummary: err.Error(),
+					}, workflow.Now(ctx).UTC())
+				} else {
+					if execution.CurrentCommit != "" {
+						repoLane.CurrentCommit = execution.CurrentCommit
+					}
+					if execution.WorkloadResultPath != "" {
+						repoLane.WorkloadResultPath = execution.WorkloadResultPath
+					}
+					applyUpdate(&view, taskrun.TaskRunUpdate{
+						State:               taskrun.StateRunning,
+						ReasonCode:          "workload_step_executed",
+						StateSummary:        "Run executed the first backend workload step inside the owned lane.",
+						NextOwner:           "backend_worker",
+						NextExpectedEvent:   "Execution worker prepares or executes the next workload step.",
+						SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+						LastProgressSummary: execution.ProgressSummary,
+						Attention: &taskrun.AttentionPriority{
+							Level:   taskrun.AttentionWatch,
+							Reason:  "Run executed its first workload step and is ready for the next backend step.",
+							SortKey: "42-workload_step_executed",
+						},
+						RepoLane: &repoLane,
+						Actions:  actionsForState(taskrun.StateRunning),
+					}, workflow.Now(ctx).UTC())
+				}
 			}
 		}
 	}
@@ -308,6 +354,23 @@ type workloadStepArtifact struct {
 	WorkloadInstruction   string    `json:"workload_instruction"`
 }
 
+type workloadExecutionResult struct {
+	CurrentCommit      string `json:"current_commit"`
+	WorkloadResultPath string `json:"workload_result_path"`
+	ProgressSummary    string `json:"progress_summary"`
+}
+
+type workloadExecutionArtifact struct {
+	TaskID              string    `json:"task_id"`
+	RunID               string    `json:"run_id"`
+	OwnedRepoRoot       string    `json:"owned_repo_root"`
+	WorkloadStepPath    string    `json:"workload_step_path"`
+	WorkloadInstruction string    `json:"workload_instruction"`
+	CurrentCommit       string    `json:"current_commit"`
+	ExecutedAt          time.Time `json:"executed_at"`
+	ExecutionSummary    string    `json:"execution_summary"`
+}
+
 func runExecutionPreflight(ctx context.Context, request taskrun.StartTaskRunRequest) (executionPreflightResult, error) {
 	if request.RepoLane.OwnedRepoRoot == "" {
 		return executionPreflightResult{}, fmt.Errorf("owned repo root is missing")
@@ -406,6 +469,49 @@ func runWorkloadStep(ctx context.Context, request taskrun.StartTaskRunRequest, r
 		CurrentCommit:    currentCommit,
 		WorkloadStepPath: stepPath,
 		ProgressSummary:  "Prepared the first backend workload step inside the owned lane.",
+	}, nil
+}
+
+func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunRequest, repoLane taskrun.RepoLane) (workloadExecutionResult, error) {
+	if repoLane.OwnedRepoRoot == "" {
+		return workloadExecutionResult{}, fmt.Errorf("owned repo root is missing")
+	}
+	if repoLane.WorkloadStepPath == "" {
+		return workloadExecutionResult{}, fmt.Errorf("workload step path is missing")
+	}
+	rawStep, err := os.ReadFile(repoLane.WorkloadStepPath)
+	if err != nil {
+		return workloadExecutionResult{}, fmt.Errorf("read workload step %s: %w", repoLane.WorkloadStepPath, err)
+	}
+	var step workloadStepArtifact
+	if err := json.Unmarshal(rawStep, &step); err != nil {
+		return workloadExecutionResult{}, fmt.Errorf("decode workload step %s: %w", repoLane.WorkloadStepPath, err)
+	}
+	if strings.TrimSpace(step.WorkloadInstruction) == "" {
+		return workloadExecutionResult{}, fmt.Errorf("workload instruction is missing")
+	}
+	resultPath := strings.TrimSuffix(repoLane.WorkloadStepPath, ".json") + ".result.json"
+	currentCommit, err := gitRevParse(repoLane.OwnedRepoRoot, "HEAD")
+	if err != nil {
+		return workloadExecutionResult{}, err
+	}
+	artifact := workloadExecutionArtifact{
+		TaskID:              request.TaskID,
+		RunID:               request.RunID,
+		OwnedRepoRoot:       repoLane.OwnedRepoRoot,
+		WorkloadStepPath:    repoLane.WorkloadStepPath,
+		WorkloadInstruction: step.WorkloadInstruction,
+		CurrentCommit:       currentCommit,
+		ExecutedAt:          time.Now().UTC(),
+		ExecutionSummary:    "Executed the first backend workload step packet inside the owned lane.",
+	}
+	if err := writeJSONArtifact(resultPath, artifact); err != nil {
+		return workloadExecutionResult{}, err
+	}
+	return workloadExecutionResult{
+		CurrentCommit:      currentCommit,
+		WorkloadResultPath: resultPath,
+		ProgressSummary:    "Executed the first backend workload step inside the owned lane.",
 	}, nil
 }
 

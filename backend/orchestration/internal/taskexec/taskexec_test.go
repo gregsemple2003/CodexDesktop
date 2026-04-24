@@ -466,6 +466,67 @@ func TestRunWorkloadStepWritesOwnedLaneExecutionPacket(t *testing.T) {
 	}
 }
 
+func TestRunExecuteWorkloadStepWritesResultFromPreparedPacket(t *testing.T) {
+	ownedRoot := filepath.Join(t.TempDir(), "owned")
+	if err := os.MkdirAll(filepath.Join(ownedRoot, ".codex-taskrun", "taskrun--Task-0008--active"), 0o755); err != nil {
+		t.Fatalf("mkdir owned root: %v", err)
+	}
+	runTaskExecCommand(t, ownedRoot, "git", "init")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.email", "taskexec-tests@example.com")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.name", "TaskExec Tests")
+	writeTaskFile(t, filepath.Join(ownedRoot, "README.txt"), "owned lane\n")
+	runTaskExecCommand(t, ownedRoot, "git", "add", ".")
+	runTaskExecCommand(t, ownedRoot, "git", "commit", "-m", "initial")
+
+	stepPath := filepath.Join(ownedRoot, ".codex-taskrun", "taskrun--Task-0008--active", "workload-step-0001.json")
+	step := workloadStepArtifact{
+		TaskID:              "Task-0008",
+		RunID:               "taskrun--Task-0008--active",
+		OwnedRepoRoot:       ownedRoot,
+		CurrentCommit:       stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
+		WorkloadInstruction: "Use the owned task root and captured task snapshot to execute the next backend-owned task step from inside this owned lane.",
+		GeneratedAt:         time.Now().UTC(),
+	}
+	rawStep, err := json.Marshal(step)
+	if err != nil {
+		t.Fatalf("marshal step: %v", err)
+	}
+	if err := os.WriteFile(stepPath, append(rawStep, '\n'), 0o644); err != nil {
+		t.Fatalf("write step: %v", err)
+	}
+
+	request := taskrun.StartTaskRunRequest{
+		RunID:  "taskrun--Task-0008--active",
+		TaskID: "Task-0008",
+	}
+	repoLane := taskrun.RepoLane{
+		OwnedRepoRoot:    ownedRoot,
+		WorkloadStepPath: stepPath,
+	}
+
+	result, err := runExecuteWorkloadStep(context.Background(), request, repoLane)
+	if err != nil {
+		t.Fatalf("runExecuteWorkloadStep: %v", err)
+	}
+	if result.WorkloadResultPath == "" {
+		t.Fatal("expected workload result path")
+	}
+	rawResult, err := os.ReadFile(result.WorkloadResultPath)
+	if err != nil {
+		t.Fatalf("read workload result: %v", err)
+	}
+	var artifact workloadExecutionArtifact
+	if err := json.Unmarshal(rawResult, &artifact); err != nil {
+		t.Fatalf("decode workload result: %v", err)
+	}
+	if artifact.ExecutionSummary == "" {
+		t.Fatal("expected execution summary")
+	}
+	if artifact.WorkloadStepPath != stepPath {
+		t.Fatalf("workload step path = %q, want %q", artifact.WorkloadStepPath, stepPath)
+	}
+}
+
 func writeTaskFile(t *testing.T, path string, contents string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
