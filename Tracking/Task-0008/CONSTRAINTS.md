@@ -46,3 +46,7 @@ Add new constraints here as they are given.
 - Keep the current slice bounded.
 - Prefer explicit interrupt-review decision and resolution behavior over widening scope into real worker-side execution unless execution becomes the smaller honest next step.
 - Do not widen scope unnecessarily.
+
+### 2026-04-24 Validation Replay Constraint
+
+- When the fixed active task-run workflow id is reused after workflow-shape changes, reset the disposable validation Temporal volume before live proof so replay failures do not masquerade as task logic regressions.

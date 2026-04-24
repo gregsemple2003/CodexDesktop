@@ -140,7 +140,14 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - the run advances automatically to `reason_code = execution_preflight_complete` without `POST /state`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0007.md](./Testing/PASS-0002-BACKEND-SMOKE-0007.md)
 
-What is still missing is the first actual task workload step after preflight.
+`PASS-0002` now also has the first actual workload-step preparation slice:
+
+- after preflight, the task-run workflow writes the first backend workload packet inside the owned lane under `.codex-taskrun/`
+- the run advances automatically to `reason_code = workload_step_prepared`
+- task readback reflects that workload-prepared active story without `POST /state`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0008.md](./Testing/PASS-0002-BACKEND-SMOKE-0008.md)
+
+What is still missing is executing that prepared workload step rather than only materializing it.
 
 ## Current Gate
 
@@ -158,7 +165,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from execution preflight into the first actual backend-driven workload step after dispatch
+- move from workload-step preparation into executing the first prepared backend workload step
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints

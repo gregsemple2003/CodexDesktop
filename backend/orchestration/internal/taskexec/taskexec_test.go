@@ -395,6 +395,77 @@ func TestRunExecutionPreflightWritesArtifactFromOwnedLane(t *testing.T) {
 	}
 }
 
+func TestRunWorkloadStepWritesOwnedLaneExecutionPacket(t *testing.T) {
+	worktreeRoot := t.TempDir()
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK.md"), "# task\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "PLAN.md"), "# plan\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "HANDOFF.md"), "# handoff\n")
+	writeTaskFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK-STATE.json"), "{\"task_id\":\"Task-0008\"}\n")
+	runTaskExecCommand(t, worktreeRoot, "git", "init")
+	runTaskExecCommand(t, worktreeRoot, "git", "config", "user.email", "taskexec-tests@example.com")
+	runTaskExecCommand(t, worktreeRoot, "git", "config", "user.name", "TaskExec Tests")
+	runTaskExecCommand(t, worktreeRoot, "git", "add", ".")
+	runTaskExecCommand(t, worktreeRoot, "git", "commit", "-m", "initial")
+
+	ownedRoot := filepath.Join(t.TempDir(), "owned")
+	runTaskExecCommand(t, worktreeRoot, "git", "worktree", "add", "--detach", ownedRoot, "HEAD")
+
+	runArtifactRoot := filepath.Join(t.TempDir(), "artifacts")
+	headCommit := stringsTrim(runTaskExecOutput(t, worktreeRoot, "git", "rev-parse", "HEAD"))
+	request := taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: worktreeRoot,
+			DeclaredTaskRoot:     filepath.Join(worktreeRoot, "Tracking", "Task-0008"),
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  headCommit,
+			CapturedAt:           time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC),
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         ownedRoot,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        headCommit,
+			CurrentCommit:         headCommit,
+			ApprovedRestoreCommit: headCommit,
+			RunArtifactRoot:       runArtifactRoot,
+			BootstrapArtifactPath: filepath.Join(runArtifactRoot, "owned-lane-bootstrap.json"),
+			PreflightArtifactPath: filepath.Join(runArtifactRoot, "execution-preflight.json"),
+		},
+		DispatchRequestedAt: time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC),
+	}
+	writeTaskFile(t, request.RepoLane.PreflightArtifactPath, "{}\n")
+
+	result, err := runWorkloadStep(context.Background(), request, request.RepoLane)
+	if err != nil {
+		t.Fatalf("runWorkloadStep: %v", err)
+	}
+	if result.WorkloadStepPath == "" {
+		t.Fatal("expected workload step path")
+	}
+	if !strings.Contains(result.WorkloadStepPath, ".codex-taskrun") {
+		t.Fatalf("workload step path = %q", result.WorkloadStepPath)
+	}
+	raw, err := os.ReadFile(result.WorkloadStepPath)
+	if err != nil {
+		t.Fatalf("read workload step artifact: %v", err)
+	}
+	var artifact workloadStepArtifact
+	if err := json.Unmarshal(raw, &artifact); err != nil {
+		t.Fatalf("decode workload step artifact: %v", err)
+	}
+	if artifact.WorkloadInstruction == "" {
+		t.Fatal("expected workload instruction")
+	}
+	if artifact.CurrentCommit != headCommit {
+		t.Fatalf("current commit = %q, want %q", artifact.CurrentCommit, headCommit)
+	}
+	if artifact.PreflightArtifactPath != request.RepoLane.PreflightArtifactPath {
+		t.Fatalf("preflight artifact path = %q, want %q", artifact.PreflightArtifactPath, request.RepoLane.PreflightArtifactPath)
+	}
+}
+
 func writeTaskFile(t *testing.T, path string, contents string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
