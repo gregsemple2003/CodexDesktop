@@ -1,0 +1,34 @@
+# Task 0008 Constraints
+
+This file records explicit human-provided or human-approved constraints that should remain visible throughout implementation.
+
+Add new constraints here as they are given.
+
+## Active Constraints
+
+### 2026-04-24 Implementation Approval
+
+- `PLAN.md` is approved.
+- Start implementation immediately.
+- Do not stop until the task is done or a real blocker is reached.
+- Keep durable task state current at each lifecycle transition.
+
+### 2026-04-24 Runtime Truth And Ingest
+
+- Latest git task docs remain declared task or process truth.
+- The backend must preserve rollback-safe runtime truth instead of forgetting waits, interrupts, cleanup, or divergence after git rewinds.
+- Day-to-day sync should use task-API read-through reconcile, not a general file watcher.
+- Direct agent HTTP calls are not the normal primary truth mechanism.
+
+### 2026-04-24 Execution Lane Safety
+
+- Simple task execution must use an exclusive backend-owned checkout or equivalent isolated repo lane.
+- Do not use the human's shared primary worktree as the normal simple-execution lane.
+- Restore or cleanup semantics must target a recorded useful commit baseline or later approved restore target.
+
+### 2026-04-24 Human-Facing Contract
+
+- Use `meaning_summary` for the task-level summary of why the task exists or why the human should care.
+- Use `state_summary` for the current run or state summary.
+- `completed` must mean no further human judgment, review, or approval is required.
+- If review or approval is still required, the state must surface as `waiting_for_human` with an explicit approval target.

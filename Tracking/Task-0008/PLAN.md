@@ -2,17 +2,18 @@
 
 ## Planning Verdict
 
-This plan is ready for explicit human approval.
+This plan was explicitly approved for implementation on `2026-04-24`.
 
-Human gate:
+Implementation starts with `PASS-0000`.
 
-- do not start backend implementation until the human agrees that this task owns the backend-only dispatch runtime and durable execution-state contract, including:
-  - the backend readback, freshness, action-gating, and deep-context capabilities the future `Tasks` tab consumes
-  - an exclusive backend-owned repo checkout or equivalent isolated repo lane for simple task execution instead of the human's shared primary worktree
-  - explicit restore-commit semantics so unit proof and execution cleanup can reset that owned checkout to a recorded useful commit baseline
-  - the explicit human-state envelope, meaningful-progress rules, full wait contract, dispatch-readiness rule, multi-run story-selection rule, and attention-priority shape described below
-  - a doc-to-backend ingest and snapshot model that preserves live runtime truth across git rollback without making ad hoc agent HTTP calls the required primary mechanism
-  - first proof allowed through Codex or direct backend interactions rather than frontend work
+The approved scope is the backend-only dispatch runtime and durable execution-state contract, including:
+
+- the backend readback, freshness, action-gating, and deep-context capabilities the future `Tasks` tab consumes
+- an exclusive backend-owned repo checkout or equivalent isolated repo lane for simple task execution instead of the human's shared primary worktree
+- explicit restore-commit semantics so unit proof and execution cleanup can reset that owned checkout to a recorded useful commit baseline
+- the explicit human-state envelope, meaningful-progress rules, full wait contract, dispatch-readiness rule, multi-run story-selection rule, and attention-priority shape described below
+- a doc-to-backend ingest and snapshot model that preserves live runtime truth across git rollback without making ad hoc agent HTTP calls the required primary mechanism
+- first proof allowed through Codex or direct backend interactions rather than frontend work
 
 ## Planning Basis
 

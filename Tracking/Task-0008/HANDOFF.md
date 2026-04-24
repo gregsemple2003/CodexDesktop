@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0008` is in planning with `PLAN.md` written and awaiting explicit human approval.
+`Task-0008` is in implementation with `PASS-0000` active.
 
 This task is a backend-only runtime task:
 
@@ -56,9 +56,7 @@ What is missing is the task-run model that ties those pieces together durably.
 
 ## Current Gate
 
-Do not begin implementation until the human explicitly approves [PLAN.md](./PLAN.md).
-
-That approval gate covers the current backend-only runtime split:
+Implementation is active under the approved backend-only runtime split:
 
 - backend-owned task-run workflow and API contract
 - first proof allowed through Codex or direct backend interactions before frontend work
@@ -68,18 +66,14 @@ That approval gate covers the current backend-only runtime split:
 
 ## Next Recommended Step
 
-Review and approve the execution plan, especially around:
+Implement `PASS-0000` and prove the chosen backend contract directly before any frontend work starts.
 
-- sleeping versus legitimate waiting
-- poke semantics
-- interrupt semantics
-- session and thread provenance readback
-- task-level readback and action-gating obligations for the later `Tasks` tab
-- freshness and next-step fields the UI should consume from backend truth
-- exclusive repo-lane ownership for simple execution
-- baseline and approved restore-commit semantics for proof and cleanup
+The first implementation slice should:
 
-After approval, implementation should start with `PASS-0000` and prove the backend contract directly before any frontend work starts.
+- add the backend task-run contract types and storage model under `backend/orchestration/`
+- encode the approved worktree/task-root ingest model
+- create the durable run vocabulary and readback envelope
+- keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
 
 ## Watchouts
 
