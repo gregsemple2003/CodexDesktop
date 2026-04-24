@@ -3,9 +3,83 @@ package taskrun
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 )
+
+type fakeRuntime struct {
+	activeByTask map[string]TaskRunView
+	byRunID      map[string]TaskRunView
+	started      []StartTaskRunRequest
+}
+
+func newFakeRuntime() *fakeRuntime {
+	return &fakeRuntime{
+		activeByTask: map[string]TaskRunView{},
+		byRunID:      map[string]TaskRunView{},
+	}
+}
+
+func (f *fakeRuntime) StartTaskRun(_ context.Context, request StartTaskRunRequest) (TaskRunView, error) {
+	f.started = append(f.started, request)
+	run := TaskRunView{
+		RunID:                  request.RunID,
+		TaskID:                 request.TaskID,
+		WorkflowID:             request.RunID,
+		TemporalExecutionRunID: "temporal-run-id",
+		Status:                 "active",
+		StateEnvelope: StateEnvelope{
+			State:             StateDispatching,
+			ReasonCode:        "dispatch_started",
+			StateSummary:      "Run is dispatching in an owned checkout.",
+			NextOwner:         "backend",
+			NextExpectedEvent: "Execution worker records the next task-run state update.",
+			SuspiciousAfter:   request.DispatchRequestedAt.Add(15 * time.Minute),
+		},
+		MeaningSummary:             request.MeaningSummary,
+		Attention:                  AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"},
+		Actions:                    map[string]ActionAvailability{},
+		RepoLane:                   request.RepoLane,
+		LastProgressAt:             request.DispatchRequestedAt,
+		LastProgressSummary:        "Captured task docs and provisioned an owned checkout.",
+		CapturedTaskSnapshot:       request.CapturedTaskSnapshot,
+		DocRuntimeDivergenceStatus: "in_sync",
+	}
+	f.activeByTask[request.TaskID] = run
+	f.byRunID[request.RunID] = run
+	return run, nil
+}
+
+func (f *fakeRuntime) GetTaskRun(_ context.Context, runID string) (TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return TaskRunView{}, ErrRunNotFound
+	}
+	return run, nil
+}
+
+func (f *fakeRuntime) GetActiveTaskRun(_ context.Context, taskID string) (TaskRunView, error) {
+	run, ok := f.activeByTask[taskID]
+	if !ok {
+		return TaskRunView{}, ErrRunNotFound
+	}
+	return run, nil
+}
+
+func (f *fakeRuntime) ReconcileTaskSnapshot(_ context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return TaskRunView{}, ErrRunNotFound
+	}
+	run.CapturedTaskSnapshot = snapshot
+	run.DocRuntimeDivergenceStatus = "reconciled"
+	run.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
 
 func TestListTasksParsesMeaningAndReadyState(t *testing.T) {
 	worktreeRoot := writeTaskTrackingRoot(t, map[string]taskFixture{
@@ -36,7 +110,7 @@ Create the durable backend task-run contract so later clients do not guess state
 		},
 	})
 
-	service := NewService(worktreeRoot)
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), nil)
 	tasks, err := service.ListTasks(context.Background())
 	if err != nil {
 		t.Fatalf("list tasks: %v", err)
@@ -93,7 +167,7 @@ Need approval before implementation starts.
 		},
 	})
 
-	service := NewService(worktreeRoot)
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), nil)
 	task, err := service.Task(context.Background(), "Task-0012")
 	if err != nil {
 		t.Fatalf("task detail: %v", err)
@@ -107,6 +181,66 @@ Need approval before implementation starts.
 	}
 	if task.Actions[ActionDispatch].Allowed {
 		t.Fatal("dispatch should not be allowed while plan approval is missing")
+	}
+}
+
+func TestDispatchProvisionOwnedLaneAndCaptureBaselineCommit(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0001",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T16:44:31-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	runsRoot := filepath.Join(worktreeRoot, ".runs")
+	service := NewService(worktreeRoot, runsRoot, runtime)
+
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if len(runtime.started) != 1 {
+		t.Fatalf("started requests = %d, want 1", len(runtime.started))
+	}
+	request := runtime.started[0]
+	if request.TaskID != "Task-0008" {
+		t.Fatalf("task id = %q", request.TaskID)
+	}
+	if request.RepoLane.BaselineCommit == "" {
+		t.Fatal("expected baseline commit to be captured")
+	}
+	if request.RepoLane.ApprovedRestoreCommit != request.RepoLane.BaselineCommit {
+		t.Fatalf("approved restore commit = %q, want baseline %q", request.RepoLane.ApprovedRestoreCommit, request.RepoLane.BaselineCommit)
+	}
+	if request.RepoLane.OwnedRepoRoot == "" {
+		t.Fatal("expected owned repo root to be set")
+	}
+	if _, err := os.Stat(request.RepoLane.OwnedRepoRoot); err != nil {
+		t.Fatalf("owned repo root missing: %v", err)
+	}
+	if run.RunID != ActiveRunID("Task-0008") {
+		t.Fatalf("run id = %q", run.RunID)
 	}
 }
 
@@ -147,9 +281,29 @@ func writeTaskTrackingRoot(t *testing.T, tasks map[string]taskFixture) string {
 	return worktreeRoot
 }
 
+func writeGitTaskTrackingRoot(t *testing.T, tasks map[string]taskFixture) string {
+	t.Helper()
+	worktreeRoot := writeTaskTrackingRoot(t, tasks)
+	runCommand(t, worktreeRoot, "git", "init")
+	runCommand(t, worktreeRoot, "git", "config", "user.email", "taskrun-tests@example.com")
+	runCommand(t, worktreeRoot, "git", "config", "user.name", "TaskRun Tests")
+	runCommand(t, worktreeRoot, "git", "add", ".")
+	runCommand(t, worktreeRoot, "git", "commit", "-m", "initial task fixtures")
+	return worktreeRoot
+}
+
 func writeFile(t *testing.T, path string, contents string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
+func runCommand(t *testing.T, dir string, exe string, args ...string) {
+	t.Helper()
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
 	}
 }

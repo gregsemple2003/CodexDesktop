@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -18,6 +19,8 @@ import (
 type Service struct {
 	declaredWorktreeRoot string
 	trackingRoot         string
+	ownedLaneRoot        string
+	runtime              Runtime
 	now                  func() time.Time
 }
 
@@ -32,17 +35,28 @@ type taskStateFile struct {
 	UpdatedAt    string   `json:"updated_at"`
 }
 
-func NewService(declaredWorktreeRoot string) *Service {
+type parsedTask struct {
+	state       taskStateFile
+	title       string
+	meaning     string
+	snapshot    TaskDefinitionSnapshot
+	evidenceRef []EvidenceRef
+	taskRoot    string
+}
+
+func NewService(declaredWorktreeRoot string, runsRoot string, runtime Runtime) *Service {
 	return &Service{
 		declaredWorktreeRoot: declaredWorktreeRoot,
 		trackingRoot:         filepath.Join(declaredWorktreeRoot, "Tracking"),
+		ownedLaneRoot:        filepath.Join(runsRoot, "task-owned-checkouts"),
+		runtime:              runtime,
 		now: func() time.Time {
 			return time.Now().UTC()
 		},
 	}
 }
 
-func (s *Service) ListTasks(_ context.Context) ([]TaskView, error) {
+func (s *Service) ListTasks(ctx context.Context) ([]TaskView, error) {
 	entries, err := os.ReadDir(s.trackingRoot)
 	if err != nil {
 		return nil, fmt.Errorf("read tracking root: %w", err)
@@ -53,7 +67,7 @@ func (s *Service) ListTasks(_ context.Context) ([]TaskView, error) {
 		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "Task-") {
 			continue
 		}
-		task, err := s.readTask(filepath.Join(s.trackingRoot, entry.Name()))
+		task, err := s.readTask(ctx, filepath.Join(s.trackingRoot, entry.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +80,7 @@ func (s *Service) ListTasks(_ context.Context) ([]TaskView, error) {
 	return tasks, nil
 }
 
-func (s *Service) Task(_ context.Context, taskID string) (TaskView, error) {
+func (s *Service) Task(ctx context.Context, taskID string) (TaskView, error) {
 	taskRoot := filepath.Join(s.trackingRoot, taskID)
 	if _, err := os.Stat(taskRoot); err != nil {
 		if os.IsNotExist(err) {
@@ -74,25 +88,148 @@ func (s *Service) Task(_ context.Context, taskID string) (TaskView, error) {
 		}
 		return TaskView{}, err
 	}
-	return s.readTask(taskRoot)
+	return s.readTask(ctx, taskRoot)
 }
 
-func (s *Service) readTask(taskRoot string) (TaskView, error) {
+func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, error) {
+	if s.runtime == nil {
+		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
+	}
+
+	task, err := s.Task(ctx, taskID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	if !task.DispatchReadiness.Ready {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked: %s", summarizeBlockReasons(task.DispatchReadiness.BlockReasons))
+	}
+
+	repoLane, err := s.provisionOwnedLane(task.TaskID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+
+	request := StartTaskRunRequest{
+		RunID:          ActiveRunID(task.TaskID),
+		TaskID:         task.TaskID,
+		Title:          task.Title,
+		MeaningSummary: task.MeaningSummary,
+		CapturedTaskSnapshot: TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: task.DeclaredWorktreeRoot,
+			DeclaredTaskRoot:     task.DeclaredTaskRoot,
+			DeclaredTaskRevision: task.DeclaredTaskRevision,
+			DeclaredGitRevision:  task.DeclaredGitRevision,
+			CapturedAt:           s.now(),
+			Files:                nil,
+		},
+		RepoLane:            repoLane,
+		DispatchRequestedAt: s.now(),
+	}
+
+	metadata, err := s.loadTask(taskRootForID(s.trackingRoot, task.TaskID))
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
+	request.CapturedTaskSnapshot = metadata.snapshot
+
+	run, err := s.runtime.StartTaskRun(ctx, request)
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
+	return run, nil
+}
+
+func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
+	if s.runtime == nil {
+		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
+	}
+	return s.runtime.GetTaskRun(ctx, runID)
+}
+
+func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, error) {
+	metadata, err := s.loadTask(taskRoot)
+	if err != nil {
+		return TaskView{}, err
+	}
+
+	view := TaskView{
+		TaskID:               metadata.state.TaskID,
+		Title:                metadata.title,
+		MeaningSummary:       metadata.meaning,
+		DeclaredWorktreeRoot: metadata.snapshot.DeclaredWorktreeRoot,
+		DeclaredTaskRoot:     metadata.snapshot.DeclaredTaskRoot,
+		DeclaredTaskRevision: metadata.snapshot.DeclaredTaskRevision,
+		DeclaredGitRevision:  metadata.snapshot.DeclaredGitRevision,
+		CurrentStory: StoryOwnership{
+			Status: "no_active_run",
+			Reason: "No task run currently owns the live story.",
+		},
+		CurrentGate:  metadata.state.CurrentGate,
+		CurrentPass:  metadata.state.CurrentPass,
+		Phase:        metadata.state.Phase,
+		PlanApproved: metadata.state.PlanApproved,
+		Blockers:     append([]string(nil), metadata.state.Blockers...),
+		UpdatedAt:    metadata.state.UpdatedAt,
+	}
+
+	view.StateEnvelope = s.deriveStateEnvelope(metadata)
+	view.DispatchReadiness = s.deriveDispatchReadiness(metadata, false)
+	view.Attention = s.deriveAttention(view.StateEnvelope.State, view.DispatchReadiness.Ready)
+	view.Actions = defaultActions(view.DispatchReadiness)
+	view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+
+	if s.runtime == nil {
+		return view, nil
+	}
+
+	run, err := s.runtime.GetActiveTaskRun(ctx, metadata.state.TaskID)
+	if err != nil {
+		if errors.Is(err, ErrRunNotFound) {
+			return view, nil
+		}
+		return TaskView{}, err
+	}
+
+	if run.CapturedTaskSnapshot.DeclaredTaskRevision != metadata.snapshot.DeclaredTaskRevision {
+		reconciled, reconcileErr := s.runtime.ReconcileTaskSnapshot(ctx, run.RunID, metadata.snapshot)
+		if reconcileErr == nil {
+			run = reconciled
+		}
+	}
+
+	view.LatestRun = &run
+	view.CurrentStory = StoryOwnership{
+		OwnerRunID: run.RunID,
+		Status:     "active_run",
+		Reason:     "An active task run owns the current live story.",
+	}
+	view.StateEnvelope = run.StateEnvelope
+	view.Attention = run.Attention
+	view.Actions = run.Actions
+	view.DispatchReadiness = s.deriveDispatchReadiness(metadata, true)
+	view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+
+	return view, nil
+}
+
+func (s *Service) loadTask(taskRoot string) (parsedTask, error) {
 	taskMDPath := filepath.Join(taskRoot, "TASK.md")
 	taskRaw, err := os.ReadFile(taskMDPath)
 	if err != nil {
-		return TaskView{}, fmt.Errorf("read %s: %w", taskMDPath, err)
+		return parsedTask{}, fmt.Errorf("read %s: %w", taskMDPath, err)
 	}
 
 	taskStatePath := filepath.Join(taskRoot, "TASK-STATE.json")
 	taskStateRaw, err := os.ReadFile(taskStatePath)
 	if err != nil {
-		return TaskView{}, fmt.Errorf("read %s: %w", taskStatePath, err)
+		return parsedTask{}, fmt.Errorf("read %s: %w", taskStatePath, err)
 	}
 
 	var state taskStateFile
 	if err := json.Unmarshal(taskStateRaw, &state); err != nil {
-		return TaskView{}, fmt.Errorf("decode %s: %w", taskStatePath, err)
+		return parsedTask{}, fmt.Errorf("decode %s: %w", taskStatePath, err)
 	}
 
 	title := extractMarkdownSection(string(taskRaw), "Title")
@@ -106,7 +243,7 @@ func (s *Service) readTask(taskRoot string) (TaskView, error) {
 
 	snapshot, err := s.captureSnapshot(taskRoot)
 	if err != nil {
-		return TaskView{}, err
+		return parsedTask{}, err
 	}
 
 	evidenceRefs := []EvidenceRef{
@@ -123,87 +260,45 @@ func (s *Service) readTask(taskRoot string) (TaskView, error) {
 		evidenceRefs = append(evidenceRefs, taskArtifactRef("CONSTRAINTS.md", filepath.Join(taskRoot, "CONSTRAINTS.md")))
 	}
 
-	view := TaskView{
-		TaskID:               state.TaskID,
-		Title:                title,
-		MeaningSummary:       meaning,
-		DeclaredWorktreeRoot: snapshot.DeclaredWorktreeRoot,
-		DeclaredTaskRoot:     snapshot.DeclaredTaskRoot,
-		DeclaredTaskRevision: snapshot.DeclaredTaskRevision,
-		DeclaredGitRevision:  snapshot.DeclaredGitRevision,
-		CurrentStory: StoryOwnership{
-			Status: "no_active_run",
-			Reason: "No task run currently owns the live story.",
-		},
-		CurrentGate:  state.CurrentGate,
-		CurrentPass:  state.CurrentPass,
-		Phase:        state.Phase,
-		PlanApproved: state.PlanApproved,
-		Blockers:     append([]string(nil), state.Blockers...),
-		UpdatedAt:    state.UpdatedAt,
-	}
-
-	view.StateEnvelope = s.deriveStateEnvelope(view, state, evidenceRefs, taskRoot)
-	view.DispatchReadiness = s.deriveDispatchReadiness(state, taskRoot)
-	view.Attention = s.deriveAttention(view.StateEnvelope.State, view.DispatchReadiness.Ready)
-	view.Actions = map[string]ActionAvailability{
-		ActionDispatch: {
-			Allowed:      view.DispatchReadiness.Ready,
-			BlockReasons: append([]ActionBlockReason(nil), view.DispatchReadiness.BlockReasons...),
-		},
-		ActionPoke: {
-			Allowed: false,
-			BlockReasons: []ActionBlockReason{{
-				Code:    "no_active_run",
-				Summary: "Poke is unavailable until a task run exists.",
-			}},
-		},
-		ActionInterrupt: {
-			Allowed: false,
-			BlockReasons: []ActionBlockReason{{
-				Code:    "no_active_run",
-				Summary: "Interrupt is unavailable until a task run exists.",
-			}},
-		},
-	}
-	view.StateEnvelope.ActionBlockReasons = map[string][]ActionBlockReason{
-		ActionDispatch:  append([]ActionBlockReason(nil), view.Actions[ActionDispatch].BlockReasons...),
-		ActionPoke:      append([]ActionBlockReason(nil), view.Actions[ActionPoke].BlockReasons...),
-		ActionInterrupt: append([]ActionBlockReason(nil), view.Actions[ActionInterrupt].BlockReasons...),
-	}
-
-	return view, nil
+	return parsedTask{
+		state:       state,
+		title:       title,
+		meaning:     meaning,
+		snapshot:    snapshot,
+		evidenceRef: evidenceRefs,
+		taskRoot:    taskRoot,
+	}, nil
 }
 
-func (s *Service) deriveStateEnvelope(view TaskView, state taskStateFile, evidenceRefs []EvidenceRef, taskRoot string) StateEnvelope {
+func (s *Service) deriveStateEnvelope(metadata parsedTask) StateEnvelope {
 	now := s.now()
 	envelope := StateEnvelope{
-		EvidenceRefs: evidenceRefs,
+		EvidenceRefs: metadata.evidenceRef,
 		NextOwner:    "backend",
 	}
 
 	switch {
-	case len(state.Blockers) > 0:
+	case len(metadata.state.Blockers) > 0:
 		envelope.State = StateBlocked
 		envelope.ReasonCode = "task_blocked"
 		envelope.StateSummary = "Task is blocked on recorded constraints."
 		envelope.NextOwner = "human_or_supervisor"
 		envelope.NextExpectedEvent = "Resolve blockers and reassess dispatch readiness."
 		envelope.SuspiciousAfter = now.Add(24 * time.Hour)
-	case !state.PlanApproved:
+	case !metadata.state.PlanApproved:
 		envelope.State = StateWaitingForHuman
 		envelope.ReasonCode = "plan_approval_required"
 		envelope.StateSummary = "Task is waiting for plan approval."
 		envelope.NextOwner = "human"
 		envelope.NextExpectedEvent = "Approve PLAN.md."
 		envelope.SuspiciousAfter = now.Add(72 * time.Hour)
-	case state.Status == "done" || state.Status == "completed" || state.Status == "closed":
+	case metadata.state.Status == "done" || metadata.state.Status == "completed" || metadata.state.Status == "closed":
 		envelope.State = StateCompleted
 		envelope.ReasonCode = "task_complete"
 		envelope.StateSummary = "Task is complete."
 		envelope.NextOwner = "none"
 		envelope.NextExpectedEvent = "No further action is required."
-	case state.Phase == "implementation" && state.CurrentGate == "implementation":
+	case metadata.state.Phase == "implementation" && metadata.state.CurrentGate == "implementation":
 		envelope.State = StateReady
 		envelope.ReasonCode = "ready_for_dispatch"
 		envelope.StateSummary = "Task is ready for backend dispatch."
@@ -222,48 +317,66 @@ func (s *Service) deriveStateEnvelope(view TaskView, state taskStateFile, eviden
 		envelope.EvidenceRefs = append(envelope.EvidenceRefs, EvidenceRef{
 			Type:  "task_artifact",
 			Label: "PLAN approval target",
-			URI:   fileURI(filepath.Join(taskRoot, "PLAN.md")),
+			URI:   fileURI(filepath.Join(metadata.taskRoot, "PLAN.md")),
 		})
 	}
 
 	return envelope
 }
 
-func (s *Service) deriveDispatchReadiness(state taskStateFile, taskRoot string) DispatchReadiness {
+func (s *Service) deriveDispatchReadiness(metadata parsedTask, activeRunExists bool) DispatchReadiness {
 	readiness := DispatchReadiness{
 		Ready:        false,
 		BlockReasons: []ActionBlockReason{},
 	}
 
-	if !state.PlanApproved {
+	if s.runtime == nil {
+		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
+			Code:    "dispatch_runtime_not_implemented",
+			Summary: "The durable dispatch lane is not implemented yet.",
+		})
+	}
+	if !metadata.state.PlanApproved {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
 			Code:    "plan_not_approved",
 			Summary: "Dispatch requires an approved plan.",
 		})
 	}
-	if len(state.Blockers) > 0 {
+	if len(metadata.state.Blockers) > 0 {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
 			Code:    "task_blockers_present",
 			Summary: "Dispatch is blocked until the recorded task blockers are cleared.",
 		})
 	}
-	if _, err := os.Stat(filepath.Join(taskRoot, "PLAN.md")); err != nil {
+	if activeRunExists {
+		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
+			Code:    "active_run_exists",
+			Summary: "Dispatch is blocked while another active run owns the current live story.",
+		})
+	}
+	if _, err := os.Stat(filepath.Join(metadata.taskRoot, "PLAN.md")); err != nil {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
 			Code:    "plan_missing",
 			Summary: "Dispatch requires PLAN.md to be present in the declared task root.",
 		})
 	}
-	if _, err := os.Stat(filepath.Join(taskRoot, "TASK.md")); err != nil {
+	if _, err := os.Stat(filepath.Join(metadata.taskRoot, "TASK.md")); err != nil {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
 			Code:    "task_missing",
 			Summary: "Dispatch requires TASK.md to be present in the declared task root.",
 		})
 	}
-	if len(readiness.BlockReasons) == 0 {
+	if metadata.snapshot.DeclaredGitRevision == "" {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
-			Code:    "dispatch_runtime_not_implemented",
-			Summary: "The durable dispatch lane is not implemented yet.",
+			Code:    "baseline_commit_unavailable",
+			Summary: "Dispatch requires a resolvable git baseline for the declared worktree.",
 		})
+	}
+
+	if len(readiness.BlockReasons) == 0 {
+		readiness.Ready = true
+		readiness.ExpectedFirstSignal = "Create a durable backend task run with an owned checkout and captured baseline commit."
+		readiness.FirstSuspiciousAfter = s.now().Add(15 * time.Minute)
 	}
 
 	return readiness
@@ -272,35 +385,15 @@ func (s *Service) deriveDispatchReadiness(state taskStateFile, taskRoot string) 
 func (s *Service) deriveAttention(state string, dispatchReady bool) AttentionPriority {
 	switch {
 	case state == StateWaitingForHuman:
-		return AttentionPriority{
-			Level:   AttentionNeedsAttention,
-			Reason:  "Task needs an explicit human action.",
-			SortKey: "20-waiting_for_human",
-		}
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Task needs an explicit human action.", SortKey: "20-waiting_for_human"}
 	case state == StateBlocked:
-		return AttentionPriority{
-			Level:   AttentionNeedsAttention,
-			Reason:  "Task is blocked and needs review.",
-			SortKey: "30-blocked",
-		}
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Task is blocked and needs review.", SortKey: "30-blocked"}
 	case dispatchReady:
-		return AttentionPriority{
-			Level:   AttentionNeedsAttention,
-			Reason:  "Task is ready for dispatch.",
-			SortKey: "40-ready",
-		}
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Task is ready for dispatch.", SortKey: "40-ready"}
 	case state == StateCompleted:
-		return AttentionPriority{
-			Level:   AttentionNone,
-			Reason:  "Task is complete.",
-			SortKey: "90-complete",
-		}
+		return AttentionPriority{Level: AttentionNone, Reason: "Task is complete.", SortKey: "90-complete"}
 	default:
-		return AttentionPriority{
-			Level:   AttentionWatch,
-			Reason:  "Task should remain visible for backend follow-up.",
-			SortKey: "50-watch",
-		}
+		return AttentionPriority{Level: AttentionWatch, Reason: "Task should remain visible for backend follow-up.", SortKey: "50-watch"}
 	}
 }
 
@@ -344,6 +437,93 @@ func (s *Service) captureSnapshot(taskRoot string) (TaskDefinitionSnapshot, erro
 		CapturedAt:           s.now(),
 		Files:                digests,
 	}, nil
+}
+
+func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
+	baselineCommit := gitRevision(s.declaredWorktreeRoot)
+	if baselineCommit == "" {
+		return RepoLane{}, fmt.Errorf("resolve baseline commit for %s", taskID)
+	}
+
+	stamp := strings.NewReplacer(":", "", ".", "").Replace(s.now().Format("20060102T150405.000000000Z07:00"))
+	ownedRepoRoot := filepath.Join(s.ownedLaneRoot, sanitizePathSegment(taskID), stamp, "worktree")
+	if err := os.MkdirAll(filepath.Dir(ownedRepoRoot), 0o755); err != nil {
+		return RepoLane{}, fmt.Errorf("create owned lane parent: %w", err)
+	}
+
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "add", "--detach", ownedRepoRoot, baselineCommit)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return RepoLane{}, fmt.Errorf("create owned worktree: %w: %s", err, strings.TrimSpace(string(output)))
+	}
+
+	return RepoLane{
+		OwnedRepoRoot:         ownedRepoRoot,
+		CheckoutMode:          "git_worktree_detached",
+		BaselineCommit:        baselineCommit,
+		ApprovedRestoreCommit: baselineCommit,
+		ResetStatus:           "not_run",
+	}, nil
+}
+
+func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
+	if repoLane.OwnedRepoRoot == "" {
+		return nil
+	}
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("remove owned worktree: %w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+func defaultActions(readiness DispatchReadiness) map[string]ActionAvailability {
+	return map[string]ActionAvailability{
+		ActionDispatch: {
+			Allowed:      readiness.Ready,
+			BlockReasons: append([]ActionBlockReason(nil), readiness.BlockReasons...),
+		},
+		ActionPoke: {
+			Allowed: false,
+			BlockReasons: []ActionBlockReason{{
+				Code:    "no_active_run",
+				Summary: "Poke is unavailable until a task run exists.",
+			}},
+		},
+		ActionInterrupt: {
+			Allowed: false,
+			BlockReasons: []ActionBlockReason{{
+				Code:    "no_active_run",
+				Summary: "Interrupt is unavailable until a task run exists.",
+			}},
+		},
+	}
+}
+
+func collectActionBlockReasons(actions map[string]ActionAvailability) map[string][]ActionBlockReason {
+	blockReasons := map[string][]ActionBlockReason{}
+	for action, availability := range actions {
+		blockReasons[action] = append([]ActionBlockReason(nil), availability.BlockReasons...)
+	}
+	return blockReasons
+}
+
+func summarizeBlockReasons(reasons []ActionBlockReason) string {
+	if len(reasons) == 0 {
+		return "unknown reason"
+	}
+	summaries := make([]string, 0, len(reasons))
+	for _, reason := range reasons {
+		summaries = append(summaries, reason.Summary)
+	}
+	return strings.Join(summaries, "; ")
+}
+
+func ActiveRunID(taskID string) string {
+	return "taskrun--" + sanitizePathSegment(taskID) + "--active"
+}
+
+func taskRootForID(trackingRoot string, taskID string) string {
+	return filepath.Join(trackingRoot, taskID)
 }
 
 func extractMarkdownSection(markdown string, heading string) string {
@@ -402,4 +582,9 @@ func gitRevision(worktreeRoot string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
+}
+
+func sanitizePathSegment(value string) string {
+	replacer := strings.NewReplacer("\\", "_", "/", "_", ":", "_", " ", "_")
+	return replacer.Replace(value)
 }

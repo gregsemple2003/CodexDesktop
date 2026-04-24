@@ -37,7 +37,10 @@ func NewMux(cfg config.Config, service *controlplane.Service, taskService *taskr
 		handleTasksList(w, r, taskService)
 	})
 	mux.HandleFunc("/api/v1/tasks/", func(w http.ResponseWriter, r *http.Request) {
-		handleTaskDetail(w, r, taskService)
+		handleTaskAPIRoute(w, r, taskService)
+	})
+	mux.HandleFunc("/api/v1/task-runs/", func(w http.ResponseWriter, r *http.Request) {
+		handleTaskRunDetail(w, r, taskService)
 	})
 	mux.HandleFunc("/webhooks/", func(w http.ResponseWriter, r *http.Request) {
 		handleWebhookRoute(w, r, "/webhooks/", service)
@@ -104,12 +107,49 @@ func handleTasksList(w http.ResponseWriter, r *http.Request, taskService *taskru
 	writeJSON(w, http.StatusOK, map[string]any{"tasks": tasks})
 }
 
-func handleTaskDetail(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+func handleTaskAPIRoute(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	trimmed := strings.TrimPrefix(r.URL.Path, "/api/v1/tasks/")
+	if trimmed == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if strings.HasSuffix(trimmed, "/dispatch") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		taskID := strings.TrimSuffix(trimmed, "/dispatch")
+		taskID = strings.TrimSuffix(taskID, "/")
+		if taskID == "" || strings.Contains(taskID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.Dispatch(ctx, taskID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
+
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	taskID := strings.TrimPrefix(r.URL.Path, "/api/v1/tasks/")
+	taskID := strings.TrimSuffix(trimmed, "/")
 	if taskID == "" || strings.Contains(taskID, "/") {
 		http.NotFound(w, r)
 		return
@@ -118,7 +158,7 @@ func handleTaskDetail(w http.ResponseWriter, r *http.Request, taskService *taskr
 	defer cancel()
 	task, err := taskService.Task(ctx, taskID)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such file") {
+		if strings.Contains(err.Error(), "not found") {
 			http.NotFound(w, r)
 			return
 		}
@@ -126,6 +166,30 @@ func handleTaskDetail(w http.ResponseWriter, r *http.Request, taskService *taskr
 		return
 	}
 	writeJSON(w, http.StatusOK, task)
+}
+
+func handleTaskRunDetail(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	runID := strings.TrimPrefix(r.URL.Path, "/api/v1/task-runs/")
+	if runID == "" || strings.Contains(runID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	run, err := taskService.Run(ctx, runID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSONError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, run)
 }
 
 func handleJobsList(w http.ResponseWriter, r *http.Request, exactPath string, service *controlplane.Service) {

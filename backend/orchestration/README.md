@@ -21,9 +21,17 @@ Task-0008 extends that backend with the first task-readback contract:
 - parse declared task docs on demand from the repo worktree
 - expose `GET /api/v1/tasks`
 - expose `GET /api/v1/tasks/{task_id}`
+- expose `POST /api/v1/tasks/{task_id}/dispatch`
+- expose `GET /api/v1/task-runs/{run_id}`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
 
-Durable task-run dispatch and Temporal-backed run persistence are still the next slice, not finished by this readback-only addition.
+Task-0008 also starts the first durable dispatch slice:
+
+- dispatch creates a Temporal-backed task run
+- dispatch provisions an exclusive backend-owned checkout lane
+- dispatch captures the baseline commit the owned lane may restore to later
+
+Poke, interrupt, and later task-run execution state updates remain future slices.
 
 ## Scheduling Boundary
 
@@ -63,6 +71,9 @@ The current backend slice proves:
   - `GET /api/v1/jobs/{job_id}/runs`
   - `GET /api/v1/tasks`
   - `GET /api/v1/tasks/{task_id}`
+  - `GET /api/v1/task-runs/{run_id}`
+- task dispatch API:
+  - `POST /api/v1/tasks/{task_id}/dispatch`
 - `codex exec` command assembly with per-run artifact paths for JSONL events and final-message capture
 - local dev-stack layout for Temporal plus Postgres
 
@@ -161,6 +172,8 @@ Invoke-WebRequest http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-dige
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-digest/runs | Select-Object -ExpandProperty Content
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks | Select-Object -ExpandProperty Content
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks/Task-0008 | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch | Select-Object -ExpandProperty Content
+Invoke-WebRequest http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-digest/run | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/webhooks/digests/physical-agents | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/sync | Select-Object -ExpandProperty Content

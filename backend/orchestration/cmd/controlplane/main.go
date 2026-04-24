@@ -37,7 +37,7 @@ func main() {
 	defer worker.Stop()
 
 	service := controlplane.NewService(cfg.JobsRoot, backend)
-	taskService := taskrun.NewService(cfg.WorktreeRoot)
+	taskService := taskrun.NewService(cfg.WorktreeRoot, cfg.RunsRoot, backend)
 	startupCtx, startupCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	_, err = service.Reconcile(startupCtx)
 	startupCancel()

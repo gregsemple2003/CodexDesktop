@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
@@ -20,8 +22,20 @@ type fakeBackend struct {
 	started   []controlplane.JobRunRequest
 }
 
+type fakeTaskRuntime struct {
+	activeByTask map[string]taskrun.TaskRunView
+	byRunID      map[string]taskrun.TaskRunView
+}
+
 func newFakeBackend() *fakeBackend {
 	return &fakeBackend{schedules: map[string]controlplane.RuntimeSchedule{}}
+}
+
+func newFakeTaskRuntime() *fakeTaskRuntime {
+	return &fakeTaskRuntime{
+		activeByTask: map[string]taskrun.TaskRunView{},
+		byRunID:      map[string]taskrun.TaskRunView{},
+	}
 }
 
 func (b *fakeBackend) ListManagedSchedules(context.Context) ([]controlplane.RuntimeSchedule, error) {
@@ -74,6 +88,58 @@ func (b *fakeBackend) StartJobRun(_ context.Context, request controlplane.JobRun
 	}, nil
 }
 
+func (f *fakeTaskRuntime) StartTaskRun(_ context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
+	run := taskrun.TaskRunView{
+		RunID:                  request.RunID,
+		TaskID:                 request.TaskID,
+		WorkflowID:             request.RunID,
+		TemporalExecutionRunID: "temporal-run-id",
+		Status:                 "active",
+		StateEnvelope: taskrun.StateEnvelope{
+			State:             taskrun.StateDispatching,
+			ReasonCode:        "dispatch_started",
+			StateSummary:      "Run is dispatching in an owned checkout.",
+			NextOwner:         "backend",
+			NextExpectedEvent: "Execution worker records the next task-run state update.",
+			SuspiciousAfter:   request.DispatchRequestedAt.Add(15 * time.Minute),
+		},
+		MeaningSummary:       request.MeaningSummary,
+		Attention:            taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"},
+		RepoLane:             request.RepoLane,
+		CapturedTaskSnapshot: request.CapturedTaskSnapshot,
+	}
+	f.activeByTask[request.TaskID] = run
+	f.byRunID[request.RunID] = run
+	return run, nil
+}
+
+func (f *fakeTaskRuntime) GetTaskRun(_ context.Context, runID string) (taskrun.TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}
+	return run, nil
+}
+
+func (f *fakeTaskRuntime) GetActiveTaskRun(_ context.Context, taskID string) (taskrun.TaskRunView, error) {
+	run, ok := f.activeByTask[taskID]
+	if !ok {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}
+	return run, nil
+}
+
+func (f *fakeTaskRuntime) ReconcileTaskSnapshot(_ context.Context, runID string, snapshot taskrun.TaskDefinitionSnapshot) (taskrun.TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}
+	run.CapturedTaskSnapshot = snapshot
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
+
 func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	root := writeJobsRoot(t, []jobs.Spec{
 		{
@@ -100,8 +166,9 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	})
 
 	service := controlplane.NewService(root, newFakeBackend())
+	taskRuntime := newFakeTaskRuntime()
 	worktreeRoot := writeTaskTrackingRoot(t)
-	taskService := taskrun.NewService(worktreeRoot)
+	taskService := taskrun.NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), taskRuntime)
 	mux := NewMux(config.Config{
 		BindAddress:     "127.0.0.1:4318",
 		JobsRoot:        root,
@@ -168,6 +235,20 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(taskDetailResponse, taskDetailRequest)
 	if taskDetailResponse.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/tasks/{id} status = %d, want 200", taskDetailResponse.Code)
+	}
+
+	dispatchRequest := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil)
+	dispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(dispatchResponse, dispatchRequest)
+	if dispatchResponse.Code != http.StatusAccepted {
+		t.Fatalf("POST /api/v1/tasks/{id}/dispatch status = %d, want 202", dispatchResponse.Code)
+	}
+
+	taskRunRequest := httptest.NewRequest(http.MethodGet, "/api/v1/task-runs/"+taskrun.ActiveRunID("Task-0008"), nil)
+	taskRunResponse := httptest.NewRecorder()
+	mux.ServeHTTP(taskRunResponse, taskRunRequest)
+	if taskRunResponse.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/task-runs/{id} status = %d, want 200", taskRunResponse.Code)
 	}
 
 	runsRequest := httptest.NewRequest(http.MethodGet, "/runs?job_id=codex-daily-ue-determinism-digest", nil)
@@ -246,12 +327,26 @@ Create the durable backend task-run contract so later clients do not guess state
   "status": "in_progress",
   "phase": "implementation",
   "plan_approved": true,
-  "current_pass": "PASS-0000",
+  "current_pass": "PASS-0001",
   "current_gate": "implementation",
   "blockers": [],
-  "updated_at": "2026-04-24T16:27:00-04:00"
+  "updated_at": "2026-04-24T16:44:31-04:00"
 }`), 0o644); err != nil {
 		t.Fatalf("write TASK-STATE.json: %v", err)
 	}
+	runCommand(t, worktreeRoot, "git", "init")
+	runCommand(t, worktreeRoot, "git", "config", "user.email", "httpapi-tests@example.com")
+	runCommand(t, worktreeRoot, "git", "config", "user.name", "HTTP API Tests")
+	runCommand(t, worktreeRoot, "git", "add", ".")
+	runCommand(t, worktreeRoot, "git", "commit", "-m", "initial task fixtures")
 	return worktreeRoot
+}
+
+func runCommand(t *testing.T, dir string, exe string, args ...string) {
+	t.Helper()
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
+	}
 }

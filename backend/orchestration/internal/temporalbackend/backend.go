@@ -2,6 +2,7 @@ package temporalbackend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/worker"
@@ -17,12 +19,15 @@ import (
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobexec"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskexec"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
 )
 
 const managedBy = "codex-orchestration"
 
 type Backend struct {
 	client client.Client
+	cfg    config.Config
 }
 
 func New(cfg config.Config) (*Backend, error) {
@@ -34,7 +39,7 @@ func New(cfg config.Config) (*Backend, error) {
 		return nil, fmt.Errorf("dial temporal: %w", err)
 	}
 
-	return &Backend{client: temporalClient}, nil
+	return &Backend{client: temporalClient, cfg: cfg}, nil
 }
 
 func (b *Backend) Close() error {
@@ -129,10 +134,55 @@ func (b *Backend) StartJobRun(ctx context.Context, request controlplane.JobRunRe
 func (b *Backend) StartWorker(cfg config.Config) (worker.Worker, error) {
 	w := worker.New(b.client, cfg.TaskQueue, worker.Options{})
 	jobexec.Register(w, cfg)
+	taskexec.Register(w)
 	if err := w.Start(); err != nil {
 		return nil, fmt.Errorf("start worker: %w", err)
 	}
 	return w, nil
+}
+
+func (b *Backend) StartTaskRun(ctx context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
+	workflowRun, err := b.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:                       request.RunID,
+		TaskQueue:                b.cfg.TaskQueue,
+		WorkflowExecutionTimeout: 30 * 24 * time.Hour,
+		WorkflowIDReusePolicy:    enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+	}, taskexec.TaskRunWorkflowName, request)
+	if err != nil {
+		return taskrun.TaskRunView{}, fmt.Errorf("start task run %s: %w", request.RunID, err)
+	}
+
+	return taskexec.InitialView(request, workflowRun.GetID(), workflowRun.GetRunID()), nil
+}
+
+func (b *Backend) GetTaskRun(ctx context.Context, runID string) (taskrun.TaskRunView, error) {
+	response, err := b.client.QueryWorkflow(ctx, runID, "", taskexec.TaskRunStateQueryName)
+	if err != nil {
+		if isTemporalNotFound(err) {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return taskrun.TaskRunView{}, fmt.Errorf("query task run %s: %w", runID, err)
+	}
+
+	var view taskrun.TaskRunView
+	if err := response.Get(&view); err != nil {
+		return taskrun.TaskRunView{}, fmt.Errorf("decode task run %s query result: %w", runID, err)
+	}
+	return view, nil
+}
+
+func (b *Backend) GetActiveTaskRun(ctx context.Context, taskID string) (taskrun.TaskRunView, error) {
+	return b.GetTaskRun(ctx, taskrun.ActiveRunID(taskID))
+}
+
+func (b *Backend) ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot taskrun.TaskDefinitionSnapshot) (taskrun.TaskRunView, error) {
+	if err := b.client.SignalWorkflow(ctx, runID, "", taskexec.ReconcileSnapshotSignalName, snapshot); err != nil {
+		if isTemporalNotFound(err) {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return taskrun.TaskRunView{}, fmt.Errorf("signal reconcile for task run %s: %w", runID, err)
+	}
+	return b.GetTaskRun(ctx, runID)
 }
 
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {
@@ -282,4 +332,15 @@ func scheduleRunRequest(desired controlplane.DesiredSchedule) controlplane.JobRu
 		RequestedAt:     time.Now().UTC(),
 		Spec:            desired.Spec,
 	}
+}
+
+func isTemporalNotFound(err error) bool {
+	var notFound *serviceerror.NotFound
+	if errors.As(err, &notFound) {
+		return true
+	}
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "not found")
 }

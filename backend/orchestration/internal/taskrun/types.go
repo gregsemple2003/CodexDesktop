@@ -1,6 +1,12 @@
 package taskrun
 
-import "time"
+import (
+	"context"
+	"errors"
+	"time"
+)
+
+var ErrRunNotFound = errors.New("task run not found")
 
 const (
 	StateReady             = "ready"
@@ -121,6 +127,7 @@ type TaskRunView struct {
 	RunID                       string                        `json:"run_id"`
 	TaskID                      string                        `json:"task_id"`
 	WorkflowID                  string                        `json:"workflow_id,omitempty"`
+	TemporalExecutionRunID      string                        `json:"temporal_execution_run_id,omitempty"`
 	Status                      string                        `json:"status"`
 	StateEnvelope               StateEnvelope                 `json:"state_envelope"`
 	MeaningSummary              string                        `json:"meaning_summary,omitempty"`
@@ -155,4 +162,21 @@ type TaskView struct {
 	PlanApproved         bool                          `json:"plan_approved"`
 	Blockers             []string                      `json:"blockers,omitempty"`
 	UpdatedAt            string                        `json:"updated_at,omitempty"`
+}
+
+type Runtime interface {
+	StartTaskRun(ctx context.Context, request StartTaskRunRequest) (TaskRunView, error)
+	GetTaskRun(ctx context.Context, runID string) (TaskRunView, error)
+	GetActiveTaskRun(ctx context.Context, taskID string) (TaskRunView, error)
+	ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error)
+}
+
+type StartTaskRunRequest struct {
+	RunID                string                 `json:"run_id"`
+	TaskID               string                 `json:"task_id"`
+	Title                string                 `json:"title"`
+	MeaningSummary       string                 `json:"meaning_summary"`
+	CapturedTaskSnapshot TaskDefinitionSnapshot `json:"captured_task_snapshot"`
+	RepoLane             RepoLane               `json:"repo_lane"`
+	DispatchRequestedAt  time.Time              `json:"dispatch_requested_at"`
 }
