@@ -10,9 +10,10 @@ import (
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
 )
 
-func NewMux(cfg config.Config, service *controlplane.Service) *http.ServeMux {
+func NewMux(cfg config.Config, service *controlplane.Service, taskService *taskrun.Service) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		handleHealth(w, r, cfg, service)
@@ -31,6 +32,12 @@ func NewMux(cfg config.Config, service *controlplane.Service) *http.ServeMux {
 	})
 	mux.HandleFunc("/api/v1/jobs/", func(w http.ResponseWriter, r *http.Request) {
 		handleJobAPIRoute(w, r, service)
+	})
+	mux.HandleFunc("/api/v1/tasks", func(w http.ResponseWriter, r *http.Request) {
+		handleTasksList(w, r, taskService)
+	})
+	mux.HandleFunc("/api/v1/tasks/", func(w http.ResponseWriter, r *http.Request) {
+		handleTaskDetail(w, r, taskService)
 	})
 	mux.HandleFunc("/webhooks/", func(w http.ResponseWriter, r *http.Request) {
 		handleWebhookRoute(w, r, "/webhooks/", service)
@@ -76,6 +83,49 @@ func NewMux(cfg config.Config, service *controlplane.Service) *http.ServeMux {
 		writeJSON(w, http.StatusOK, report)
 	})
 	return mux
+}
+
+func handleTasksList(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+	if r.URL.Path != "/api/v1/tasks" {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	tasks, err := taskService.ListTasks(ctx)
+	if err != nil {
+		writeJSONError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tasks": tasks})
+}
+
+func handleTaskDetail(w http.ResponseWriter, r *http.Request, taskService *taskrun.Service) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	taskID := strings.TrimPrefix(r.URL.Path, "/api/v1/tasks/")
+	if taskID == "" || strings.Contains(taskID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	ctx, cancel := contextWithTimeout(r, 15*time.Second)
+	defer cancel()
+	task, err := taskService.Task(ctx, taskID)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such file") {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSONError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, task)
 }
 
 func handleJobsList(w http.ResponseWriter, r *http.Request, exactPath string, service *controlplane.Service) {

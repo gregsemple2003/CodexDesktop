@@ -11,6 +11,8 @@ import (
 type Config struct {
 	BindAddress     string
 	JobsRoot        string
+	WorktreeRoot    string
+	TrackingRoot    string
 	Namespace       string
 	TaskQueue       string
 	TemporalAddress string
@@ -33,9 +35,17 @@ func Load() (Config, error) {
 		CodexExecutable: resolveCodexExecutable(home),
 		RunsRoot:        envOrDefault("CODEX_ORCHESTRATION_RUNS_ROOT", defaultRunsRoot(home)),
 	}
+	cfg.WorktreeRoot = envOrDefault("CODEX_ORCHESTRATION_WORKTREE_ROOT", resolveWorktreeRoot())
+	cfg.TrackingRoot = envOrDefault("CODEX_ORCHESTRATION_TRACKING_ROOT", filepath.Join(cfg.WorktreeRoot, "Tracking"))
 
 	if cfg.JobsRoot == "" {
 		return Config{}, errors.New("jobs root must not be empty")
+	}
+	if cfg.WorktreeRoot == "" {
+		return Config{}, errors.New("worktree root must not be empty")
+	}
+	if cfg.TrackingRoot == "" {
+		return Config{}, errors.New("tracking root must not be empty")
 	}
 
 	return cfg, nil
@@ -79,4 +89,28 @@ func resolveCodexExecutable(home string) string {
 
 	sort.Strings(candidates)
 	return candidates[len(candidates)-1]
+}
+
+func resolveWorktreeRoot() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+
+	current := wd
+	for {
+		if pathExists(filepath.Join(current, "Tracking")) && pathExists(filepath.Join(current, "backend", "orchestration")) {
+			return current
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return wd
+		}
+		current = parent
+	}
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

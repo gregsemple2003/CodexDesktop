@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0008` is in implementation with `PASS-0000` active.
+`Task-0008` is in implementation with `PASS-0001` active.
 
 This task is a backend-only runtime task:
 
@@ -52,7 +52,15 @@ The repo already has:
 - Temporal-backed job orchestration from [Task-0005](../Task-0005/TASK.md)
 - a planned `Tasks` tab surface from [Task-0009](../Task-0009/TASK.md)
 
-What is missing is the task-run model that ties those pieces together durably.
+`PASS-0000` landed the first executable task-readback slice:
+
+- task-run contract types under `backend/orchestration/internal/taskrun/`
+- declared-doc parsing for `Tracking/Task-<id>/`
+- `GET /api/v1/tasks`
+- `GET /api/v1/tasks/{task_id}`
+- unit coverage plus backend smoke evidence in [Testing/PASS-0000-BACKEND-SMOKE-0001.md](./Testing/PASS-0000-BACKEND-SMOKE-0001.md)
+
+What is still missing is durable dispatch and Temporal-backed task-run persistence that tie readback to real owned execution.
 
 ## Current Gate
 
@@ -66,13 +74,15 @@ Implementation is active under the approved backend-only runtime split:
 
 ## Next Recommended Step
 
-Implement `PASS-0000` and prove the chosen backend contract directly before any frontend work starts.
+Implement `PASS-0001` and turn readback into a real runtime capability before any frontend work starts.
 
-The first implementation slice should:
+The next implementation slice should:
 
-- add the backend task-run contract types and storage model under `backend/orchestration/`
-- encode the approved worktree/task-root ingest model
-- create the durable run vocabulary and readback envelope
+- add real dispatch entrypoints
+- persist task runs durably through Temporal-backed runtime state
+- capture an owned checkout or owned-lane identity for simple execution
+- capture the dispatch baseline commit before the run mutates that owned lane
+- keep task and run readback aligned with the declared-doc ingest and reconcile model
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
 
 ## Watchouts

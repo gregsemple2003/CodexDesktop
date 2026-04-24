@@ -12,6 +12,7 @@ import (
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/httpapi"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/temporalbackend"
 )
 
@@ -36,6 +37,7 @@ func main() {
 	defer worker.Stop()
 
 	service := controlplane.NewService(cfg.JobsRoot, backend)
+	taskService := taskrun.NewService(cfg.WorktreeRoot)
 	startupCtx, startupCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	_, err = service.Reconcile(startupCtx)
 	startupCancel()
@@ -45,7 +47,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.BindAddress,
-		Handler:           httpapi.NewMux(cfg, service),
+		Handler:           httpapi.NewMux(cfg, service, taskService),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

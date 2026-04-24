@@ -12,6 +12,7 @@ import (
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/config"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobs"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
 )
 
 type fakeBackend struct {
@@ -99,13 +100,17 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	})
 
 	service := controlplane.NewService(root, newFakeBackend())
+	worktreeRoot := writeTaskTrackingRoot(t)
+	taskService := taskrun.NewService(worktreeRoot)
 	mux := NewMux(config.Config{
 		BindAddress:     "127.0.0.1:4318",
 		JobsRoot:        root,
+		WorktreeRoot:    worktreeRoot,
+		TrackingRoot:    filepath.Join(worktreeRoot, "Tracking"),
 		Namespace:       "default",
 		TaskQueue:       "codex-orchestration",
 		TemporalAddress: "127.0.0.1:7233",
-	}, service)
+	}, service, taskService)
 
 	syncRequest := httptest.NewRequest(http.MethodPost, "/sync", nil)
 	syncResponse := httptest.NewRecorder()
@@ -149,6 +154,20 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(healthResponse, healthRequest)
 	if healthResponse.Code != http.StatusOK {
 		t.Fatalf("GET /health status = %d, want 200", healthResponse.Code)
+	}
+
+	tasksRequest := httptest.NewRequest(http.MethodGet, "/api/v1/tasks", nil)
+	tasksResponse := httptest.NewRecorder()
+	mux.ServeHTTP(tasksResponse, tasksRequest)
+	if tasksResponse.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/tasks status = %d, want 200", tasksResponse.Code)
+	}
+
+	taskDetailRequest := httptest.NewRequest(http.MethodGet, "/api/v1/tasks/Task-0008", nil)
+	taskDetailResponse := httptest.NewRecorder()
+	mux.ServeHTTP(taskDetailResponse, taskDetailRequest)
+	if taskDetailResponse.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/tasks/{id} status = %d, want 200", taskDetailResponse.Code)
 	}
 
 	runsRequest := httptest.NewRequest(http.MethodGet, "/runs?job_id=codex-daily-ue-determinism-digest", nil)
@@ -198,4 +217,41 @@ func writeJobsRoot(t *testing.T, specs []jobs.Spec) string {
 		}
 	}
 	return root
+}
+
+func writeTaskTrackingRoot(t *testing.T) string {
+	t.Helper()
+	worktreeRoot := t.TempDir()
+	taskRoot := filepath.Join(worktreeRoot, "Tracking", "Task-0008")
+	if err := os.MkdirAll(taskRoot, 0o755); err != nil {
+		t.Fatalf("mkdir task root: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(taskRoot, "TASK.md"), []byte(`# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`), 0o644); err != nil {
+		t.Fatalf("write TASK.md: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(taskRoot, "PLAN.md"), []byte("# plan\n"), 0o644); err != nil {
+		t.Fatalf("write PLAN.md: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(taskRoot, "TASK-STATE.json"), []byte(`{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0000",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T16:27:00-04:00"
+}`), 0o644); err != nil {
+		t.Fatalf("write TASK-STATE.json: %v", err)
+	}
+	return worktreeRoot
 }
