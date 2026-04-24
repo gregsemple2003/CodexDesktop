@@ -155,11 +155,35 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 	if update.StateSummary != "" {
 		run.StateEnvelope.StateSummary = update.StateSummary
 	}
+	if update.NextOwner != "" {
+		run.StateEnvelope.NextOwner = update.NextOwner
+	}
+	if update.NextExpectedEvent != "" {
+		run.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+	}
+	if !update.SuspiciousAfter.IsZero() {
+		run.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+	}
 	if update.WaitContract != nil {
 		run.WaitContract = update.WaitContract
+	} else if update.State != "" && update.State != taskrun.StateWaitingForHuman {
+		run.WaitContract = nil
 	}
 	if update.Attention != nil {
 		run.Attention = *update.Attention
+	}
+	if update.FollowUp != nil {
+		if update.FollowUp.Kind == "" &&
+			update.FollowUp.Owner == "" &&
+			update.FollowUp.Status == "" &&
+			update.FollowUp.Summary == "" &&
+			update.FollowUp.RequestedAt.IsZero() &&
+			update.FollowUp.DueAt.IsZero() &&
+			update.FollowUp.CompletedAt.IsZero() {
+			run.FollowUp = nil
+		} else {
+			run.FollowUp = update.FollowUp
+		}
 	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
@@ -176,6 +200,8 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 	}
 	if update.FailureSummary != "" {
 		run.FailureSummary = update.FailureSummary
+	} else if update.State != "" && update.State != taskrun.StateBlocked && update.State != taskrun.StateFailed {
+		run.FailureSummary = ""
 	}
 	switch run.StateEnvelope.State {
 	case taskrun.StateCompleted:
@@ -367,6 +393,76 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(webhookResponse, webhookRequest)
 	if webhookResponse.Code != http.StatusAccepted {
 		t.Fatalf("POST /api/v1/webhooks/{path} status = %d, want 202", webhookResponse.Code)
+	}
+}
+
+func TestMuxExposesRetryCleanupRoute(t *testing.T) {
+	taskRuntime := newFakeTaskRuntime()
+	worktreeRoot := writeTaskTrackingRoot(t)
+	taskService := taskrun.NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), taskRuntime)
+	mux := NewMux(config.Config{
+		BindAddress:     "127.0.0.1:4318",
+		JobsRoot:        t.TempDir(),
+		WorktreeRoot:    worktreeRoot,
+		TrackingRoot:    filepath.Join(worktreeRoot, "Tracking"),
+		Namespace:       "default",
+		TaskQueue:       "codex-orchestration",
+		TemporalAddress: "127.0.0.1:7233",
+	}, controlplane.NewService(t.TempDir(), newFakeBackend()), taskService)
+
+	dispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(dispatchResponse, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil))
+	if dispatchResponse.Code != http.StatusAccepted {
+		t.Fatalf("dispatch status = %d, want 202", dispatchResponse.Code)
+	}
+
+	runID := taskrun.ActiveRunID("Task-0008")
+	current := taskRuntime.byRunID[runID]
+	validOwnedRoot := current.RepoLane.OwnedRepoRoot
+	badRoot := filepath.Join(worktreeRoot, "outside-owned-lane")
+	if err := os.MkdirAll(badRoot, 0o755); err != nil {
+		t.Fatalf("mkdir bad root: %v", err)
+	}
+	current.StateEnvelope.State = taskrun.StateRunning
+	current.RepoLane.OwnedRepoRoot = badRoot
+	taskRuntime.byRunID[runID] = current
+	taskRuntime.activeByTask[current.TaskID] = current
+
+	interruptResponse := httptest.NewRecorder()
+	mux.ServeHTTP(interruptResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/interrupt", nil))
+	if interruptResponse.Code != http.StatusAccepted {
+		t.Fatalf("interrupt status = %d, want 202", interruptResponse.Code)
+	}
+	var interrupted taskrun.TaskRunView
+	if err := json.Unmarshal(interruptResponse.Body.Bytes(), &interrupted); err != nil {
+		t.Fatalf("decode interrupt response: %v", err)
+	}
+	if interrupted.StateEnvelope.ReasonCode != "interrupt_cleanup_blocked" {
+		t.Fatalf("interrupt reason = %q", interrupted.StateEnvelope.ReasonCode)
+	}
+
+	repairedSeed := taskRuntime.byRunID[runID]
+	repairedSeed.RepoLane.OwnedRepoRoot = validOwnedRoot
+	taskRuntime.byRunID[runID] = repairedSeed
+	taskRuntime.activeByTask[repairedSeed.TaskID] = repairedSeed
+
+	retryResponse := httptest.NewRecorder()
+	mux.ServeHTTP(retryResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/retry-cleanup", nil))
+	if retryResponse.Code != http.StatusAccepted {
+		t.Fatalf("retry-cleanup status = %d, want 202", retryResponse.Code)
+	}
+	var repaired taskrun.TaskRunView
+	if err := json.Unmarshal(retryResponse.Body.Bytes(), &repaired); err != nil {
+		t.Fatalf("decode retry-cleanup response: %v", err)
+	}
+	if repaired.StateEnvelope.ReasonCode != "interrupt_cleanup_repaired" {
+		t.Fatalf("retry-cleanup reason = %q", repaired.StateEnvelope.ReasonCode)
+	}
+	if repaired.FollowUp == nil || repaired.FollowUp.Kind != "interrupt_review" {
+		t.Fatalf("follow-up = %#v", repaired.FollowUp)
+	}
+	if repaired.RepoLane.ResetStatus != "restored" {
+		t.Fatalf("reset status = %q", repaired.RepoLane.ResetStatus)
 	}
 }
 

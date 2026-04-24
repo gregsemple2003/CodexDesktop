@@ -106,12 +106,18 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	}
 	if update.WaitContract != nil {
 		run.WaitContract = update.WaitContract
+	} else if update.State != "" && update.State != StateWaitingForHuman {
+		run.WaitContract = nil
 	}
 	if update.Attention != nil {
 		run.Attention = *update.Attention
 	}
 	if update.FollowUp != nil {
-		run.FollowUp = update.FollowUp
+		if isEmptyRunFollowUp(update.FollowUp) {
+			run.FollowUp = nil
+		} else {
+			run.FollowUp = update.FollowUp
+		}
 	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
@@ -129,6 +135,8 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	}
 	if update.FailureSummary != "" {
 		run.FailureSummary = update.FailureSummary
+	} else if update.State != "" && update.State != StateBlocked && update.State != StateFailed {
+		run.FailureSummary = ""
 	}
 	switch run.StateEnvelope.State {
 	case StateCompleted:
@@ -647,6 +655,128 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if blocked.FailureSummary == "" {
 		t.Fatal("expected run failure summary to be populated")
+	}
+}
+
+func TestRetryCleanupRunRepairsCleanupBlockedRunIntoInterruptReview(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	validOwnedRoot := run.RepoLane.OwnedRepoRoot
+
+	badRoot := filepath.Join(worktreeRoot, "outside-owned-lane")
+	if err := os.MkdirAll(badRoot, 0o755); err != nil {
+		t.Fatalf("mkdir bad root: %v", err)
+	}
+	current := runtime.byRunID[run.RunID]
+	current.StateEnvelope.State = StateRunning
+	current.Actions = actionsForRunState(StateRunning)
+	current.RepoLane.OwnedRepoRoot = badRoot
+	runtime.byRunID[run.RunID] = current
+	runtime.activeByTask[run.TaskID] = current
+
+	blocked, err := service.InterruptRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+	if blocked.StateEnvelope.ReasonCode != "interrupt_cleanup_blocked" {
+		t.Fatalf("reason code = %q", blocked.StateEnvelope.ReasonCode)
+	}
+
+	repairedSeed := runtime.byRunID[run.RunID]
+	repairedSeed.RepoLane.OwnedRepoRoot = validOwnedRoot
+	runtime.byRunID[run.RunID] = repairedSeed
+	runtime.activeByTask[run.TaskID] = repairedSeed
+
+	repaired, err := service.RetryCleanupRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("retry cleanup: %v", err)
+	}
+	if repaired.StateEnvelope.State != StateInterrupted {
+		t.Fatalf("state = %q, want %q", repaired.StateEnvelope.State, StateInterrupted)
+	}
+	if repaired.StateEnvelope.ReasonCode != "interrupt_cleanup_repaired" {
+		t.Fatalf("reason code = %q", repaired.StateEnvelope.ReasonCode)
+	}
+	if repaired.RepoLane.ResetStatus != "restored" {
+		t.Fatalf("reset status = %q, want restored", repaired.RepoLane.ResetStatus)
+	}
+	if repaired.FollowUp == nil || repaired.FollowUp.Kind != "interrupt_review" || repaired.FollowUp.Status != "pending" {
+		t.Fatalf("follow-up = %#v", repaired.FollowUp)
+	}
+	if repaired.FailureSummary != "" {
+		t.Fatalf("failure summary = %q, want empty", repaired.FailureSummary)
+	}
+	if repaired.Status != "interrupted" {
+		t.Fatalf("status = %q, want interrupted", repaired.Status)
+	}
+}
+
+func TestRetryCleanupRunRejectsNonCleanupBlockedRun(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if _, err := service.RetryCleanupRun(context.Background(), run.RunID); err == nil {
+		t.Fatal("expected retry cleanup to reject a non-cleanup-blocked run")
 	}
 }
 

@@ -259,6 +259,31 @@ func handleTaskRunDetail(w http.ResponseWriter, r *http.Request, taskService *ta
 		writeJSON(w, http.StatusAccepted, run)
 		return
 	}
+	if strings.HasSuffix(trimmed, "/retry-cleanup") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		runID := strings.TrimSuffix(trimmed, "/retry-cleanup")
+		runID = strings.TrimSuffix(runID, "/")
+		if runID == "" || strings.Contains(runID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.RetryCleanupRun(ctx, runID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

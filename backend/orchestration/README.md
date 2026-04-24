@@ -26,6 +26,7 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `POST /api/v1/task-runs/{run_id}/state`
 - expose `POST /api/v1/task-runs/{run_id}/poke`
 - expose `POST /api/v1/task-runs/{run_id}/interrupt`
+- expose `POST /api/v1/task-runs/{run_id}/retry-cleanup`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
 
 Task-0008 also starts the first durable dispatch slice:
@@ -39,9 +40,10 @@ Task-0008 also starts the first durable dispatch slice:
 - interrupt can restore the owned checkout to its recorded restore commit
 - interrupt cleanup failures surface through dedicated repo-lane reset failure fields
 - `poke` creates a durable backend-worker follow-up that later runtime progress can complete
+- cleanup retry can restore a cleanup-blocked owned checkout and convert the run into `interrupt_review`
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Richer repair workflow for cleanup-blocked runs, comparable follow-up lifecycle for interrupt review or repair, and real task execution inside the owned checkout remain future slices.
+Dedicated interrupt-review resolution and real task execution inside the owned checkout remain future slices.
 
 ## Scheduling Boundary
 
@@ -83,9 +85,10 @@ The current backend slice proves:
   - `GET /api/v1/tasks/{task_id}`
   - `GET /api/v1/task-runs/{run_id}`
 - task-run mutation API:
-  - `POST /api/v1/task-runs/{run_id}/state`
-  - `POST /api/v1/task-runs/{run_id}/poke`
-  - `POST /api/v1/task-runs/{run_id}/interrupt`
+- `POST /api/v1/task-runs/{run_id}/state`
+- `POST /api/v1/task-runs/{run_id}/poke`
+- `POST /api/v1/task-runs/{run_id}/interrupt`
+- `POST /api/v1/task-runs/{run_id}/retry-cleanup`
 - task dispatch API:
   - `POST /api/v1/tasks/{task_id}/dispatch`
 - `codex exec` command assembly with per-run artifact paths for JSONL events and final-message capture
@@ -192,6 +195,7 @@ $body = '{"state":"waiting_for_human","reason_code":"approval_required","state_s
 Invoke-WebRequest -Method Post -Uri http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/state -ContentType 'application/json' -Body $body | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/poke | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/interrupt | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/retry-cleanup | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-digest/run | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/webhooks/digests/physical-agents | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/sync | Select-Object -ExpandProperty Content

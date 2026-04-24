@@ -221,11 +221,11 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 	repoLane, resetErr := s.restoreOwnedLane(run.RepoLane)
 	if resetErr != nil {
 		update := TaskRunUpdate{
-			State:             StateBlocked,
-			ReasonCode:        "interrupt_cleanup_blocked",
-			StateSummary:      "Run interrupt could not restore the owned checkout.",
-			NextOwner:         "human_or_supervisor",
-			NextExpectedEvent: "Review cleanup failure and resolve the owned checkout manually.",
+			State:               StateBlocked,
+			ReasonCode:          "interrupt_cleanup_blocked",
+			StateSummary:        "Run interrupt could not restore the owned checkout.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Review cleanup failure and resolve the owned checkout manually.",
 			LastProgressSummary: "Interrupt cleanup failed and the owned checkout needs manual review.",
 			FollowUp: &RunFollowUp{
 				Kind:        "cleanup_repair",
@@ -235,20 +235,20 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 				RequestedAt: s.now(),
 				DueAt:       s.now().Add(24 * time.Hour),
 			},
-			RepoLane:          &repoLane,
-			FailureSummary:    resetErr.Error(),
+			RepoLane:       &repoLane,
+			FailureSummary: resetErr.Error(),
 		}
 		return s.UpdateRun(ctx, runID, update)
 	}
 
 	now := s.now()
 	update := TaskRunUpdate{
-		State:             StateInterrupted,
-		ReasonCode:        "interrupt_requested",
-		StateSummary:      "Run was interrupted and the owned checkout was restored.",
-		NextOwner:         "human_or_supervisor",
-		NextExpectedEvent: "Review the interrupted run and decide whether to dispatch again.",
-		SuspiciousAfter:   now,
+		State:               StateInterrupted,
+		ReasonCode:          "interrupt_requested",
+		StateSummary:        "Run was interrupted and the owned checkout was restored.",
+		NextOwner:           "human_or_supervisor",
+		NextExpectedEvent:   "Review the interrupted run and decide whether to dispatch again.",
+		SuspiciousAfter:     now,
 		LastProgressSummary: "Interrupt restored the owned checkout to its recorded restore commit.",
 		FollowUp: &RunFollowUp{
 			Kind:        "interrupt_review",
@@ -258,8 +258,63 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 			RequestedAt: now,
 			DueAt:       now.Add(24 * time.Hour),
 		},
-		RepoLane:          &repoLane,
-		CompletedAt:       now,
+		RepoLane:    &repoLane,
+		CompletedAt: now,
+	}
+	return s.UpdateRun(ctx, runID, update)
+}
+
+func (s *Service) RetryCleanupRun(ctx context.Context, runID string) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	if run.StateEnvelope.State != StateBlocked || run.StateEnvelope.ReasonCode != "interrupt_cleanup_blocked" {
+		return TaskRunView{}, fmt.Errorf("cleanup retry blocked: run is not waiting on cleanup repair")
+	}
+
+	repoLane, resetErr := s.restoreOwnedLane(run.RepoLane)
+	now := s.now()
+	if resetErr != nil {
+		update := TaskRunUpdate{
+			State:               StateBlocked,
+			ReasonCode:          "interrupt_cleanup_blocked",
+			StateSummary:        "Cleanup retry could not restore the owned checkout.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Repair the owned checkout or retry cleanup again.",
+			LastProgressSummary: "Backend cleanup retry failed and the owned checkout still needs repair.",
+			FollowUp: &RunFollowUp{
+				Kind:        "cleanup_repair",
+				Owner:       "human_or_supervisor",
+				Status:      "pending",
+				Summary:     "Repair the cleanup-blocked owned checkout or retry cleanup again after the restore target is valid.",
+				RequestedAt: now,
+				DueAt:       now.Add(24 * time.Hour),
+			},
+			RepoLane:       &repoLane,
+			FailureSummary: resetErr.Error(),
+		}
+		return s.UpdateRun(ctx, runID, update)
+	}
+
+	update := TaskRunUpdate{
+		State:               StateInterrupted,
+		ReasonCode:          "interrupt_cleanup_repaired",
+		StateSummary:        "Cleanup retry restored the owned checkout and the run now needs interrupt review.",
+		NextOwner:           "human_or_supervisor",
+		NextExpectedEvent:   "Review the repaired interrupted run and decide whether to dispatch again.",
+		SuspiciousAfter:     now,
+		LastProgressSummary: "Cleanup retry restored the owned checkout to its recorded restore commit.",
+		FollowUp: &RunFollowUp{
+			Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Cleanup repair completed; review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),
+		},
+		RepoLane:    &repoLane,
+		CompletedAt: now,
 	}
 	return s.UpdateRun(ctx, runID, update)
 }

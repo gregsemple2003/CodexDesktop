@@ -107,7 +107,15 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - a fresh runtime update completes the follow-up durably
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0003.md](./Testing/PASS-0002-BACKEND-SMOKE-0003.md)
 
-What is still missing is a richer repair workflow over cleanup-blocked runs, comparable follow-up behavior around interrupt review or repair, and real task execution over those durable runs.
+`PASS-0002` now also has the first cleanup-repair follow-up slice:
+
+- `POST /api/v1/task-runs/{run_id}/retry-cleanup`
+- cleanup-blocked runs can retry owned-lane restore through the backend instead of staying readback-only truth
+- successful cleanup retry converts the run into terminal `interrupted` state with a pending `interrupt_review` follow-up
+- cleanup repair and interrupt review now use the same durable `follow_up` envelope already used by `poke`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0004.md](./Testing/PASS-0002-BACKEND-SMOKE-0004.md)
+
+What is still missing is a dedicated interrupt-review resolution path and real task execution over those durable runs.
 
 ## Current Gate
 
@@ -125,8 +133,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- turn cleanup-blocked from a truthful readback into a fuller repair or retry workflow
-- decide whether interrupt review and cleanup repair should use the same durable follow-up lifecycle as `poke`
+- turn interrupt review from a durable pending follow-up into a more explicit decision path
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
