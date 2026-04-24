@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0008` is in implementation with `PASS-0001` active.
+`Task-0008` is in implementation with `PASS-0002` active.
 
 This task is a backend-only runtime task:
 
@@ -76,6 +76,8 @@ The repo already has:
 - task-level readback that reflects live active-run state updates
 - live validation-lane proof in [Testing/PASS-0001-BACKEND-SMOKE-0002.md](./Testing/PASS-0001-BACKEND-SMOKE-0002.md)
 
+`PASS-0001` is now complete enough for the next honest step to shift into supervision and intervention behavior.
+
 What is still missing is supervision, poke, interrupt, cleanup behavior, and real task execution over those durable runs.
 
 ## Current Gate
@@ -90,7 +92,7 @@ Implementation is active under the approved backend-only runtime split:
 
 ## Next Recommended Step
 
-Continue `PASS-0001` by extending the initial dispatch slice into a fuller runtime capability before any frontend work starts.
+Continue with `PASS-0002` by turning the durable run model into a recoverable supervision surface before any frontend work starts.
 
 The next implementation slice should:
 
