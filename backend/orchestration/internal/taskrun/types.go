@@ -104,7 +104,10 @@ type RepoLane struct {
 	OwnedRepoRoot         string    `json:"owned_repo_root,omitempty"`
 	CheckoutMode          string    `json:"checkout_mode,omitempty"`
 	BaselineCommit        string    `json:"baseline_commit,omitempty"`
+	CurrentCommit         string    `json:"current_commit,omitempty"`
 	ApprovedRestoreCommit string    `json:"approved_restore_commit,omitempty"`
+	RunArtifactRoot       string    `json:"run_artifact_root,omitempty"`
+	BootstrapArtifactPath string    `json:"bootstrap_artifact_path,omitempty"`
 	ResetStatus           string    `json:"reset_status,omitempty"`
 	LastResetTargetCommit string    `json:"last_reset_target_commit,omitempty"`
 	ResetFailureSummary   string    `json:"reset_failure_summary,omitempty"`

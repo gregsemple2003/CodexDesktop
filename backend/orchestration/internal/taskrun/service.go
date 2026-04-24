@@ -21,6 +21,7 @@ import (
 type Service struct {
 	declaredWorktreeRoot string
 	trackingRoot         string
+	runArtifactsRoot     string
 	ownedLaneRoot        string
 	runtime              Runtime
 	now                  func() time.Time
@@ -46,10 +47,26 @@ type parsedTask struct {
 	taskRoot    string
 }
 
+type ownedLaneBootstrapRecord struct {
+	TaskID               string               `json:"task_id"`
+	RunID                string               `json:"run_id"`
+	OwnedRepoRoot        string               `json:"owned_repo_root"`
+	BaselineCommit       string               `json:"baseline_commit"`
+	CurrentCommit        string               `json:"current_commit"`
+	DeclaredWorktreeRoot string               `json:"declared_worktree_root"`
+	DeclaredTaskRoot     string               `json:"declared_task_root"`
+	DeclaredTaskRevision string               `json:"declared_task_revision"`
+	DeclaredGitRevision  string               `json:"declared_git_revision,omitempty"`
+	CapturedAt           time.Time            `json:"captured_at"`
+	BootstrappedAt       time.Time            `json:"bootstrapped_at"`
+	Files                []TaskArtifactDigest `json:"files,omitempty"`
+}
+
 func NewService(declaredWorktreeRoot string, runsRoot string, runtime Runtime) *Service {
 	return &Service{
 		declaredWorktreeRoot: declaredWorktreeRoot,
 		trackingRoot:         filepath.Join(declaredWorktreeRoot, "Tracking"),
+		runArtifactsRoot:     filepath.Join(runsRoot, "taskruns"),
 		ownedLaneRoot:        defaultOwnedLaneRoot(runsRoot),
 		runtime:              runtime,
 		now: func() time.Time {
@@ -134,6 +151,11 @@ func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, err
 		return TaskRunView{}, err
 	}
 	request.CapturedTaskSnapshot = metadata.snapshot
+	request.RepoLane, err = s.bootstrapOwnedLane(request.TaskID, request.RunID, request.CapturedTaskSnapshot, request.RepoLane)
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
 
 	run, err := s.runtime.StartTaskRun(ctx, request)
 	if err != nil {
@@ -802,6 +824,46 @@ func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
 	}, nil
 }
 
+func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskDefinitionSnapshot, repoLane RepoLane) (RepoLane, error) {
+	if repoLane.OwnedRepoRoot == "" {
+		return RepoLane{}, fmt.Errorf("bootstrap owned lane for %s: owned repo root is missing", taskID)
+	}
+
+	currentCommit := gitRevision(repoLane.OwnedRepoRoot)
+	if currentCommit == "" {
+		return RepoLane{}, fmt.Errorf("bootstrap owned lane for %s: resolve current commit", taskID)
+	}
+
+	artifactRoot := filepath.Join(s.runArtifactsRoot, sanitizePathSegment(taskID), sanitizePathSegment(runID))
+	if err := os.MkdirAll(artifactRoot, 0o755); err != nil {
+		return RepoLane{}, fmt.Errorf("create task-run artifact root: %w", err)
+	}
+
+	bootstrapPath := filepath.Join(artifactRoot, "owned-lane-bootstrap.json")
+	record := ownedLaneBootstrapRecord{
+		TaskID:               taskID,
+		RunID:                runID,
+		OwnedRepoRoot:        repoLane.OwnedRepoRoot,
+		BaselineCommit:       repoLane.BaselineCommit,
+		CurrentCommit:        currentCommit,
+		DeclaredWorktreeRoot: snapshot.DeclaredWorktreeRoot,
+		DeclaredTaskRoot:     snapshot.DeclaredTaskRoot,
+		DeclaredTaskRevision: snapshot.DeclaredTaskRevision,
+		DeclaredGitRevision:  snapshot.DeclaredGitRevision,
+		CapturedAt:           snapshot.CapturedAt,
+		BootstrappedAt:       s.now(),
+		Files:                append([]TaskArtifactDigest(nil), snapshot.Files...),
+	}
+	if err := writeJSONFile(bootstrapPath, record); err != nil {
+		return RepoLane{}, fmt.Errorf("write owned-lane bootstrap artifact: %w", err)
+	}
+
+	repoLane.CurrentCommit = currentCommit
+	repoLane.RunArtifactRoot = artifactRoot
+	repoLane.BootstrapArtifactPath = bootstrapPath
+	return repoLane, nil
+}
+
 func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	if repoLane.OwnedRepoRoot == "" {
 		return nil
@@ -1228,6 +1290,15 @@ func taskArtifactRef(label string, path string) EvidenceRef {
 func fileURI(path string) string {
 	value := filepath.ToSlash(path)
 	return (&url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(value, "/")}).String()
+}
+
+func writeJSONFile(path string, value any) error {
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	return os.WriteFile(path, data, 0o644)
 }
 
 func gitRevision(worktreeRoot string) string {

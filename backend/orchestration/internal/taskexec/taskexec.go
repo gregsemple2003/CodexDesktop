@@ -67,6 +67,24 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 		suspiciousAfter = time.Time{}
 	}
 
+	initialState := taskrun.StateDispatching
+	initialReasonCode := "dispatch_started"
+	initialStateSummary := "Run is dispatching in an owned checkout."
+	initialNextOwner := "backend"
+	initialNextExpectedEvent := "Execution worker records the next task-run state update."
+	initialAttention := taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active and waiting for the next backend update.", SortKey: "50-dispatching"}
+	initialLastProgressSummary := "Captured task docs and provisioned an owned checkout."
+
+	if request.RepoLane.CurrentCommit != "" {
+		initialState = taskrun.StateRunning
+		initialReasonCode = "owned_lane_bootstrapped"
+		initialStateSummary = "Run bootstrapped the owned checkout and is ready for backend execution."
+		initialNextOwner = "backend_worker"
+		initialNextExpectedEvent = "Execution worker records the next progress checkpoint."
+		initialAttention = taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active after owned-lane bootstrap.", SortKey: "45-owned_lane_bootstrapped"}
+		initialLastProgressSummary = "Bootstrapped the owned checkout and recorded its current commit."
+	}
+
 	actions := map[string]taskrun.ActionAvailability{
 		taskrun.ActionDispatch: {
 			Allowed: false,
@@ -90,6 +108,16 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 			}},
 		},
 	}
+	if initialState == taskrun.StateRunning {
+		actions[taskrun.ActionPoke] = taskrun.ActionAvailability{
+			Allowed: false,
+			BlockReasons: []taskrun.ActionBlockReason{{
+				Code:    "run_not_suspicious_yet",
+				Summary: "Poke stays blocked until the run misses its next expected progress deadline.",
+			}},
+		}
+		actions[taskrun.ActionInterrupt] = taskrun.ActionAvailability{Allowed: true}
+	}
 
 	return taskrun.TaskRunView{
 		RunID:                  request.RunID,
@@ -98,20 +126,20 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 		TemporalExecutionRunID: executionRunID,
 		Status:                 "active",
 		StateEnvelope: taskrun.StateEnvelope{
-			State:              taskrun.StateDispatching,
-			ReasonCode:         "dispatch_started",
-			StateSummary:       "Run is dispatching in an owned checkout.",
-			NextOwner:          "backend",
-			NextExpectedEvent:  "Execution worker records the next task-run state update.",
+			State:              initialState,
+			ReasonCode:         initialReasonCode,
+			StateSummary:       initialStateSummary,
+			NextOwner:          initialNextOwner,
+			NextExpectedEvent:  initialNextExpectedEvent,
 			SuspiciousAfter:    suspiciousAfter,
 			ActionBlockReasons: collectActionBlockReasons(actions),
 		},
 		MeaningSummary:      request.MeaningSummary,
-		Attention:           taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active and waiting for the next backend update.", SortKey: "50-dispatching"},
+		Attention:           initialAttention,
 		Actions:             actions,
 		RepoLane:            request.RepoLane,
 		LastProgressAt:      request.DispatchRequestedAt,
-		LastProgressSummary: "Captured task docs and provisioned an owned checkout.",
+		LastProgressSummary: initialLastProgressSummary,
 		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
 			DeclaredWorktreeRoot: request.CapturedTaskSnapshot.DeclaredWorktreeRoot,
 			DeclaredTaskRoot:     request.CapturedTaskSnapshot.DeclaredTaskRoot,

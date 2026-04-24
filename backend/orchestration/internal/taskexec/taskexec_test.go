@@ -69,6 +69,46 @@ func TestApplyUpdateMovesRunIntoWaitingForHuman(t *testing.T) {
 	}
 }
 
+func TestInitialViewUsesBootstrappedOwnedLaneAsRunning(t *testing.T) {
+	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
+	view := InitialView(taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: `C:\Agent\CodexDashboard`,
+			DeclaredTaskRoot:     `C:\Agent\CodexDashboard\Tracking\Task-0008`,
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  "abc123",
+			CapturedAt:           dispatchAt,
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         `C:\Temp\owned`,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        "abc123",
+			CurrentCommit:         "abc123",
+			ApprovedRestoreCommit: "abc123",
+			RunArtifactRoot:       `C:\Temp\artifacts`,
+			BootstrapArtifactPath: `C:\Temp\artifacts\owned-lane-bootstrap.json`,
+			ResetStatus:           "not_run",
+		},
+		DispatchRequestedAt: dispatchAt,
+	}, "workflow-id", "run-id")
+
+	if view.StateEnvelope.State != taskrun.StateRunning {
+		t.Fatalf("state = %q, want %q", view.StateEnvelope.State, taskrun.StateRunning)
+	}
+	if view.StateEnvelope.ReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("reason code = %q", view.StateEnvelope.ReasonCode)
+	}
+	if !view.Actions[taskrun.ActionInterrupt].Allowed {
+		t.Fatal("interrupt should be allowed after owned-lane bootstrap")
+	}
+	if view.RepoLane.CurrentCommit != "abc123" {
+		t.Fatalf("current commit = %q", view.RepoLane.CurrentCommit)
+	}
+}
+
 func TestApplyUpdateMarksInterruptedRunTerminal(t *testing.T) {
 	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
 	view := InitialView(taskrun.StartTaskRunRequest{

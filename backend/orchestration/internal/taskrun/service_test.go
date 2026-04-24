@@ -2,6 +2,7 @@ package taskrun
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,6 +25,40 @@ func newFakeRuntime() *fakeRuntime {
 
 func (f *fakeRuntime) StartTaskRun(_ context.Context, request StartTaskRunRequest) (TaskRunView, error) {
 	f.started = append(f.started, request)
+	state := StateDispatching
+	reasonCode := "dispatch_started"
+	stateSummary := "Run is dispatching in an owned checkout."
+	nextOwner := "backend"
+	nextExpectedEvent := "Execution worker records the next task-run state update."
+	attention := AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"}
+	lastProgressSummary := "Captured task docs and provisioned an owned checkout."
+	actions := map[string]ActionAvailability{}
+	if request.RepoLane.CurrentCommit != "" {
+		state = StateRunning
+		reasonCode = "owned_lane_bootstrapped"
+		stateSummary = "Run bootstrapped the owned checkout and is ready for backend execution."
+		nextOwner = "backend_worker"
+		nextExpectedEvent = "Execution worker records the next progress checkpoint."
+		attention = AttentionPriority{Level: AttentionWatch, Reason: "Run is active after owned-lane bootstrap.", SortKey: "45-owned_lane_bootstrapped"}
+		lastProgressSummary = "Bootstrapped the owned checkout and recorded its current commit."
+		actions = map[string]ActionAvailability{
+			ActionDispatch: {
+				Allowed: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "active_run_exists",
+					Summary: "Dispatch is blocked while this run owns the current live story.",
+				}},
+			},
+			ActionPoke: {
+				Allowed: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "run_not_suspicious_yet",
+					Summary: "Poke stays blocked until the run misses its next expected progress deadline.",
+				}},
+			},
+			ActionInterrupt: {Allowed: true},
+		}
+	}
 	run := TaskRunView{
 		RunID:                  request.RunID,
 		TaskID:                 request.TaskID,
@@ -31,19 +66,19 @@ func (f *fakeRuntime) StartTaskRun(_ context.Context, request StartTaskRunReques
 		TemporalExecutionRunID: "temporal-run-id",
 		Status:                 "active",
 		StateEnvelope: StateEnvelope{
-			State:             StateDispatching,
-			ReasonCode:        "dispatch_started",
-			StateSummary:      "Run is dispatching in an owned checkout.",
-			NextOwner:         "backend",
-			NextExpectedEvent: "Execution worker records the next task-run state update.",
+			State:             state,
+			ReasonCode:        reasonCode,
+			StateSummary:      stateSummary,
+			NextOwner:         nextOwner,
+			NextExpectedEvent: nextExpectedEvent,
 			SuspiciousAfter:   request.DispatchRequestedAt.Add(15 * time.Minute),
 		},
 		MeaningSummary:             request.MeaningSummary,
-		Attention:                  AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"},
-		Actions:                    map[string]ActionAvailability{},
+		Attention:                  attention,
+		Actions:                    actions,
 		RepoLane:                   request.RepoLane,
 		LastProgressAt:             request.DispatchRequestedAt,
-		LastProgressSummary:        "Captured task docs and provisioned an owned checkout.",
+		LastProgressSummary:        lastProgressSummary,
 		CapturedTaskSnapshot:       request.CapturedTaskSnapshot,
 		DocRuntimeDivergenceStatus: "in_sync",
 	}
@@ -305,6 +340,9 @@ Create the durable backend task-run contract so later clients do not guess state
 	if request.RepoLane.BaselineCommit == "" {
 		t.Fatal("expected baseline commit to be captured")
 	}
+	if request.RepoLane.CurrentCommit != request.RepoLane.BaselineCommit {
+		t.Fatalf("current commit = %q, want baseline %q", request.RepoLane.CurrentCommit, request.RepoLane.BaselineCommit)
+	}
 	if request.RepoLane.ApprovedRestoreCommit != request.RepoLane.BaselineCommit {
 		t.Fatalf("approved restore commit = %q, want baseline %q", request.RepoLane.ApprovedRestoreCommit, request.RepoLane.BaselineCommit)
 	}
@@ -314,8 +352,34 @@ Create the durable backend task-run contract so later clients do not guess state
 	if _, err := os.Stat(request.RepoLane.OwnedRepoRoot); err != nil {
 		t.Fatalf("owned repo root missing: %v", err)
 	}
+	if request.RepoLane.RunArtifactRoot == "" {
+		t.Fatal("expected run artifact root to be set")
+	}
+	if request.RepoLane.BootstrapArtifactPath == "" {
+		t.Fatal("expected bootstrap artifact path to be set")
+	}
+	rawBootstrap, err := os.ReadFile(request.RepoLane.BootstrapArtifactPath)
+	if err != nil {
+		t.Fatalf("read bootstrap artifact: %v", err)
+	}
+	var bootstrap ownedLaneBootstrapRecord
+	if err := json.Unmarshal(rawBootstrap, &bootstrap); err != nil {
+		t.Fatalf("decode bootstrap artifact: %v", err)
+	}
+	if bootstrap.CurrentCommit != request.RepoLane.CurrentCommit {
+		t.Fatalf("bootstrap current commit = %q, want %q", bootstrap.CurrentCommit, request.RepoLane.CurrentCommit)
+	}
+	if bootstrap.OwnedRepoRoot != request.RepoLane.OwnedRepoRoot {
+		t.Fatalf("bootstrap owned repo root = %q, want %q", bootstrap.OwnedRepoRoot, request.RepoLane.OwnedRepoRoot)
+	}
 	if run.RunID != ActiveRunID("Task-0008") {
 		t.Fatalf("run id = %q", run.RunID)
+	}
+	if run.StateEnvelope.State != StateRunning {
+		t.Fatalf("state = %q, want %q", run.StateEnvelope.State, StateRunning)
+	}
+	if run.StateEnvelope.ReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("reason code = %q, want owned_lane_bootstrapped", run.StateEnvelope.ReasonCode)
 	}
 }
 

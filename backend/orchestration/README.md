@@ -35,6 +35,7 @@ Task-0008 also starts the first durable dispatch slice:
 - dispatch creates a Temporal-backed task run
 - dispatch provisions an exclusive backend-owned checkout lane
 - dispatch captures the baseline commit the owned lane may restore to later
+- dispatch bootstraps the owned lane, captures its current commit, and writes a bootstrap artifact under the backend run-artifact root
 - task runs can accept backend-owned post-dispatch state updates
 - active-run reads can supervise stale progress into `sleeping_or_stalled`
 - active-run reads can supervise stale human waits into `human_wait_stale`
@@ -44,6 +45,7 @@ Task-0008 also starts the first durable dispatch slice:
 - cleanup retry can restore a cleanup-blocked owned checkout and convert the run into `interrupt_review`
 - pending `interrupt_review` blocks redispatch until the review is explicitly resolved
 - interrupt review resolution records a durable decision and returns the task to dispatch-ready state
+- dispatch can now move a run into backend-produced `running` state without requiring a manual `/state` mutation first
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.
@@ -194,6 +196,8 @@ Invoke-WebRequest http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-dige
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks | Select-Object -ExpandProperty Content
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks/Task-0008 | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch | Select-Object -ExpandProperty Content
+$dispatch = Invoke-RestMethod -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch
+Get-Content -Raw $dispatch.repo_lane.bootstrap_artifact_path
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active | Select-Object -ExpandProperty Content
 $body = '{"state":"waiting_for_human","reason_code":"approval_required","state_summary":"Run is waiting for approval.","next_owner":"human","next_expected_event":"Approve or redirect the next backend step."}'
 Invoke-WebRequest -Method Post -Uri http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/state -ContentType 'application/json' -Body $body | Select-Object -ExpandProperty Content

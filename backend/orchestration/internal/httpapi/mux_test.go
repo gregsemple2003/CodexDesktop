@@ -90,6 +90,20 @@ func (b *fakeBackend) StartJobRun(_ context.Context, request controlplane.JobRun
 }
 
 func (f *fakeTaskRuntime) StartTaskRun(_ context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
+	state := taskrun.StateDispatching
+	reasonCode := "dispatch_started"
+	stateSummary := "Run is dispatching in an owned checkout."
+	nextOwner := "backend"
+	nextExpectedEvent := "Execution worker records the next task-run state update."
+	attention := taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"}
+	if request.RepoLane.CurrentCommit != "" {
+		state = taskrun.StateRunning
+		reasonCode = "owned_lane_bootstrapped"
+		stateSummary = "Run bootstrapped the owned checkout and is ready for backend execution."
+		nextOwner = "backend_worker"
+		nextExpectedEvent = "Execution worker records the next progress checkpoint."
+		attention = taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active after owned-lane bootstrap.", SortKey: "45-owned_lane_bootstrapped"}
+	}
 	run := taskrun.TaskRunView{
 		RunID:                  request.RunID,
 		TaskID:                 request.TaskID,
@@ -97,15 +111,15 @@ func (f *fakeTaskRuntime) StartTaskRun(_ context.Context, request taskrun.StartT
 		TemporalExecutionRunID: "temporal-run-id",
 		Status:                 "active",
 		StateEnvelope: taskrun.StateEnvelope{
-			State:             taskrun.StateDispatching,
-			ReasonCode:        "dispatch_started",
-			StateSummary:      "Run is dispatching in an owned checkout.",
-			NextOwner:         "backend",
-			NextExpectedEvent: "Execution worker records the next task-run state update.",
+			State:             state,
+			ReasonCode:        reasonCode,
+			StateSummary:      stateSummary,
+			NextOwner:         nextOwner,
+			NextExpectedEvent: nextExpectedEvent,
 			SuspiciousAfter:   request.DispatchRequestedAt.Add(15 * time.Minute),
 		},
 		MeaningSummary:       request.MeaningSummary,
-		Attention:            taskrun.AttentionPriority{Level: taskrun.AttentionWatch, Reason: "Run is active.", SortKey: "50-dispatching"},
+		Attention:            attention,
 		RepoLane:             request.RepoLane,
 		CapturedTaskSnapshot: request.CapturedTaskSnapshot,
 	}

@@ -124,7 +124,15 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - Temporal-backed run updates now fall back to the closed workflow result when a successful resolution closes the workflow before the immediate query returns
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0005.md](./Testing/PASS-0002-BACKEND-SMOKE-0005.md)
 
-What is still missing is real task execution over those durable runs and richer backend-owned worker behavior beyond manual state updates.
+`PASS-0002` now also has the first backend-owned execution-bootstrap slice:
+
+- dispatch now bootstraps the owned checkout before the run starts
+- dispatch captures `repo_lane.current_commit`
+- dispatch writes an owned-lane bootstrap artifact under the backend run-artifact root
+- the created run starts in backend-produced `running` state with `reason_code = owned_lane_bootstrapped`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0006.md](./Testing/PASS-0002-BACKEND-SMOKE-0006.md)
+
+What is still missing is actual task workload execution inside the owned lane and richer backend-owned worker behavior after bootstrap.
 
 ## Current Gate
 
@@ -142,7 +150,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move beyond manual runtime state mutation toward real worker-side execution or backend-driven runtime progress
+- move from owned-lane bootstrap into the first real backend-driven workload step after dispatch
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
