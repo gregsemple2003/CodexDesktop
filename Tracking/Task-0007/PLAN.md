@@ -13,7 +13,7 @@ Human gate:
 The plan is grounded in:
 
 - the April 19, 2026 conversation that framed each direct human input as a system failure signal
-- the adjacent incident-capture work in [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md)
+- the earlier incident-capture artifacts preserved in [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md)
 - current orchestration thinking in [2026-04-16-SWE-Orchestration.md](/c:/Users/gregs/.codex/reports/2026-04-16-SWE-Orchestration.md)
 
 ## PASS-0000 Bootstrap The Analysis Home

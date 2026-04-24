@@ -35,13 +35,13 @@ The immediate need is not implementation. The immediate need is to preserve the 
 - Claiming the system can infer every new or novel human request.
 - Treating every human message as equally inferable or equally blameworthy.
 - Finalizing a cross-repo workflow contract before the analysis is grounded.
-- Replacing [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md), which remains the narrower incident-capture task.
+- Recreating [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) as a separate active incident-capture lane. `Task-0006` is now superseded historical context.
 
 ## Constraints And Baseline
 
 - The current request is archival and analytical, not execution-focused.
 - The model is cross-repo in spirit, but this task is incubating the analysis locally first.
-- [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) already owns adjacent work on durable incident capture.
+- [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) holds earlier adjacent incident-capture artifacts, but that separate task is now closed as superseded by this broader research-and-reference line.
 - Later inference work must represent local human constraints honestly rather than hallucinating a universal human model.
 - Any later report, schema, or agent output should distinguish:
   - explicitly stated human desire
@@ -92,7 +92,7 @@ If this task later produces durable cross-repo workflow rules, report formats, o
 - What is the smallest durable shape of `HUMAN-DESIRE.md`?
 - What counts as a reasonable inference failure versus genuine novelty?
 - What should a daily per-repo Jarvis report look like in practice?
-- How should this task relate to [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) incident records and any future shared intervention canon?
+- How should this task relate to the preserved [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) incident records and any future shared intervention canon?
 
 ## References
 

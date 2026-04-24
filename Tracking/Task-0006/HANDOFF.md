@@ -2,17 +2,21 @@
 
 ## Current Status
 
-`Task-0006` is now framed as an incident-capture task rather than a broad "make orchestration smarter" bucket.
+`Task-0006` is cancelled as superseded by [Task-0007](/c:/Agent/CodexDashboard/Tracking/Task-0007/TASK.md).
 
-For this task, an incident is a divergence where the human had to step in and express disagreement over an AI-produced or AI-directed outcome to preserve the intended human-facing result.
+On `2026-04-24`, the user directed that the remaining value in this line of work should no longer continue as a separate active incident-capture task.
 
-The current task definition was distilled from the seed transcript in [Scaling-Agent-Orchestration.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/Research/Scaling-Agent-Orchestration.md) and pressure-tested against:
+Instead, the durable research-and-reference baseline under `Task-0007` is now the authoritative continuation point for this broader intervention-analysis direction.
 
-- [VISION-HARVESTER.md](/c:/Users/gregs/.codex/Orchestration/Prompts/VISION-HARVESTER.md)
-- [GENERAL-DESIGNER.md](/c:/Users/gregs/.codex/Orchestration/Prompts/GENERAL-DESIGNER.md)
-- [INTERFACE-DESIGNER.md](/c:/Users/gregs/.codex/Orchestration/Prompts/INTERFACE-DESIGNER.md)
+## Cancellation Rationale
 
-Research is now complete enough to support a real plan:
+- `Task-0006` did useful narrowing work around incident definition, `why_chains`, and example incident shape.
+- It also left behind concrete research artifacts that remain useful reference material.
+- But the active product and research direction has moved to [Task-0007](/c:/Agent/CodexDashboard/Tracking/Task-0007/TASK.md), which now owns the intervention-analysis and reference baseline more durably than keeping `Task-0006` alive as a separate planning lane.
+
+## Preserved Baseline
+
+The current repo still contains useful reference material from this task, including:
 
 - [RESEARCH-PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/RESEARCH-PLAN.md)
 - [RESEARCH-ANALYSIS.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/RESEARCH-ANALYSIS.md)
@@ -24,41 +28,23 @@ Research is now complete enough to support a real plan:
 - [SEED-INCIDENTS-LAST-5D.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/Research/SEED-INCIDENTS-LAST-5D.md)
 - [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/PLAN.md)
 
-## Current Baseline
+Treat those artifacts as historical research and schema reference, not as the active implementation queue.
 
-The first planning draft was rejected because it stayed at surface-level incident interpretation and did not preserve a usable upward explanation of what target state the human was actually protecting.
+## Superseded Next Step
 
-The revised baseline now requires every incident to preserve:
+Do not reopen `Task-0006` just to finish the old incident-capture planning lane unless the product direction explicitly asks for a distinct task again.
 
-- the grounded pre-correction state, including active course when relevant
-- the human intervention itself
-- the concrete event-level expected and actual state
-- one or more ordered `why_chains` that progressively generalize from the concrete target state toward the broader human principle being expressed
-
-The task now also has a concrete task-local schema and two validated example incidents, so `PASS-0000` is no longer a vague contract-design pass. It can be checked by file existence and schema validation.
-
-The earlier Home-card example was dropped because it failed the qualification gate. It described a real bug, but the preserved evidence did not clearly show a human correcting an AI-produced outcome.
-
-The revised plan still includes an explicit five-incident seed requirement covering:
-
-- usability or state truth
-- information architecture and CTA framing
-- UI semantics and operator jargon
-- orchestration or producer misunderstanding
-- proxy-proof or debugging misunderstanding
-
-The five recommended starter incidents all come from April 3, 2026 through April 7, 2026 history rather than from the older seed transcript alone.
-
-## Next Step
-
-Request explicit human approval on `PLAN.md` before starting `PASS-0000`.
+Any further intervention-analysis continuation should proceed under [Task-0007](/c:/Agent/CodexDashboard/Tracking/Task-0007/TASK.md) and its follow-on task split.
 
 ## Watchouts
 
-- do not widen the task into full critic automation, training, or autonomous remediation
-- do not flatten all incidents into "taste" or "design" problems
-- do not lose the human correction path while trying to normalize incidents
-- do not let the `why_chains` drift into unsupported abstraction before the concrete event is clear
-- shared orchestration and prompt rules belong in `.codex`; task-local evidence and history belong under `Tracking/Task-0006/`
-- `PLAN.md` is not approved.
-- no pass, audit, bug, or regression artifacts exist yet
+- treat `Task-0006` artifacts as preserved reference material, not as the active orchestration source of truth
+- do not let `Task-0006` and `Task-0007` drift into two competing intervention-analysis lanes
+- shared orchestration and prompt rules still belong in `.codex`; task-local evidence and history stay under the owning task directory
+- `Task-0006` never reached plan approval, pass execution, audit, or regression closure
+
+## References
+
+- [TASK.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md)
+- [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0006/PLAN.md)
+- [Task-0007](/c:/Agent/CodexDashboard/Tracking/Task-0007/TASK.md)

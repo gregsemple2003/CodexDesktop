@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "task_id": "Task-0006",
-  "status": "in_progress",
-  "phase": "planning",
+  "status": "cancelled",
+  "phase": "closure",
   "plan_approved": false,
   "current_pass": null,
   "last_completed_pass": null,
-  "current_gate": "planning",
+  "current_gate": "none",
   "latest_audit_verdict": "unknown",
   "validation": {
     "build": "not_run",
@@ -15,5 +15,5 @@
   },
   "blockers": [],
   "next_expected_artifacts": [],
-  "updated_at": "2026-04-07T16:52:00.0000000-04:00"
+  "updated_at": "2026-04-24T10:28:10.6599366-04:00"
 }

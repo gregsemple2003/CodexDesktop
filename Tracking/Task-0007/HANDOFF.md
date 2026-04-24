@@ -1,6 +1,26 @@
 # Task 0007 Handoff
 
-## Current Objective
+## Current Status
+
+`Task-0007` is complete and should now be treated as a closed research-and-reference task.
+
+What this task now owns durably:
+
+- the task-owned research, reference packets, and comparison material for Jarvis-style intervention analysis
+- the recovered Dream-process design discussion and the reference packet backups
+- the task-local research that shaped the current shared Dream writer and auditor workflow
+
+Follow-on product work has been split out into separate tasks:
+
+- [Task-0008](../Task-0008/TASK.md): the separate dispatch layer and durable execution-state contract
+- [Task-0009](../Task-0009/TASK.md): the dashboard `Tasks` tab as the humane dispatch and monitoring surface
+- [Task-0010](../Task-0010/TASK.md): the daily Dream run, digest, and option-task promotion flow
+
+The earlier [Task-0006](../Task-0006/TASK.md) lane is now cancelled as superseded by this research-and-reference baseline.
+
+This handoff remains valuable as historical context, but it is no longer the active implementation queue.
+
+## Historical Objective At Close
 
 The current problem is:
 
@@ -253,3 +273,12 @@ Current continuation frame from this lookup thread:
 - no durable Dream docs were changed in this lookup thread
 - this thread only recovered the historical source for the Dream pass split and the adversarial solution-audit follow-up
 - the next honest discussion can start from whether the current Dream workflow should stay split as `2A` and `2B` only, or remain the later `2A` / `2B` / `2C` design that separates solution design, winner synthesis, and winner-task drafting
+
+Later recovery thread that wrote this lookup down:
+
+- thread name: `Locate Dream process thread`
+- session id: `019dbac2-19f9-75f0-b04b-3accc4fa08d3`
+- session index entry: [/c:/Users/gregs/.codex/session_index.jsonl](/c:/Users/gregs/.codex/session_index.jsonl#L408)
+- transcript: [/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T10-32-56-019dbac2-19f9-75f0-b04b-3accc4fa08d3.jsonl](/c:/Users/gregs/.codex/sessions/2026/04/23/rollout-2026-04-23T10-32-56-019dbac2-19f9-75f0-b04b-3accc4fa08d3.jsonl#L6)
+- purpose: recover the design-origin thread and distinguish it from the later worker thread
+- no `spawn_agent`, `wait_agent`, `send_input`, `resume_agent`, or `close_agent` calls were found in that recovery transcript during this lookup, so there is no separate child agent from that recovery session to stop now

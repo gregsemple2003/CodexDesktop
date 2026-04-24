@@ -10,7 +10,7 @@ Ground the Jarvis intervention model enough to decide whether it should remain a
 - What kinds of human input are genuine novelty or changed desire?
 - What is the minimum useful shape of `HUMAN-DESIRE.md`?
 - What should a daily per-repo Jarvis report contain?
-- How should this analysis relate to [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) incident capture?
+- How should this analysis relate to the preserved [Task-0006](/c:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md) incident-capture artifacts?
 
 ## Primary Sources
 
