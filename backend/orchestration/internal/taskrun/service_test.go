@@ -978,6 +978,70 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 }
 
+func TestRedispatchReleasesPreviousTerminalOwnedLane(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	firstRun, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	originalOwnedRoot := firstRun.RepoLane.OwnedRepoRoot
+	if _, err := os.Stat(originalOwnedRoot); err != nil {
+		t.Fatalf("expected original owned root to exist: %v", err)
+	}
+
+	if _, err := service.InterruptRun(context.Background(), firstRun.RunID); err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+	if _, err := service.ResolveInterruptReview(context.Background(), firstRun.RunID, InterruptReviewResolution{
+		Decision:   "redispatch_ready",
+		Summary:    "Human review approved another dispatch attempt.",
+		ResolvedBy: "human",
+	}); err != nil {
+		t.Fatalf("resolve interrupt review: %v", err)
+	}
+
+	secondRun, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("redispatch: %v", err)
+	}
+	if secondRun.RepoLane.OwnedRepoRoot == originalOwnedRoot {
+		t.Fatalf("expected a fresh owned root, still got %q", secondRun.RepoLane.OwnedRepoRoot)
+	}
+	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("expected previous owned root to be removed, stat err = %v", err)
+	}
+	if _, err := os.Stat(secondRun.RepoLane.OwnedRepoRoot); err != nil {
+		t.Fatalf("expected new owned root to exist: %v", err)
+	}
+}
+
 func TestResolveInterruptReviewRejectsRunWithoutPendingReview(t *testing.T) {
 	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
 		"Task-0008": {

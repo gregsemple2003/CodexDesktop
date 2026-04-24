@@ -249,7 +249,26 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
     - `reset_status = restored`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0015.md](./Testing/PASS-0002-BACKEND-SMOKE-0015.md)
 
-What is still missing is moving from this bounded interrupt-review timing change into the next worker-applied existing-file change that affects an even broader or later Task-0008 runtime path inside the owned lane.
+`PASS-0002` now also has the next worker-applied existing-file change on a broader redispatch path:
+
+- after Task-0008 validation and brief generation, the workflow now edits the existing owned-lane implementation path:
+  - `backend/orchestration/internal/taskrun/service.go`
+- that edit changes redispatch behavior so a fresh dispatch releases the previous terminal owned lane before provisioning a new one
+- the workflow now runs an owned-lane behavior probe that exercises redispatch after a resolved terminal run and records:
+  - `behavior_probe_path`
+  in the workload result artifact
+- task readback now advances automatically to:
+  - `reason_code = task_0008_redispatch_lane_released`
+- the live proof verified:
+  - the owned-lane edited file contains the real `releasePreviousOwnedLane` dispatch call
+  - the owned-lane behavior probe reported:
+    - `original_owned_root_removed = true`
+    - `new_owned_root_exists = true`
+    - `new_owned_root_differs = true`
+    - `new_run_reason_code = owned_lane_bootstrapped`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0016.md](./Testing/PASS-0002-BACKEND-SMOKE-0016.md)
+
+What is still missing is moving from this bounded redispatch-lane release change into the next worker-applied existing-file change that affects a broader recovery or execution policy than owned-lane turnover alone.
 
 ## Current Gate
 
@@ -267,7 +286,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from the bounded interrupt-review timing change into the next worker-applied existing-file change that affects an even broader or later Task-0008 runtime path inside the owned lane
+- move from the bounded redispatch-lane release change into the next worker-applied existing-file change that affects a broader recovery or execution policy than owned-lane turnover alone
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -282,7 +301,7 @@ The next implementation slice should:
 - after a fresh validation-volume reset, a clean manual listener may need a short Temporal warm-up delay before backend startup or it can fail with `error reading server preface: EOF`
 - when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
-- do not mistake a bounded owned-lane interrupt-review timing change for finished implementation work; the next honest step is another worker-applied existing-file change that affects a broader or later Task-0008 runtime path
+- do not mistake a bounded owned-lane redispatch-lane release change for finished implementation work; the next honest step is another worker-applied existing-file change that affects a broader recovery or execution policy
 - do not broaden this task into dashboard implementation work
 
 ## References

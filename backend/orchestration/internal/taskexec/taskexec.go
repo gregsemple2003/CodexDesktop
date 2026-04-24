@@ -181,11 +181,11 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					attentionReason := "Run executed its first workload step and is ready for the next backend step."
 					attentionSortKey := "42-workload_step_executed"
 					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_interrupt_review_window_changed"
-						stateSummary = "Run validated Task-0008 and changed a later interrupt-review behavior in an existing owned-lane implementation file."
-						nextExpectedEvent = "Execution worker applies the next broader Task-0008 runtime behavior change."
-						attentionReason = "Run changed a later Task-0008 interrupt-review behavior in an existing owned-lane implementation file and is ready for the next backend step."
-						attentionSortKey = "36-task_0008_interrupt_review_window_changed"
+						reasonCode = "task_0008_redispatch_lane_released"
+						stateSummary = "Run validated Task-0008 and changed owned-lane redispatch cleanup behavior in an existing implementation file."
+						nextExpectedEvent = "Execution worker applies the next broader Task-0008 recovery or redispatch behavior change."
+						attentionReason = "Run changed owned-lane redispatch cleanup behavior in an existing Task-0008 implementation file and is ready for the next backend step."
+						attentionSortKey = "35-task_0008_redispatch_lane_released"
 					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
@@ -649,7 +649,7 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, "", err
 	}
 
-	summary := "Executed Task-0008 backend validation and changed a later interrupt-review behavior in an existing owned-lane implementation file."
+	summary := "Executed Task-0008 backend validation and changed owned-lane redispatch cleanup behavior in an existing implementation file."
 	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, gitStatusAfter, nil
 }
 
@@ -750,32 +750,69 @@ func writeTask0008OwnedLaneCode(step workloadStepArtifact) (string, error) {
 }
 
 func applyTask0008InterruptReviewWindowChange(source string) string {
-	const oldBlock = `Kind:        "interrupt_review",
-			Owner:       "human_or_supervisor",
-			Status:      "pending",
-			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
-			RequestedAt: now,
-			DueAt:       now.Add(24 * time.Hour),`
-	const newBlock = `Kind:        "interrupt_review",
-			Owner:       "human_or_supervisor",
-			Status:      "pending",
-			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
-			RequestedAt: now,
-			DueAt:       now.Add(2 * time.Hour),`
-	const oldRepairBlock = `Kind:        "interrupt_review",
-			Owner:       "human_or_supervisor",
-			Status:      "pending",
-			Summary:     "Cleanup repair completed; review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
-			RequestedAt: now,
-			DueAt:       now.Add(24 * time.Hour),`
-	const newRepairBlock = `Kind:        "interrupt_review",
-			Owner:       "human_or_supervisor",
-			Status:      "pending",
-			Summary:     "Cleanup repair completed; review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
-			RequestedAt: now,
-			DueAt:       now.Add(2 * time.Hour),`
-	updated := strings.ReplaceAll(source, oldBlock, newBlock)
-	updated = strings.ReplaceAll(updated, oldRepairBlock, newRepairBlock)
+	const dispatchNeedle = `	if !task.DispatchReadiness.Ready {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked: %s", summarizeBlockReasons(task.DispatchReadiness.BlockReasons))
+	}
+
+	repoLane, err := s.provisionOwnedLane(task.TaskID)`
+	const dispatchReplacement = `	if !task.DispatchReadiness.Ready {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked: %s", summarizeBlockReasons(task.DispatchReadiness.BlockReasons))
+	}
+	if err := s.releasePreviousOwnedLane(ctx, task.TaskID); err != nil {
+		return TaskRunView{}, err
+	}
+
+	repoLane, err := s.provisionOwnedLane(task.TaskID)`
+	const fixtureDispatchNeedle = `	if !state.PlanApproved || len(state.Blockers) > 0 {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked")
+	}
+	repoLane, err := s.provisionOwnedLane(taskID)`
+	const fixtureDispatchReplacement = `	if !state.PlanApproved || len(state.Blockers) > 0 {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked")
+	}
+	if err := s.releasePreviousOwnedLane(ctx, taskID); err != nil {
+		return TaskRunView{}, err
+	}
+	repoLane, err := s.provisionOwnedLane(taskID)`
+	const helperNeedle = `func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskDefinitionSnapshot, repoLane RepoLane) (RepoLane, error) {`
+	const helperInsert = `func (s *Service) releasePreviousOwnedLane(ctx context.Context, taskID string) error {
+	if s.runtime == nil {
+		return nil
+	}
+	previousRun, err := s.runtime.GetActiveTaskRun(ctx, taskID)
+	if err != nil {
+		if errors.Is(err, ErrRunNotFound) {
+			return nil
+		}
+		return err
+	}
+	if runOwnsLiveStory(previousRun) || previousRun.RepoLane.OwnedRepoRoot == "" {
+		return nil
+	}
+	if err := s.cleanupOwnedLane(previousRun.RepoLane); err != nil {
+		return fmt.Errorf("release previous owned lane for %s: %w", taskID, err)
+	}
+	return nil
+}
+
+func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskDefinitionSnapshot, repoLane RepoLane) (RepoLane, error) {`
+	const cleanupNeedle = `func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
+	if repoLane.OwnedRepoRoot == "" {
+		return nil
+	}
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)`
+	const cleanupReplacement = `func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
+	if repoLane.OwnedRepoRoot == "" {
+		return nil
+	}
+	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
+		return fmt.Errorf("owned repo root %q is outside the backend-owned lane root", repoLane.OwnedRepoRoot)
+	}
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)`
+	updated := strings.Replace(source, dispatchNeedle, dispatchReplacement, 1)
+	updated = strings.Replace(updated, fixtureDispatchNeedle, fixtureDispatchReplacement, 1)
+	updated = strings.Replace(updated, helperNeedle, helperInsert, 1)
+	updated = strings.Replace(updated, cleanupNeedle, cleanupReplacement, 1)
 	return updated
 }
 
@@ -806,65 +843,100 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	taskrun "%s/internal/taskrun"
 )
 
 type fakeRuntime struct {
-	run taskrun.TaskRunView
+	activeByTask map[string]taskrun.TaskRunView
+	byRunID      map[string]taskrun.TaskRunView
+	run          taskrun.TaskRunView
 }
 
 func (f *fakeRuntime) StartTaskRun(ctx context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
-	return taskrun.TaskRunView{}, fmt.Errorf("not implemented")
+	run := taskrun.TaskRunView{
+		RunID:  request.RunID,
+		TaskID: request.TaskID,
+		Status: "active",
+		StateEnvelope: taskrun.StateEnvelope{
+			State:             taskrun.StateRunning,
+			ReasonCode:        "owned_lane_bootstrapped",
+			StateSummary:      "Run bootstrapped the owned checkout and is ready for backend execution.",
+			NextOwner:         "backend_worker",
+			NextExpectedEvent: "Execution worker records the next progress checkpoint.",
+			SuspiciousAfter:   request.DispatchRequestedAt.Add(15 * time.Minute),
+		},
+		RepoLane: request.RepoLane,
+	}
+	f.run = run
+	f.activeByTask[request.TaskID] = run
+	f.byRunID[request.RunID] = run
+	return run, nil
 }
 
 func (f *fakeRuntime) GetTaskRun(ctx context.Context, runID string) (taskrun.TaskRunView, error) {
-	return f.run, nil
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return taskrun.TaskRunView{}, fmt.Errorf("run not found")
+	}
+	return run, nil
 }
 
 func (f *fakeRuntime) GetActiveTaskRun(ctx context.Context, taskID string) (taskrun.TaskRunView, error) {
-	return f.run, nil
+	run, ok := f.activeByTask[taskID]
+	if !ok {
+		return taskrun.TaskRunView{}, fmt.Errorf("run not found")
+	}
+	return run, nil
 }
 
 func (f *fakeRuntime) ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot taskrun.TaskDefinitionSnapshot) (taskrun.TaskRunView, error) {
-	return f.run, nil
+	return f.GetTaskRun(ctx, runID)
 }
 
 func (f *fakeRuntime) UpdateTaskRun(ctx context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
+	run, err := f.GetTaskRun(ctx, runID)
+	if err != nil {
+		return taskrun.TaskRunView{}, err
+	}
 	if update.State != "" {
-		f.run.StateEnvelope.State = update.State
+		run.StateEnvelope.State = update.State
 	}
 	if update.ReasonCode != "" {
-		f.run.StateEnvelope.ReasonCode = update.ReasonCode
+		run.StateEnvelope.ReasonCode = update.ReasonCode
 	}
 	if update.StateSummary != "" {
-		f.run.StateEnvelope.StateSummary = update.StateSummary
+		run.StateEnvelope.StateSummary = update.StateSummary
 	}
 	if update.NextOwner != "" {
-		f.run.StateEnvelope.NextOwner = update.NextOwner
+		run.StateEnvelope.NextOwner = update.NextOwner
 	}
 	if update.NextExpectedEvent != "" {
-		f.run.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+		run.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
 	}
 	if !update.SuspiciousAfter.IsZero() {
-		f.run.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+		run.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
 	}
 	if update.FollowUp != nil {
-		f.run.FollowUp = update.FollowUp
+		run.FollowUp = update.FollowUp
 	}
 	if update.RepoLane != nil {
-		f.run.RepoLane = *update.RepoLane
+		run.RepoLane = *update.RepoLane
 	}
 	if update.Actions != nil {
-		f.run.Actions = update.Actions
+		run.Actions = update.Actions
 	}
 	if update.Attention != nil {
-		f.run.Attention = *update.Attention
+		run.Attention = *update.Attention
 	}
 	if !update.CompletedAt.IsZero() {
-		f.run.Status = "interrupted"
+		run.Status = "interrupted"
 	}
-	return f.run, nil
+	f.run = run
+	f.activeByTask[run.TaskID] = run
+	f.byRunID[run.RunID] = run
+	return run, nil
 }
 
 func mustRun(dir string, name string, args ...string) {
@@ -885,34 +957,60 @@ func mustOutput(dir string, name string, args ...string) string {
 	return string(output)
 }
 
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 func main() {
-	ownedRoot := filepath.Join(os.TempDir(), "cdxow", "task0008-probe-owned", "w")
+	baseRoot := filepath.Join(os.TempDir(), fmt.Sprintf("task0008-probe-%%d", time.Now().UnixNano()))
+	worktreeRoot := filepath.Join(baseRoot, "worktree")
+	ownedRoot := filepath.Join(os.TempDir(), "cdxow", filepath.Base(baseRoot), "w")
+	runsRoot := filepath.Join(baseRoot, "runs")
+	_ = os.RemoveAll(worktreeRoot)
 	_ = os.RemoveAll(filepath.Dir(ownedRoot))
-	_ = os.MkdirAll(ownedRoot, 0o755)
-	mustRun(ownedRoot, "git", "init")
-	mustRun(ownedRoot, "git", "config", "user.email", "probe@example.com")
-	mustRun(ownedRoot, "git", "config", "user.name", "Probe")
-	_ = os.WriteFile(filepath.Join(ownedRoot, "README.txt"), []byte("owned lane\n"), 0o644)
-	mustRun(ownedRoot, "git", "add", ".")
-	mustRun(ownedRoot, "git", "commit", "-m", "initial")
-	head := strings.TrimSpace(mustOutput(ownedRoot, "git", "rev-parse", "HEAD"))
+	_ = os.RemoveAll(runsRoot)
+	_ = os.MkdirAll(filepath.Join(worktreeRoot, "Tracking", "Task-0008"), 0o755)
+	_ = os.WriteFile(filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK.md"), []byte("# Task 0008\n\n## Title\n\nTask 0008\n\n## Summary\n\nOwned lane redispatch probe.\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK-STATE.json"), []byte("{\"task_id\":\"Task-0008\",\"status\":\"in_progress\",\"phase\":\"implementation\",\"plan_approved\":true,\"current_pass\":\"PASS-0002\",\"current_gate\":\"implementation\",\"blockers\":[],\"updated_at\":\"2026-04-24T17:10:00-04:00\"}\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(worktreeRoot, "Tracking", "Task-0008", "PLAN.md"), []byte("# approved plan\n"), 0o644)
+	mustRun(worktreeRoot, "git", "init")
+	mustRun(worktreeRoot, "git", "config", "user.email", "probe@example.com")
+	mustRun(worktreeRoot, "git", "config", "user.name", "Probe")
+	mustRun(worktreeRoot, "git", "add", ".")
+	mustRun(worktreeRoot, "git", "commit", "-m", "initial")
+	mustRun(worktreeRoot, "git", "worktree", "add", "--detach", ownedRoot, "HEAD")
+	head := strings.TrimSpace(mustOutput(worktreeRoot, "git", "rev-parse", "HEAD"))
 
 	rt := &fakeRuntime{
+		activeByTask: map[string]taskrun.TaskRunView{},
+		byRunID:      map[string]taskrun.TaskRunView{},
 		run: taskrun.TaskRunView{
 			RunID:  "taskrun--Task-0008--active",
 			TaskID: "Task-0008",
-			Status: "active",
+			Status: "interrupted",
 			StateEnvelope: taskrun.StateEnvelope{
-				State:             taskrun.StateRunning,
-				ReasonCode:        "owned_lane_bootstrapped",
-				StateSummary:      "Run bootstrapped the owned checkout and is ready for backend execution.",
-				NextOwner:         "backend_worker",
-				NextExpectedEvent: "Execution worker records the next progress checkpoint.",
+				State:             taskrun.StateInterrupted,
+				ReasonCode:        "interrupt_review_resolved_redispatch_ready",
+				StateSummary:      "Interrupt review approved the run for redispatch.",
+				NextOwner:         "backend",
+				NextExpectedEvent: "Dispatch a new run when the task is ready.",
 			},
-			Actions: map[string]taskrun.ActionAvailability{
-				taskrun.ActionDispatch:  {Allowed: false},
-				taskrun.ActionPoke:      {Allowed: false},
-				taskrun.ActionInterrupt: {Allowed: true},
+			FollowUp: &taskrun.RunFollowUp{
+				Kind:        "interrupt_review",
+				Owner:       "human_or_supervisor",
+				Status:      "completed",
+				Summary:     "Approved for redispatch.",
+				RequestedAt: time.Now().UTC().Add(-30 * time.Minute),
+				DueAt:       time.Now().UTC().Add(-28 * time.Minute),
+				CompletedAt: time.Now().UTC().Add(-25 * time.Minute),
+			},
+			Resolution: &taskrun.RunResolution{
+				Kind:       "interrupt_review",
+				Decision:   "redispatch_ready",
+				Summary:    "Approved for redispatch.",
+				ResolvedBy: "human",
+				ResolvedAt: time.Now().UTC().Add(-25 * time.Minute),
 			},
 			RepoLane: taskrun.RepoLane{
 				OwnedRepoRoot:         ownedRoot,
@@ -924,21 +1022,24 @@ func main() {
 			},
 		},
 	}
+	rt.activeByTask[rt.run.TaskID] = rt.run
+	rt.byRunID[rt.run.RunID] = rt.run
 
-	service := taskrun.NewService(filepath.Join(os.TempDir(), "task0008-probe-worktree"), filepath.Join(os.TempDir(), "task0008-probe-runs"), rt)
-	result, err := service.InterruptRun(context.Background(), "taskrun--Task-0008--active")
+	service := taskrun.NewService(worktreeRoot, runsRoot, rt)
+	redispatched, err := service.Dispatch(context.Background(), "Task-0008")
 	if err != nil {
 		panic(err)
 	}
 
-	windowHours := int(result.FollowUp.DueAt.Sub(result.FollowUp.RequestedAt).Hours())
 	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
-		"reason_code":         result.StateEnvelope.ReasonCode,
-		"follow_up_kind":      result.FollowUp.Kind,
-		"follow_up_status":    result.FollowUp.Status,
-		"due_window_hours":    windowHours,
-		"reset_status":        result.RepoLane.ResetStatus,
-		"next_expected_event": result.StateEnvelope.NextExpectedEvent,
+		"redispatch_run_id":              redispatched.RunID,
+		"original_owned_root":            ownedRoot,
+		"original_owned_root_removed":    !pathExists(ownedRoot),
+		"new_owned_root":                 redispatched.RepoLane.OwnedRepoRoot,
+		"new_owned_root_exists":          pathExists(redispatched.RepoLane.OwnedRepoRoot),
+		"new_owned_root_differs":         redispatched.RepoLane.OwnedRepoRoot != ownedRoot,
+		"new_run_reason_code":            redispatched.StateEnvelope.ReasonCode,
+		"new_run_current_commit_present": redispatched.RepoLane.CurrentCommit != "",
 	})
 }
 `, modulePath)
@@ -957,26 +1058,30 @@ func main() {
 		return "", fmt.Errorf("write behavior probe artifact: %w", err)
 	}
 	var probe struct {
-		DueWindowHours   int    `json:"due_window_hours"`
-		ReasonCode       string `json:"reason_code"`
-		FollowUpKind     string `json:"follow_up_kind"`
-		FollowUpStatus   string `json:"follow_up_status"`
-		ResetStatus      string `json:"reset_status"`
+		OriginalOwnedRootRemoved bool   `json:"original_owned_root_removed"`
+		NewOwnedRoot             string `json:"new_owned_root"`
+		NewOwnedRootExists       bool   `json:"new_owned_root_exists"`
+		NewOwnedRootDiffers      bool   `json:"new_owned_root_differs"`
+		NewRunReasonCode         string `json:"new_run_reason_code"`
+		NewRunCurrentCommit      bool   `json:"new_run_current_commit_present"`
 	}
 	if err := json.Unmarshal(output, &probe); err != nil {
 		return "", fmt.Errorf("decode behavior probe output: %w", err)
 	}
-	if probe.DueWindowHours != 2 {
-		return "", fmt.Errorf("behavior probe expected a 2 hour interrupt review window, got %d", probe.DueWindowHours)
+	if !probe.OriginalOwnedRootRemoved {
+		return "", fmt.Errorf("behavior probe expected the original owned root to be removed")
 	}
-	if probe.ReasonCode != "interrupt_requested" {
-		return "", fmt.Errorf("behavior probe expected interrupt_requested, got %q", probe.ReasonCode)
+	if !probe.NewOwnedRootExists {
+		return "", fmt.Errorf("behavior probe expected the new owned root to exist")
 	}
-	if probe.FollowUpKind != "interrupt_review" || probe.FollowUpStatus != "pending" {
-		return "", fmt.Errorf("behavior probe expected pending interrupt_review, got %q / %q", probe.FollowUpKind, probe.FollowUpStatus)
+	if !probe.NewOwnedRootDiffers {
+		return "", fmt.Errorf("behavior probe expected a fresh owned root")
 	}
-	if probe.ResetStatus != "restored" {
-		return "", fmt.Errorf("behavior probe expected restored owned lane, got %q", probe.ResetStatus)
+	if probe.NewRunReasonCode != "owned_lane_bootstrapped" {
+		return "", fmt.Errorf("behavior probe expected owned_lane_bootstrapped after redispatch, got %q", probe.NewRunReasonCode)
+	}
+	if !probe.NewRunCurrentCommit {
+		return "", fmt.Errorf("behavior probe expected the redispatched run to capture current commit")
 	}
 	return artifactPath, nil
 }

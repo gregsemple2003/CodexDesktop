@@ -556,19 +556,10 @@ import (
 const (
 	StateRunning     = "running"
 	StateInterrupted = "interrupted"
-	ActionDispatch   = "dispatch"
-	ActionPoke       = "poke"
-	ActionInterrupt  = "interrupt"
 )
 
-type ActionBlockReason struct {
-	Code    string
-	Summary string
-}
-
 type ActionAvailability struct {
-	Allowed      bool
-	BlockReasons []ActionBlockReason
+	Allowed bool
 }
 
 type AttentionPriority struct {
@@ -610,7 +601,13 @@ type RunFollowUp struct {
 	CompletedAt time.Time
 }
 
-type RunResolution struct{}
+type RunResolution struct {
+	Kind       string
+	Decision   string
+	Summary    string
+	ResolvedBy string
+	ResolvedAt time.Time
+}
 
 type WaitContract struct{}
 
@@ -676,75 +673,118 @@ type Runtime interface {
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type Service struct {
+	declaredWorktreeRoot string
+	trackingRoot         string
 	ownedLaneRoot string
 	runtime       Runtime
 	now           func() time.Time
 }
 
+type taskStateFile struct {
+	TaskID       string   ` + "`json:\"task_id\"`" + `
+	PlanApproved bool     ` + "`json:\"plan_approved\"`" + `
+	Blockers     []string ` + "`json:\"blockers\"`" + `
+}
+
 func NewService(declaredWorktreeRoot string, runsRoot string, runtimeBackend Runtime) *Service {
 	return &Service{
-		ownedLaneRoot: defaultOwnedLaneRoot(runsRoot),
-		runtime:       runtimeBackend,
+		declaredWorktreeRoot: declaredWorktreeRoot,
+		trackingRoot:         filepath.Join(declaredWorktreeRoot, "Tracking"),
+		ownedLaneRoot:        defaultOwnedLaneRoot(runsRoot),
+		runtime:              runtimeBackend,
 		now: func() time.Time {
 			return time.Now().UTC()
 		},
 	}
 }
 
-func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
-	return s.runtime.GetTaskRun(ctx, runID)
-}
-
-func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
-	return s.runtime.UpdateTaskRun(ctx, runID, update)
-}
-
-func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, error) {
-	run, err := s.Run(ctx, runID)
+func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, error) {
+	if s.runtime == nil {
+		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
+	}
+	state, err := s.readTaskState(taskID)
 	if err != nil {
 		return TaskRunView{}, err
 	}
-	availability := run.Actions[ActionInterrupt]
-	if !availability.Allowed {
-		return TaskRunView{}, fmt.Errorf("interrupt blocked")
+	if !state.PlanApproved || len(state.Blockers) > 0 {
+		return TaskRunView{}, fmt.Errorf("dispatch blocked")
 	}
+	repoLane, err := s.provisionOwnedLane(taskID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	snapshot := TaskDefinitionSnapshot{
+		DeclaredWorktreeRoot: s.declaredWorktreeRoot,
+		DeclaredTaskRoot:     filepath.Join(s.trackingRoot, taskID),
+		DeclaredTaskRevision: "probe",
+		DeclaredGitRevision:  repoLane.BaselineCommit,
+		CapturedAt:           s.now(),
+	}
+	repoLane, err = s.bootstrapOwnedLane(taskID, ActiveRunID(taskID), snapshot, repoLane)
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
+	return s.runtime.StartTaskRun(ctx, StartTaskRunRequest{
+		RunID:                ActiveRunID(taskID),
+		TaskID:               taskID,
+		CapturedTaskSnapshot: snapshot,
+		RepoLane:             repoLane,
+		DispatchRequestedAt:  s.now(),
+	})
+}
 
-	repoLane, resetErr := s.restoreOwnedLane(run.RepoLane)
-	if resetErr != nil {
-		return TaskRunView{}, resetErr
+func (s *Service) readTaskState(taskID string) (taskStateFile, error) {
+	raw, err := os.ReadFile(filepath.Join(s.trackingRoot, taskID, "TASK-STATE.json"))
+	if err != nil {
+		return taskStateFile{}, err
 	}
+	var state taskStateFile
+	if err := json.Unmarshal(raw, &state); err != nil {
+		return taskStateFile{}, err
+	}
+	return state, nil
+}
 
-	now := s.now()
-	update := TaskRunUpdate{
-		State:               StateInterrupted,
-		ReasonCode:          "interrupt_requested",
-		StateSummary:        "Run was interrupted and the owned checkout was restored.",
-		NextOwner:           "human_or_supervisor",
-		NextExpectedEvent:   "Review the interrupted run and decide whether to dispatch again.",
-		SuspiciousAfter:     now,
-		LastProgressSummary: "Interrupt restored the owned checkout to its recorded restore commit.",
-		FollowUp: &RunFollowUp{
-			Kind:        "interrupt_review",
-			Owner:       "human_or_supervisor",
-			Status:      "pending",
-			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
-			RequestedAt: now,
-			DueAt:       now.Add(24 * time.Hour),
-		},
-		RepoLane:    &repoLane,
-		CompletedAt: now,
+func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
+	if err := os.MkdirAll(s.ownedLaneRoot, 0o755); err != nil {
+		return RepoLane{}, err
 	}
-	return s.UpdateRun(ctx, runID, update)
+	baselineCommit := gitRevision(s.declaredWorktreeRoot)
+	laneDir := filepath.Join(s.ownedLaneRoot, sanitizePathSegment(taskID)+"-"+strconv.FormatInt(s.now().UnixNano(), 10))
+	if err := os.MkdirAll(laneDir, 0o755); err != nil {
+		return RepoLane{}, err
+	}
+	ownedRepoRoot := filepath.Join(laneDir, "w")
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "add", "--detach", ownedRepoRoot, baselineCommit)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return RepoLane{}, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return RepoLane{
+		OwnedRepoRoot:         ownedRepoRoot,
+		CheckoutMode:          "git_worktree_detached",
+		BaselineCommit:        baselineCommit,
+		ApprovedRestoreCommit: baselineCommit,
+		ResetStatus:           "not_run",
+	}, nil
+}
+
+func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskDefinitionSnapshot, repoLane RepoLane) (RepoLane, error) {
+	repoLane.CurrentCommit = gitRevision(repoLane.OwnedRepoRoot)
+	return repoLane, nil
 }
 
 func defaultOwnedLaneRoot(runsRoot string) string {
@@ -784,33 +824,42 @@ func gitInWorktree(worktreeRoot string, args ...string) error {
 	return nil
 }
 
-func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
-	now := s.now()
-	repoLane.LastResetAt = now
-	restoreCommit := repoLane.ApprovedRestoreCommit
-	if restoreCommit == "" {
-		restoreCommit = repoLane.BaselineCommit
+func gitRevision(worktreeRoot string) string {
+	output, err := exec.Command("git", "-C", worktreeRoot, "rev-parse", "HEAD").CombinedOutput()
+	if err != nil {
+		panic(string(output))
 	}
-	repoLane.LastResetTargetCommit = restoreCommit
-	repoLane.ResetFailureSummary = ""
+	return strings.TrimSpace(string(output))
+}
+
+func sanitizePathSegment(value string) string {
+	replacer := strings.NewReplacer("\\", "_", "/", "_", ":", "_", " ", "_")
+	return replacer.Replace(value)
+}
+
+func ActiveRunID(taskID string) string {
+	return "taskrun--" + sanitizePathSegment(taskID) + "--active"
+}
+
+func runOwnsLiveStory(run TaskRunView) bool {
+	return run.Status != "completed" && run.Status != "failed" && run.Status != "interrupted"
+}
+
+var errRunNotFound = errors.New("task run not found")
+var ErrRunNotFound = errRunNotFound
+
+func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
+	if repoLane.OwnedRepoRoot == "" {
+		return nil
+	}
 	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
-		repoLane.ResetStatus = "cleanup_blocked"
-		repoLane.ResetFailureSummary = "outside owned lane root"
-		return repoLane, fmt.Errorf("outside owned lane root")
+		return fmt.Errorf("outside owned lane root")
 	}
-	if err := gitInWorktree(repoLane.OwnedRepoRoot, "reset", "--hard", restoreCommit); err != nil {
-		repoLane.ResetStatus = "cleanup_blocked"
-		repoLane.ResetFailureSummary = "reset failed"
-		return repoLane, err
+	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
 	}
-	if err := gitInWorktree(repoLane.OwnedRepoRoot, "clean", "-fd"); err != nil {
-		repoLane.ResetStatus = "cleanup_blocked"
-		repoLane.ResetFailureSummary = "clean failed"
-		return repoLane, err
-	}
-	repoLane.ResetStatus = "restored"
-	repoLane.ApprovedRestoreCommit = restoreCommit
-	return repoLane, nil
+	return nil
 }
 `)
 	writeTaskFile(t, filepath.Join(ownedTaskRoot, "TASK.md"), "## Summary\n\nTask-specific owned lane execution for Task-0008.\n")
@@ -860,7 +909,11 @@ func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
 		WorkloadStepPath: stepPath,
 	})
 	if err != nil {
-		t.Fatalf("runExecuteWorkloadStep task-specific validation: %v", err)
+		stdoutPath := filepath.Join(runArtifactRoot, "task-specific-validation.stdout.txt")
+		stderrPath := filepath.Join(runArtifactRoot, "task-specific-validation.stderr.txt")
+		stdout, _ := os.ReadFile(stdoutPath)
+		stderr, _ := os.ReadFile(stderrPath)
+		t.Fatalf("runExecuteWorkloadStep task-specific validation: %v\nstdout:\n%s\nstderr:\n%s", err, string(stdout), string(stderr))
 	}
 	rawResult, err := os.ReadFile(result.WorkloadResultPath)
 	if err != nil {
@@ -873,7 +926,7 @@ func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed a later interrupt-review behavior in an existing owned-lane implementation file." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed owned-lane redispatch cleanup behavior in an existing implementation file." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -914,7 +967,7 @@ func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
 	if err != nil {
 		t.Fatalf("read workload code path: %v", err)
 	}
-	if !strings.Contains(string(rawCode), "DueAt:       now.Add(2 * time.Hour),") {
+	if !strings.Contains(string(rawCode), "releasePreviousOwnedLane(ctx,") {
 		t.Fatalf("code contents = %q", string(rawCode))
 	}
 	rawProbe, err := os.ReadFile(artifact.BehaviorProbePath)
@@ -922,26 +975,30 @@ func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
 		t.Fatalf("read behavior probe path: %v", err)
 	}
 	var probe struct {
-		ReasonCode     string `json:"reason_code"`
-		FollowUpKind   string `json:"follow_up_kind"`
-		FollowUpStatus string `json:"follow_up_status"`
-		DueWindowHours int    `json:"due_window_hours"`
-		ResetStatus    string `json:"reset_status"`
+		OriginalOwnedRootRemoved bool   `json:"original_owned_root_removed"`
+		NewOwnedRoot             string `json:"new_owned_root"`
+		NewOwnedRootExists       bool   `json:"new_owned_root_exists"`
+		NewOwnedRootDiffers      bool   `json:"new_owned_root_differs"`
+		NewRunReasonCode         string `json:"new_run_reason_code"`
+		NewRunCurrentCommit      bool   `json:"new_run_current_commit_present"`
 	}
 	if err := json.Unmarshal(rawProbe, &probe); err != nil {
 		t.Fatalf("decode behavior probe: %v", err)
 	}
-	if probe.ReasonCode != "interrupt_requested" {
-		t.Fatalf("probe reason code = %q", probe.ReasonCode)
+	if !probe.OriginalOwnedRootRemoved {
+		t.Fatal("expected original owned root to be removed")
 	}
-	if probe.FollowUpKind != "interrupt_review" || probe.FollowUpStatus != "pending" {
-		t.Fatalf("probe follow-up = %#v", probe)
+	if !probe.NewOwnedRootExists {
+		t.Fatal("expected new owned root to exist")
 	}
-	if probe.DueWindowHours != 2 {
-		t.Fatalf("probe due window = %d", probe.DueWindowHours)
+	if !probe.NewOwnedRootDiffers {
+		t.Fatal("expected a fresh owned root")
 	}
-	if probe.ResetStatus != "restored" {
-		t.Fatalf("probe reset status = %q", probe.ResetStatus)
+	if probe.NewRunReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("probe new run reason = %q", probe.NewRunReasonCode)
+	}
+	if !probe.NewRunCurrentCommit {
+		t.Fatal("expected redispatched run to capture current commit")
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)

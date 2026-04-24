@@ -55,6 +55,7 @@ Task-0008 also starts the first durable dispatch slice:
 - for `Task-0008`, that task-specific execution path can now also write `Tracking/Task-0008/OwnedLane/IMPLEMENTATION-BRIEF.md` inside the owned lane and advance to `task_0008_owned_lane_brief_written`
 - for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskexec/taskexec.go`, prove a changed bootstrapped-run suspiciousness window through an owned-lane behavior probe, and advance to `task_0008_existing_file_behavior_changed`
 - for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove a shortened interrupt-review follow-up window through an owned-lane behavior probe, and advance to `task_0008_interrupt_review_window_changed`
+- for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove that redispatch releases the previous terminal owned lane before opening a fresh one, and advance to `task_0008_redispatch_lane_released`
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.

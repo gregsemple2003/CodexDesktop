@@ -122,6 +122,9 @@ func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, err
 	if !task.DispatchReadiness.Ready {
 		return TaskRunView{}, fmt.Errorf("dispatch blocked: %s", summarizeBlockReasons(task.DispatchReadiness.BlockReasons))
 	}
+	if err := s.releasePreviousOwnedLane(ctx, task.TaskID); err != nil {
+		return TaskRunView{}, err
+	}
 
 	repoLane, err := s.provisionOwnedLane(task.TaskID)
 	if err != nil {
@@ -824,6 +827,26 @@ func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
 	}, nil
 }
 
+func (s *Service) releasePreviousOwnedLane(ctx context.Context, taskID string) error {
+	if s.runtime == nil {
+		return nil
+	}
+	previousRun, err := s.runtime.GetActiveTaskRun(ctx, taskID)
+	if err != nil {
+		if errors.Is(err, ErrRunNotFound) {
+			return nil
+		}
+		return err
+	}
+	if runOwnsLiveStory(previousRun) || previousRun.RepoLane.OwnedRepoRoot == "" {
+		return nil
+	}
+	if err := s.cleanupOwnedLane(previousRun.RepoLane); err != nil {
+		return fmt.Errorf("release previous owned lane for %s: %w", taskID, err)
+	}
+	return nil
+}
+
 func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskDefinitionSnapshot, repoLane RepoLane) (RepoLane, error) {
 	if repoLane.OwnedRepoRoot == "" {
 		return RepoLane{}, fmt.Errorf("bootstrap owned lane for %s: owned repo root is missing", taskID)
@@ -867,6 +890,9 @@ func (s *Service) bootstrapOwnedLane(taskID string, runID string, snapshot TaskD
 func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	if repoLane.OwnedRepoRoot == "" {
 		return nil
+	}
+	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
+		return fmt.Errorf("owned repo root %q is outside the backend-owned lane root", repoLane.OwnedRepoRoot)
 	}
 	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)
 	if output, err := cmd.CombinedOutput(); err != nil {
