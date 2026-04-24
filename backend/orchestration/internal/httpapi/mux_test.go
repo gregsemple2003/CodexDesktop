@@ -163,6 +163,26 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
+		run.StateEnvelope.ActionBlockReasons = map[string][]taskrun.ActionBlockReason{}
+		for action, availability := range update.Actions {
+			run.StateEnvelope.ActionBlockReasons[action] = append([]taskrun.ActionBlockReason(nil), availability.BlockReasons...)
+		}
+	}
+	if update.RepoLane != nil {
+		run.RepoLane = *update.RepoLane
+	}
+	if !update.CompletedAt.IsZero() {
+		run.LastProgressAt = update.CompletedAt
+	}
+	switch run.StateEnvelope.State {
+	case taskrun.StateCompleted:
+		run.Status = "completed"
+	case taskrun.StateFailed:
+		run.Status = "failed"
+	case taskrun.StateInterrupted:
+		run.Status = "interrupted"
+	default:
+		run.Status = "active"
 	}
 	f.byRunID[runID] = run
 	f.activeByTask[run.TaskID] = run
@@ -304,6 +324,18 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(updateResponse, updateRequest)
 	if updateResponse.Code != http.StatusAccepted {
 		t.Fatalf("POST /api/v1/task-runs/{id}/state status = %d, want 202", updateResponse.Code)
+	}
+
+	pokeResponse := httptest.NewRecorder()
+	mux.ServeHTTP(pokeResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+taskrun.ActiveRunID("Task-0008")+"/poke", nil))
+	if pokeResponse.Code != http.StatusBadRequest {
+		t.Fatalf("POST /api/v1/task-runs/{id}/poke status = %d, want 400 while run is waiting for human approval", pokeResponse.Code)
+	}
+
+	interruptResponse := httptest.NewRecorder()
+	mux.ServeHTTP(interruptResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+taskrun.ActiveRunID("Task-0008")+"/interrupt", nil))
+	if interruptResponse.Code != http.StatusAccepted {
+		t.Fatalf("POST /api/v1/task-runs/{id}/interrupt status = %d, want 202", interruptResponse.Code)
 	}
 
 	runsRequest := httptest.NewRequest(http.MethodGet, "/runs?job_id=codex-daily-ue-determinism-digest", nil)

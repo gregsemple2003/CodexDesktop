@@ -80,6 +80,17 @@ The repo already has:
 
 What is still missing is supervision, poke, interrupt, cleanup behavior, and real task execution over those durable runs.
 
+`PASS-0002` now has its first real supervision and intervention slice:
+
+- read-through supervision that marks stale active runs as `sleeping_or_stalled`
+- `POST /api/v1/task-runs/{run_id}/poke`
+- `POST /api/v1/task-runs/{run_id}/interrupt`
+- owned-lane restore-to-commit cleanup on interrupt
+- task readback that releases live-story ownership after terminal runs
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0001.md](./Testing/PASS-0002-BACKEND-SMOKE-0001.md)
+
+What is still missing is deeper stale-wait supervision, richer cleanup-failure handling, and real task execution over those durable runs.
+
 ## Current Gate
 
 Implementation is active under the approved backend-only runtime split:
@@ -92,12 +103,13 @@ Implementation is active under the approved backend-only runtime split:
 
 ## Next Recommended Step
 
-Continue with `PASS-0002` by turning the durable run model into a recoverable supervision surface before any frontend work starts.
+Continue with `PASS-0002` by deepening the supervision surface before any frontend work starts.
 
 The next implementation slice should:
 
-- turn the current runtime-state update path into real backend-owned supervision behavior instead of manual API-only mutation
-- add durable transitions for poke, interrupt, cleanup, and later restore-to-commit reporting
+- add a stronger stale-human-wait supervision path instead of only stale-progress supervision
+- make cleanup-blocked and reset-failure outcomes first-class readback, not just error strings
+- keep poke and interrupt behavior tied to durable worker-side follow-up instead of only backend intervention recording
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints

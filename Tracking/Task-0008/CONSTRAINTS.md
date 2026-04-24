@@ -36,3 +36,7 @@ Add new constraints here as they are given.
 ### 2026-04-24 Constraint Memory
 
 - Write a markdown file `CONSTRAINTS.md` and put that in there, along with any other constraint i give you.
+
+### 2026-04-24 Continuous Ownership
+
+- Plan approved. Start implementation immediately. Do not stop until blocked or done.

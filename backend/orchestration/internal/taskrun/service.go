@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"sort"
 	"strings"
@@ -146,7 +147,11 @@ func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
 	if s.runtime == nil {
 		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
 	}
-	return s.runtime.GetTaskRun(ctx, runID)
+	run, err := s.runtime.GetTaskRun(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	return s.refreshRun(ctx, run)
 }
 
 func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
@@ -161,6 +166,67 @@ func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpd
 		update.Attention = &attention
 	}
 	return s.runtime.UpdateTaskRun(ctx, runID, update)
+}
+
+func (s *Service) PokeRun(ctx context.Context, runID string) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	availability := run.Actions[ActionPoke]
+	if !availability.Allowed {
+		return TaskRunView{}, fmt.Errorf("poke blocked: %s", summarizeBlockReasons(availability.BlockReasons))
+	}
+
+	now := s.now()
+	update := TaskRunUpdate{
+		State:               StateSleepingOrStalled,
+		ReasonCode:          "poke_requested",
+		StateSummary:        "Run was poked and is waiting for a fresh backend progress signal.",
+		NextOwner:           "backend",
+		NextExpectedEvent:   "Execution worker records a fresh progress update.",
+		SuspiciousAfter:     now.Add(10 * time.Minute),
+		LastProgressSummary: "Backend requested a fresh status update for the stalled run.",
+	}
+	return s.UpdateRun(ctx, runID, update)
+}
+
+func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	availability := run.Actions[ActionInterrupt]
+	if !availability.Allowed {
+		return TaskRunView{}, fmt.Errorf("interrupt blocked: %s", summarizeBlockReasons(availability.BlockReasons))
+	}
+
+	repoLane, resetErr := s.restoreOwnedLane(run.RepoLane)
+	if resetErr != nil {
+		update := TaskRunUpdate{
+			State:             StateBlocked,
+			ReasonCode:        "interrupt_cleanup_blocked",
+			StateSummary:      "Run interrupt could not restore the owned checkout.",
+			NextOwner:         "backend",
+			NextExpectedEvent: "Review cleanup failure and resolve the owned checkout manually.",
+			RepoLane:          &repoLane,
+			FailureSummary:    resetErr.Error(),
+		}
+		return s.UpdateRun(ctx, runID, update)
+	}
+
+	now := s.now()
+	update := TaskRunUpdate{
+		State:             StateInterrupted,
+		ReasonCode:        "interrupt_requested",
+		StateSummary:      "Run was interrupted and the owned checkout was restored.",
+		NextOwner:         "human_or_supervisor",
+		NextExpectedEvent: "Review the interrupted run and decide whether to dispatch again.",
+		SuspiciousAfter:   now,
+		RepoLane:          &repoLane,
+		CompletedAt:       now,
+	}
+	return s.UpdateRun(ctx, runID, update)
 }
 
 func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, error) {
@@ -213,18 +279,32 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 			run = reconciled
 		}
 	}
+	run, err = s.refreshRun(ctx, run)
+	if err != nil {
+		return TaskView{}, err
+	}
 
 	view.LatestRun = &run
-	view.CurrentStory = StoryOwnership{
-		OwnerRunID: run.RunID,
-		Status:     "active_run",
-		Reason:     "An active task run owns the current live story.",
+	if runOwnsLiveStory(run) {
+		view.CurrentStory = StoryOwnership{
+			OwnerRunID: run.RunID,
+			Status:     "active_run",
+			Reason:     "An active task run owns the current live story.",
+		}
+		view.StateEnvelope = run.StateEnvelope
+		view.Attention = run.Attention
+		view.Actions = run.Actions
+		view.DispatchReadiness = s.deriveDispatchReadiness(metadata, true)
+		view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+	} else {
+		view.CurrentStory = StoryOwnership{
+			Status: "no_active_run",
+			Reason: "The latest task run is terminal and no run currently owns the live story.",
+		}
+		view.DispatchReadiness = s.deriveDispatchReadiness(metadata, false)
+		view.Actions = defaultActions(view.DispatchReadiness)
+		view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
 	}
-	view.StateEnvelope = run.StateEnvelope
-	view.Attention = run.Attention
-	view.Actions = run.Actions
-	view.DispatchReadiness = s.deriveDispatchReadiness(metadata, true)
-	view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
 
 	return view, nil
 }
@@ -454,6 +534,43 @@ func (s *Service) captureSnapshot(taskRoot string) (TaskDefinitionSnapshot, erro
 	}, nil
 }
 
+func (s *Service) refreshRun(ctx context.Context, run TaskRunView) (TaskRunView, error) {
+	if s.runtime == nil {
+		return run, nil
+	}
+	update := s.derivedRunUpdate(run)
+	if update == nil {
+		return run, nil
+	}
+	return s.runtime.UpdateTaskRun(ctx, run.RunID, *update)
+}
+
+func (s *Service) derivedRunUpdate(run TaskRunView) *TaskRunUpdate {
+	now := s.now()
+	desiredActions := actionsForRun(run, now)
+	desiredAttention := attentionForRun(run, now)
+
+	var update TaskRunUpdate
+	changed := false
+
+	if staleUpdate, ok := staleRunUpdate(run, now, desiredActions, desiredAttention); ok {
+		return &staleUpdate
+	}
+
+	if !reflect.DeepEqual(run.Actions, desiredActions) {
+		update.Actions = desiredActions
+		changed = true
+	}
+	if run.Attention != desiredAttention {
+		update.Attention = &desiredAttention
+		changed = true
+	}
+	if !changed {
+		return nil
+	}
+	return &update
+}
+
 func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
 	baselineCommit := gitRevision(s.declaredWorktreeRoot)
 	if baselineCommit == "" {
@@ -496,6 +613,38 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	return nil
 }
 
+func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
+	now := s.now()
+	repoLane.LastResetAt = now
+	restoreCommit := repoLane.ApprovedRestoreCommit
+	if restoreCommit == "" {
+		restoreCommit = repoLane.BaselineCommit
+	}
+	if repoLane.OwnedRepoRoot == "" {
+		repoLane.ResetStatus = "cleanup_blocked"
+		return repoLane, fmt.Errorf("owned repo root is missing")
+	}
+	if restoreCommit == "" {
+		repoLane.ResetStatus = "cleanup_blocked"
+		return repoLane, fmt.Errorf("restore commit is missing")
+	}
+	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
+		repoLane.ResetStatus = "cleanup_blocked"
+		return repoLane, fmt.Errorf("owned repo root %q is outside the backend-owned lane root", repoLane.OwnedRepoRoot)
+	}
+	if err := gitInWorktree(repoLane.OwnedRepoRoot, "reset", "--hard", restoreCommit); err != nil {
+		repoLane.ResetStatus = "cleanup_blocked"
+		return repoLane, fmt.Errorf("reset owned lane to %s: %w", restoreCommit, err)
+	}
+	if err := gitInWorktree(repoLane.OwnedRepoRoot, "clean", "-fd"); err != nil {
+		repoLane.ResetStatus = "cleanup_blocked"
+		return repoLane, fmt.Errorf("clean owned lane: %w", err)
+	}
+	repoLane.ResetStatus = "restored"
+	repoLane.ApprovedRestoreCommit = restoreCommit
+	return repoLane, nil
+}
+
 func defaultActions(readiness DispatchReadiness) map[string]ActionAvailability {
 	return map[string]ActionAvailability{
 		ActionDispatch: {
@@ -524,42 +673,40 @@ func actionsForRunState(state string) map[string]ActionAvailability {
 		Code:    "active_run_exists",
 		Summary: "Dispatch is blocked while this run owns the current live story.",
 	}}
-	pokeUnavailable := []ActionBlockReason{{
-		Code:    "poke_not_implemented",
-		Summary: "Poke is not implemented yet for task runs.",
-	}}
-	interruptUnavailable := []ActionBlockReason{{
-		Code:    "interrupt_not_implemented",
-		Summary: "Interrupt is not implemented yet for task runs.",
-	}}
+	pokeUnavailable := []ActionBlockReason{{Code: "poke_not_allowed_for_state", Summary: "Poke is not allowed in the current run state."}}
+	interruptAllowed := ActionAvailability{Allowed: true}
+	interruptUnavailable := []ActionBlockReason{{Code: "interrupt_not_allowed_for_state", Summary: "Interrupt is not allowed in the current run state."}}
 
 	switch state {
-	case StateRunning, StateDispatching, StateSleepingOrStalled:
+	case StateRunning, StateDispatching:
 		return map[string]ActionAvailability{
 			ActionDispatch:  {Allowed: false, BlockReasons: dispatchBlocked},
 			ActionPoke:      {Allowed: false, BlockReasons: pokeUnavailable},
-			ActionInterrupt: {Allowed: false, BlockReasons: interruptUnavailable},
+			ActionInterrupt: interruptAllowed,
 		}
-	case StateWaitingForHuman, StateBlocked, StateCompleted, StateFailed, StateInterrupted:
+	case StateSleepingOrStalled:
 		return map[string]ActionAvailability{
-			ActionDispatch: {
-				Allowed:      false,
-				BlockReasons: dispatchBlocked,
-			},
-			ActionPoke: {
-				Allowed: false,
-				BlockReasons: []ActionBlockReason{{
-					Code:    "poke_not_allowed_for_state",
-					Summary: "Poke is not allowed in the current run state.",
-				}},
-			},
-			ActionInterrupt: {
-				Allowed: false,
-				BlockReasons: []ActionBlockReason{{
-					Code:    "interrupt_not_allowed_for_state",
-					Summary: "Interrupt is not allowed in the current run state.",
-				}},
-			},
+			ActionDispatch:  {Allowed: false, BlockReasons: dispatchBlocked},
+			ActionPoke:      {Allowed: true},
+			ActionInterrupt: interruptAllowed,
+		}
+	case StateWaitingForHuman, StateBlocked:
+		return map[string]ActionAvailability{
+			ActionDispatch:  {Allowed: false, BlockReasons: dispatchBlocked},
+			ActionPoke:      {Allowed: false, BlockReasons: pokeUnavailable},
+			ActionInterrupt: interruptAllowed,
+		}
+	case StateCompleted, StateFailed, StateInterrupted:
+		return map[string]ActionAvailability{
+			ActionDispatch: {Allowed: false, BlockReasons: dispatchBlocked},
+			ActionPoke: {Allowed: false, BlockReasons: []ActionBlockReason{{
+				Code:    "run_terminal",
+				Summary: "Poke is not allowed after the run has already ended.",
+			}}},
+			ActionInterrupt: {Allowed: false, BlockReasons: []ActionBlockReason{{
+				Code:    "run_terminal",
+				Summary: "Interrupt is not allowed after the run has already ended.",
+			}}},
 		}
 	default:
 		return map[string]ActionAvailability{
@@ -568,6 +715,33 @@ func actionsForRunState(state string) map[string]ActionAvailability {
 			ActionInterrupt: {Allowed: false, BlockReasons: interruptUnavailable},
 		}
 	}
+}
+
+func actionsForRun(run TaskRunView, now time.Time) map[string]ActionAvailability {
+	actions := actionsForRunState(run.StateEnvelope.State)
+	if run.StateEnvelope.State == StateRunning || run.StateEnvelope.State == StateDispatching {
+		if !run.StateEnvelope.SuspiciousAfter.IsZero() && now.After(run.StateEnvelope.SuspiciousAfter) {
+			actions[ActionPoke] = ActionAvailability{Allowed: true}
+		} else {
+			actions[ActionPoke] = ActionAvailability{
+				Allowed: false,
+				BlockReasons: []ActionBlockReason{{
+					Code:    "run_not_suspicious_yet",
+					Summary: "Poke stays blocked until the run misses its next expected progress deadline.",
+				}},
+			}
+		}
+	}
+	if run.StateEnvelope.State == StateWaitingForHuman && run.WaitContract != nil && !run.WaitContract.StaleAfter.IsZero() && now.After(run.WaitContract.StaleAfter) {
+		actions[ActionPoke] = ActionAvailability{
+			Allowed: false,
+			BlockReasons: []ActionBlockReason{{
+				Code:    "waiting_for_human",
+				Summary: "Poke does not replace the required human action on a stale human wait.",
+			}},
+		}
+	}
+	return actions
 }
 
 func attentionForRunState(state string) AttentionPriority {
@@ -587,6 +761,49 @@ func attentionForRunState(state string) AttentionPriority {
 	default:
 		return AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-active"}
 	}
+}
+
+func attentionForRun(run TaskRunView, now time.Time) AttentionPriority {
+	if run.StateEnvelope.State == StateWaitingForHuman && run.WaitContract != nil && !run.WaitContract.StaleAfter.IsZero() && now.After(run.WaitContract.StaleAfter) {
+		return AttentionPriority{Level: AttentionUrgent, Reason: "Run is still waiting on a human action past its stale deadline.", SortKey: "12-waiting_stale"}
+	}
+	return attentionForRunState(run.StateEnvelope.State)
+}
+
+func staleRunUpdate(run TaskRunView, now time.Time, actions map[string]ActionAvailability, attention AttentionPriority) (TaskRunUpdate, bool) {
+	if (run.StateEnvelope.State == StateRunning || run.StateEnvelope.State == StateDispatching) &&
+		!run.StateEnvelope.SuspiciousAfter.IsZero() &&
+		now.After(run.StateEnvelope.SuspiciousAfter) {
+		return TaskRunUpdate{
+			State:               StateSleepingOrStalled,
+			ReasonCode:          "progress_stale",
+			StateSummary:        "Run has gone quiet past its expected progress window.",
+			NextOwner:           "backend",
+			NextExpectedEvent:   "Poke or interrupt the run.",
+			SuspiciousAfter:     run.StateEnvelope.SuspiciousAfter,
+			LastProgressSummary: "Supervision marked the run as sleeping or stalled.",
+			Attention:           &attention,
+			Actions:             actionsForRunState(StateSleepingOrStalled),
+		}, true
+	}
+	if run.StateEnvelope.State == StateWaitingForHuman &&
+		run.WaitContract != nil &&
+		!run.WaitContract.StaleAfter.IsZero() &&
+		now.After(run.WaitContract.StaleAfter) &&
+		run.StateEnvelope.ReasonCode != "human_wait_stale" {
+		return TaskRunUpdate{
+			State:               StateWaitingForHuman,
+			ReasonCode:          "human_wait_stale",
+			StateSummary:        "Run is still waiting for human input and the wait has gone stale.",
+			NextOwner:           "human",
+			NextExpectedEvent:   "Review the stale wait or interrupt the run.",
+			SuspiciousAfter:     run.WaitContract.StaleAfter,
+			LastProgressSummary: "Supervision marked the human wait as stale.",
+			Attention:           &attention,
+			Actions:             actions,
+		}, true
+	}
+	return TaskRunUpdate{}, false
 }
 
 func collectActionBlockReasons(actions map[string]ActionAvailability) map[string][]ActionBlockReason {
@@ -689,4 +906,38 @@ func defaultOwnedLaneRoot(runsRoot string) string {
 func shortTaskSegment(taskID string) string {
 	hash := sha256.Sum256([]byte(taskID))
 	return sanitizePathSegment(taskID) + "-" + hex.EncodeToString(hash[:4])
+}
+
+func runOwnsLiveStory(run TaskRunView) bool {
+	return run.Status != "completed" && run.Status != "failed" && run.Status != "interrupted"
+}
+
+func pathWithinRoot(path string, root string) bool {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	rel, err := filepath.Rel(absRoot, absPath)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func gitInWorktree(worktreeRoot string, args ...string) error {
+	argv := []string{}
+	if runtime.GOOS == "windows" {
+		argv = append(argv, "-c", "core.longpaths=true")
+	}
+	argv = append(argv, "-C", worktreeRoot)
+	argv = append(argv, args...)
+	cmd := exec.Command("git", argv...)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return nil
 }

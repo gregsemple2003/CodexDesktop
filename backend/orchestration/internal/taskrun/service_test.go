@@ -112,10 +112,27 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
+		run.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(update.Actions)
+	}
+	if update.RepoLane != nil {
+		run.RepoLane = *update.RepoLane
 	}
 	if update.LastProgressSummary != "" {
 		run.LastProgressSummary = update.LastProgressSummary
 		run.LastProgressAt = time.Now().UTC()
+	}
+	if !update.CompletedAt.IsZero() {
+		run.LastProgressAt = update.CompletedAt
+	}
+	switch run.StateEnvelope.State {
+	case StateCompleted:
+		run.Status = "completed"
+	case StateFailed:
+		run.Status = "failed"
+	case StateInterrupted:
+		run.Status = "interrupted"
+	default:
+		run.Status = "active"
 	}
 	f.byRunID[runID] = run
 	f.activeByTask[run.TaskID] = run
@@ -351,6 +368,138 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if updated.Attention.Level != AttentionNeedsAttention {
 		t.Fatalf("attention level = %q, want %q", updated.Attention.Level, AttentionNeedsAttention)
+	}
+}
+
+func TestRunReadSupervisesStaleProgressIntoSleepingState(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if _, err := service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:             StateRunning,
+		ReasonCode:        "worker_started",
+		StateSummary:      "Run is actively executing.",
+		SuspiciousAfter:   time.Now().UTC().Add(-1 * time.Minute),
+		NextOwner:         "backend",
+		NextExpectedEvent: "Execution worker records the next progress checkpoint.",
+	}); err != nil {
+		t.Fatalf("prime run: %v", err)
+	}
+
+	supervised, err := service.Run(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("run detail: %v", err)
+	}
+	if supervised.StateEnvelope.State != StateSleepingOrStalled {
+		t.Fatalf("state = %q, want %q", supervised.StateEnvelope.State, StateSleepingOrStalled)
+	}
+	if !supervised.Actions[ActionPoke].Allowed {
+		t.Fatal("poke should be allowed after supervision marks the run stalled")
+	}
+	if !supervised.Actions[ActionInterrupt].Allowed {
+		t.Fatal("interrupt should stay allowed for a stalled run")
+	}
+}
+
+func TestInterruptRunRestoresOwnedLaneAndMarksInterrupted(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	writeFile(t, filepath.Join(run.RepoLane.OwnedRepoRoot, "scratch.txt"), "temporary\n")
+	writeFile(t, filepath.Join(run.RepoLane.OwnedRepoRoot, "Tracking", "Task-0008", "TASK.md"), "# changed\n")
+
+	interrupted, err := service.InterruptRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+	if interrupted.StateEnvelope.State != StateInterrupted {
+		t.Fatalf("state = %q, want %q", interrupted.StateEnvelope.State, StateInterrupted)
+	}
+	if interrupted.RepoLane.ResetStatus != "restored" {
+		t.Fatalf("reset status = %q, want restored", interrupted.RepoLane.ResetStatus)
+	}
+	if interrupted.Status != "interrupted" {
+		t.Fatalf("status = %q, want interrupted", interrupted.Status)
+	}
+
+	cmd := exec.Command("git", "-C", interrupted.RepoLane.OwnedRepoRoot, "status", "--short")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git status in owned lane: %v\n%s", err, string(output))
+	}
+	if got := string(output); got != "" {
+		t.Fatalf("owned lane should be clean after interrupt reset, got %q", got)
+	}
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail after interrupt: %v", err)
+	}
+	if task.CurrentStory.Status != "no_active_run" {
+		t.Fatalf("current story after interrupt = %q, want no_active_run", task.CurrentStory.Status)
+	}
+	if !task.DispatchReadiness.Ready {
+		t.Fatal("dispatch should be ready again after the latest run is terminal")
 	}
 }
 

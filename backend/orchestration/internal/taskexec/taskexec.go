@@ -55,6 +55,9 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 			applyUpdate(&view, update, workflow.Now(ctx).UTC())
 		})
 		selector.Select(ctx)
+		if isTerminalStatus(view.Status) {
+			return view, nil
+		}
 	}
 }
 
@@ -182,4 +185,8 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 	if update.FailureSummary != "" {
 		view.DocRuntimeDivergenceSummary = update.FailureSummary
 	}
+}
+
+func isTerminalStatus(status string) bool {
+	return status == "completed" || status == "failed" || status == "interrupted"
 }

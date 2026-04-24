@@ -24,6 +24,8 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `POST /api/v1/tasks/{task_id}/dispatch`
 - expose `GET /api/v1/task-runs/{run_id}`
 - expose `POST /api/v1/task-runs/{run_id}/state`
+- expose `POST /api/v1/task-runs/{run_id}/poke`
+- expose `POST /api/v1/task-runs/{run_id}/interrupt`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
 
 Task-0008 also starts the first durable dispatch slice:
@@ -32,8 +34,11 @@ Task-0008 also starts the first durable dispatch slice:
 - dispatch provisions an exclusive backend-owned checkout lane
 - dispatch captures the baseline commit the owned lane may restore to later
 - task runs can accept backend-owned post-dispatch state updates
+- active-run reads can supervise stale progress into `sleeping_or_stalled`
+- interrupt can restore the owned checkout to its recorded restore commit
+- terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Poke, interrupt, cleanup reset, and real task execution inside the owned checkout remain future slices.
+Further stale-wait supervision, richer cleanup-failure surfacing, and real task execution inside the owned checkout remain future slices.
 
 ## Scheduling Boundary
 
@@ -76,6 +81,8 @@ The current backend slice proves:
   - `GET /api/v1/task-runs/{run_id}`
 - task-run mutation API:
   - `POST /api/v1/task-runs/{run_id}/state`
+  - `POST /api/v1/task-runs/{run_id}/poke`
+  - `POST /api/v1/task-runs/{run_id}/interrupt`
 - task dispatch API:
   - `POST /api/v1/tasks/{task_id}/dispatch`
 - `codex exec` command assembly with per-run artifact paths for JSONL events and final-message capture
@@ -180,6 +187,8 @@ Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/disp
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active | Select-Object -ExpandProperty Content
 $body = '{"state":"waiting_for_human","reason_code":"approval_required","state_summary":"Run is waiting for approval.","next_owner":"human","next_expected_event":"Approve or redirect the next backend step."}'
 Invoke-WebRequest -Method Post -Uri http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/state -ContentType 'application/json' -Body $body | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/poke | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/interrupt | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-digest/run | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/webhooks/digests/physical-agents | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/sync | Select-Object -ExpandProperty Content
