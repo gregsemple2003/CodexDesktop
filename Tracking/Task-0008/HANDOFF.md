@@ -60,7 +60,16 @@ The repo already has:
 - `GET /api/v1/tasks/{task_id}`
 - unit coverage plus backend smoke evidence in [Testing/PASS-0000-BACKEND-SMOKE-0001.md](./Testing/PASS-0000-BACKEND-SMOKE-0001.md)
 
-What is still missing is durable dispatch and Temporal-backed task-run persistence that tie readback to real owned execution.
+`PASS-0001` has now landed the first durable dispatch slice:
+
+- `POST /api/v1/tasks/{task_id}/dispatch`
+- `GET /api/v1/task-runs/{run_id}`
+- Temporal-backed task-run workflow registration and query shape
+- owned worktree allocation for simple task dispatch
+- baseline-commit capture and initial restore-baseline capture
+- backend smoke evidence in [Testing/PASS-0001-BACKEND-SMOKE-0001.md](./Testing/PASS-0001-BACKEND-SMOKE-0001.md)
+
+What is still missing is richer live execution-state evolution after dispatch, plus supervision, poke, interrupt, and cleanup behavior over those durable runs.
 
 ## Current Gate
 
@@ -74,15 +83,14 @@ Implementation is active under the approved backend-only runtime split:
 
 ## Next Recommended Step
 
-Implement `PASS-0001` and turn readback into a real runtime capability before any frontend work starts.
+Continue `PASS-0001` by extending the initial dispatch slice into a fuller runtime capability before any frontend work starts.
 
 The next implementation slice should:
 
-- add real dispatch entrypoints
-- persist task runs durably through Temporal-backed runtime state
-- capture an owned checkout or owned-lane identity for simple execution
-- capture the dispatch baseline commit before the run mutates that owned lane
+- move task runs beyond initial `dispatching` into richer durable runtime states
+- add more live run detail to readback beyond the initial snapshot and owned-lane baseline
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
+- prepare the runtime shape that later `PASS-0002` supervision, poke, interrupt, and cleanup logic will act on
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
 
 ## Watchouts
