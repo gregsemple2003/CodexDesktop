@@ -192,7 +192,24 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - the workload result artifact now records scoped post-execution git status for only the owned-lane outputs this slice wrote
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0012.md](./Testing/PASS-0002-BACKEND-SMOKE-0012.md)
 
-What is still missing is moving from owned-lane scaffold generation into the first worker-applied edit of an existing Task-0008 implementation file.
+`PASS-0002` now also has the first worker-applied edit of an existing Task-0008 implementation file:
+
+- after Task-0008 validation and brief generation, the workflow now edits the existing owned-lane implementation path:
+  - `backend/orchestration/internal/taskexec/taskexec.go`
+- the edited owned lane still passes:
+  - `go test ./internal/taskexec ./internal/taskrun`
+- task readback now advances automatically to:
+  - `reason_code = task_0008_existing_file_edited`
+- run readback continues to expose:
+  - `repo_lane.workload_code_path`
+  but the durable code path now points at an existing implementation file rather than a generated side file
+- the workload result artifact records scoped owned-lane git status including:
+  - `M backend/orchestration/internal/taskexec/taskexec.go`
+  - `?? .codex-taskrun/`
+  - `?? Tracking/Task-0008/OwnedLane/`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0013.md](./Testing/PASS-0002-BACKEND-SMOKE-0013.md)
+
+What is still missing is moving from a bounded comment-level existing-file edit into the first worker-applied implementation change that meaningfully alters existing Task-0008 runtime behavior inside the owned lane.
 
 ## Current Gate
 
@@ -210,7 +227,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from owned-lane scaffold generation into the first worker-applied edit of an existing Task-0008 implementation file
+- move from the bounded existing-file edit into the first worker-applied implementation change that meaningfully alters existing Task-0008 runtime behavior inside the owned lane
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -224,7 +241,7 @@ The next implementation slice should:
 - when replaying the fixed active task-run id after workflow-shape changes, reset the disposable validation Temporal volume or the proof lane will correctly fail on old workflow history
 - after a fresh validation-volume reset, a clean manual listener may need a short Temporal warm-up delay before backend startup or it can fail with `error reading server preface: EOF`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
-- do not mistake an owned-lane scaffold file for a real production-file edit; the next honest step is an edit to an existing Task-0008 implementation file
+- do not mistake a bounded owned-lane existing-file edit for finished implementation work; the next honest step is a worker-applied change that alters existing Task-0008 runtime behavior
 - do not broaden this task into dashboard implementation work
 
 ## References

@@ -607,7 +607,7 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and wrote an owned-lane code scaffold." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and edited an existing owned-lane implementation file." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -642,13 +642,13 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read workload code path: %v", err)
 	}
-	if !strings.Contains(string(rawCode), "Task0008OwnedLaneGeneratedSummary") {
+	if !strings.Contains(string(rawCode), "Task0008OwnedLaneEditNote:") {
 		t.Fatalf("code contents = %q", string(rawCode))
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
-	if !strings.Contains(artifact.GitStatusShortAfter, "task0008_owned_lane_generated.go") {
+	if !strings.Contains(artifact.GitStatusShortAfter, "backend/orchestration/internal/taskexec/taskexec.go") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if artifact.ExitCode != 0 {

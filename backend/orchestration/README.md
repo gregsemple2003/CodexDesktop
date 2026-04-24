@@ -53,7 +53,7 @@ Task-0008 also starts the first durable dispatch slice:
 - the task-run workflow can now execute that prepared workload packet and advance automatically to `workload_step_executed`
 - for `Task-0008`, the task-run workflow can now execute a concrete owned-lane backend validation command and advance automatically to `task_0008_backend_validation_complete`
 - for `Task-0008`, that task-specific execution path can now also write `Tracking/Task-0008/OwnedLane/IMPLEMENTATION-BRIEF.md` inside the owned lane and advance to `task_0008_owned_lane_brief_written`
-- for `Task-0008`, that execution path can now also write `backend/orchestration/internal/taskexec/task0008_owned_lane_generated.go` inside the owned lane and advance to `task_0008_owned_lane_code_written`
+- for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskexec/taskexec.go` and advance to `task_0008_existing_file_edited`
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.

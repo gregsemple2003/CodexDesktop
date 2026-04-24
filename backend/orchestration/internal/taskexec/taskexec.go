@@ -181,11 +181,11 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					attentionReason := "Run executed its first workload step and is ready for the next backend step."
 					attentionSortKey := "42-workload_step_executed"
 					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_owned_lane_code_written"
-						stateSummary = "Run validated Task-0008 and wrote an owned-lane code scaffold."
-						nextExpectedEvent = "Execution worker applies the next Task-0008-specific code change."
-						attentionReason = "Run wrote a Task-0008 code scaffold inside the owned lane and is ready for the next backend step."
-						attentionSortKey = "39-task_0008_owned_lane_code_written"
+						reasonCode = "task_0008_existing_file_edited"
+						stateSummary = "Run validated Task-0008 and edited an existing owned-lane implementation file."
+						nextExpectedEvent = "Execution worker applies the next Task-0008-specific behavior change."
+						attentionReason = "Run edited an existing Task-0008 implementation file inside the owned lane and is ready for the next backend step."
+						attentionSortKey = "38-task_0008_existing_file_edited"
 					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
@@ -636,13 +636,13 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		repoLane.OwnedRepoRoot,
 		".codex-taskrun",
 		filepath.Join("Tracking", "Task-0008", "OwnedLane"),
-		filepath.Join("backend", "orchestration", "internal", "taskexec", "task0008_owned_lane_generated.go"),
+		filepath.Join("backend", "orchestration", "internal", "taskexec", "taskexec.go"),
 	)
 	if err != nil {
 		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", err
 	}
 
-	summary := "Executed Task-0008 backend validation and wrote an owned-lane code scaffold."
+	summary := "Executed Task-0008 backend validation and edited an existing owned-lane implementation file."
 	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, gitStatusAfter, nil
 }
 
@@ -727,30 +727,53 @@ func writeTask0008OwnedLaneBrief(step workloadStepArtifact) (string, error) {
 }
 
 func writeTask0008OwnedLaneCode(step workloadStepArtifact) (string, error) {
-	codePath := filepath.Join(step.OwnedRepoRoot, "backend", "orchestration", "internal", "taskexec", "task0008_owned_lane_generated.go")
-	if err := os.MkdirAll(filepath.Dir(codePath), 0o755); err != nil {
-		return "", fmt.Errorf("create owned-lane code directory: %w", err)
+	codePath := filepath.Join(step.OwnedRepoRoot, "backend", "orchestration", "internal", "taskexec", "taskexec.go")
+	raw, err := os.ReadFile(codePath)
+	if err != nil {
+		return "", fmt.Errorf("read owned-lane implementation file: %w", err)
 	}
-	code := strings.Join([]string{
-		"package taskexec",
-		"",
-		"// Task0008OwnedLaneGeneratedSummary captures the latest owned-lane worker scaffold for Task-0008.",
-		"const Task0008OwnedLaneGeneratedSummary = \"Advance from owned-lane code scaffolding into the next bounded Task-0008 backend change.\"",
-		"",
-		"// Task0008OwnedLaneGeneratedTargets lists the next backend files the owned-lane worker should inspect.",
-		"func Task0008OwnedLaneGeneratedTargets() []string {",
-		"\treturn []string{",
-		"\t\t\"backend/orchestration/internal/taskexec/taskexec.go\",",
-		"\t\t\"backend/orchestration/internal/taskrun/service.go\",",
-		"\t\t\"backend/orchestration/internal/taskrun/types.go\",",
-		"\t}",
-		"}",
-		"",
-	}, "\n")
-	if err := os.WriteFile(codePath, []byte(code), 0o644); err != nil {
-		return "", fmt.Errorf("write owned-lane code scaffold: %w", err)
+	updated := applyTask0008OwnedLaneEdit(string(raw))
+	if err := os.WriteFile(codePath, []byte(updated), 0o644); err != nil {
+		return "", fmt.Errorf("write owned-lane implementation file: %w", err)
 	}
 	return codePath, nil
+}
+
+func applyTask0008OwnedLaneEdit(source string) string {
+	const noteLine = "// Task0008OwnedLaneEditNote: Advance from bounded owned-lane edits into the next Task-0008 runtime behavior change."
+	const targetLine = "// Task0008OwnedLaneEditTargets: backend/orchestration/internal/taskexec/taskexec.go | backend/orchestration/internal/taskrun/service.go | backend/orchestration/internal/taskrun/types.go"
+
+	lines := strings.Split(source, "\n")
+	filtered := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if strings.HasPrefix(line, "// Task0008OwnedLaneEditNote:") || strings.HasPrefix(line, "// Task0008OwnedLaneEditTargets:") {
+			continue
+		}
+		filtered = append(filtered, line)
+	}
+	lines = filtered
+
+	insertAt := -1
+	for i, line := range lines {
+		if strings.HasPrefix(line, "package ") {
+			insertAt = i + 1
+			break
+		}
+	}
+	if insertAt == -1 {
+		insertAt = 0
+	}
+
+	noteBlock := []string{noteLine, targetLine}
+	result := make([]string, 0, len(lines)+len(noteBlock)+1)
+	result = append(result, lines[:insertAt]...)
+	if insertAt > 0 && insertAt < len(lines) && lines[insertAt] != "" {
+		result = append(result, "")
+	}
+	result = append(result, noteBlock...)
+	result = append(result, "")
+	result = append(result, lines[insertAt:]...)
+	return strings.Join(result, "\n")
 }
 
 func taskexecExtractMarkdownSection(markdown string, heading string) string {
