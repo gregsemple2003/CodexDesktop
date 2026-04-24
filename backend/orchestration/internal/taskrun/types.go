@@ -111,6 +111,16 @@ type RepoLane struct {
 	LastResetAt           time.Time `json:"last_reset_at,omitempty"`
 }
 
+type RunFollowUp struct {
+	Kind        string    `json:"kind"`
+	Owner       string    `json:"owner"`
+	Status      string    `json:"status"`
+	Summary     string    `json:"summary"`
+	RequestedAt time.Time `json:"requested_at,omitempty"`
+	DueAt       time.Time `json:"due_at,omitempty"`
+	CompletedAt time.Time `json:"completed_at,omitempty"`
+}
+
 type TaskDefinitionSnapshot struct {
 	DeclaredWorktreeRoot string               `json:"declared_worktree_root"`
 	DeclaredTaskRoot     string               `json:"declared_task_root"`
@@ -136,6 +146,7 @@ type TaskRunView struct {
 	WaitContract                *WaitContract                 `json:"wait_contract,omitempty"`
 	Attention                   AttentionPriority             `json:"attention"`
 	Actions                     map[string]ActionAvailability `json:"actions,omitempty"`
+	FollowUp                    *RunFollowUp                  `json:"follow_up,omitempty"`
 	RepoLane                    RepoLane                      `json:"repo_lane"`
 	LastProgressAt              time.Time                     `json:"last_progress_at,omitempty"`
 	LastProgressSummary         string                        `json:"last_progress_summary,omitempty"`
@@ -197,6 +208,7 @@ type TaskRunUpdate struct {
 	Attention           *AttentionPriority            `json:"attention,omitempty"`
 	RepoLane            *RepoLane                     `json:"repo_lane,omitempty"`
 	Actions             map[string]ActionAvailability `json:"actions,omitempty"`
+	FollowUp            *RunFollowUp                  `json:"follow_up,omitempty"`
 	CompletedAt         time.Time                     `json:"completed_at,omitempty"`
 	FailureSummary      string                        `json:"failure_summary,omitempty"`
 }

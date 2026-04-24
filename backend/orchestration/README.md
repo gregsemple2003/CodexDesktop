@@ -38,9 +38,10 @@ Task-0008 also starts the first durable dispatch slice:
 - active-run reads can supervise stale human waits into `human_wait_stale`
 - interrupt can restore the owned checkout to its recorded restore commit
 - interrupt cleanup failures surface through dedicated repo-lane reset failure fields
+- `poke` creates a durable backend-worker follow-up that later runtime progress can complete
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Worker-side follow-up after poke or interrupt, richer repair workflow for cleanup-blocked runs, and real task execution inside the owned checkout remain future slices.
+Richer repair workflow for cleanup-blocked runs, comparable follow-up lifecycle for interrupt review or repair, and real task execution inside the owned checkout remain future slices.
 
 ## Scheduling Boundary
 

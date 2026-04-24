@@ -110,6 +110,9 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	if update.Attention != nil {
 		run.Attention = *update.Attention
 	}
+	if update.FollowUp != nil {
+		run.FollowUp = update.FollowUp
+	}
 	if update.Actions != nil {
 		run.Actions = update.Actions
 		run.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(update.Actions)
@@ -644,6 +647,193 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if blocked.FailureSummary == "" {
 		t.Fatal("expected run failure summary to be populated")
+	}
+}
+
+func TestPokeRunCreatesPendingWorkerFollowUp(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	_, err = service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:           StateSleepingOrStalled,
+		ReasonCode:      "progress_stale",
+		StateSummary:    "Run has gone quiet past its expected progress window.",
+		SuspiciousAfter: time.Now().UTC().Add(5 * time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("prime stalled run: %v", err)
+	}
+
+	poked, err := service.PokeRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("poke run: %v", err)
+	}
+	if poked.FollowUp == nil {
+		t.Fatal("expected follow-up after poke")
+	}
+	if poked.FollowUp.Kind != "poke_worker_check" || poked.FollowUp.Status != "pending" {
+		t.Fatalf("follow-up = %#v", poked.FollowUp)
+	}
+	if poked.Actions[ActionPoke].Allowed {
+		t.Fatal("poke should be blocked while follow-up is pending")
+	}
+}
+
+func TestUpdateRunCompletesPendingWorkerFollowUp(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	_, err = service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:        StateSleepingOrStalled,
+		ReasonCode:   "poke_requested",
+		StateSummary: "Run was poked and is waiting for a fresh backend progress signal.",
+		FollowUp: &RunFollowUp{
+			Kind:        "poke_worker_check",
+			Owner:       "backend_worker",
+			Status:      "pending",
+			Summary:     "Execution worker should acknowledge the poke.",
+			RequestedAt: time.Now().UTC(),
+			DueAt:       time.Now().UTC().Add(5 * time.Minute),
+		},
+	})
+	if err != nil {
+		t.Fatalf("seed follow-up: %v", err)
+	}
+
+	updated, err := service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:               StateRunning,
+		ReasonCode:          "worker_resumed",
+		StateSummary:        "Run resumed after the worker follow-up.",
+		LastProgressSummary: "Execution worker acknowledged the poke and resumed progress.",
+	})
+	if err != nil {
+		t.Fatalf("complete follow-up: %v", err)
+	}
+	if updated.FollowUp == nil || updated.FollowUp.Status != "completed" {
+		t.Fatalf("follow-up should be completed, got %#v", updated.FollowUp)
+	}
+}
+
+func TestRunReadMarksPendingWorkerFollowUpOverdue(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	_, err = service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:        StateSleepingOrStalled,
+		ReasonCode:   "poke_requested",
+		StateSummary: "Run was poked and is waiting for a fresh backend progress signal.",
+		FollowUp: &RunFollowUp{
+			Kind:        "poke_worker_check",
+			Owner:       "backend_worker",
+			Status:      "pending",
+			Summary:     "Execution worker should acknowledge the poke.",
+			RequestedAt: time.Now().UTC().Add(-10 * time.Minute),
+			DueAt:       time.Now().UTC().Add(-5 * time.Minute),
+		},
+	})
+	if err != nil {
+		t.Fatalf("seed overdue follow-up: %v", err)
+	}
+
+	supervised, err := service.Run(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("run detail: %v", err)
+	}
+	if supervised.FollowUp == nil || supervised.FollowUp.Status != "overdue" {
+		t.Fatalf("expected overdue follow-up, got %#v", supervised.FollowUp)
+	}
+	if supervised.Attention.Level != AttentionUrgent {
+		t.Fatalf("attention level = %q, want urgent", supervised.Attention.Level)
 	}
 }
 

@@ -158,11 +158,20 @@ func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpd
 	if s.runtime == nil {
 		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
 	}
-	if update.Actions == nil && update.State != "" {
-		update.Actions = actionsForRunState(update.State)
+	current, err := s.runtime.GetTaskRun(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
 	}
-	if update.Attention == nil && update.State != "" {
-		attention := attentionForRunState(update.State)
+	now := s.now()
+	if update.FollowUp == nil {
+		update.FollowUp = derivedFollowUp(current, update, now)
+	}
+	projected := projectRun(current, update, now)
+	if update.Actions == nil {
+		update.Actions = actionsForRun(projected, now)
+	}
+	if update.Attention == nil {
+		attention := attentionForRun(projected, now)
 		update.Attention = &attention
 	}
 	return s.runtime.UpdateTaskRun(ctx, runID, update)
@@ -184,9 +193,17 @@ func (s *Service) PokeRun(ctx context.Context, runID string) (TaskRunView, error
 		ReasonCode:          "poke_requested",
 		StateSummary:        "Run was poked and is waiting for a fresh backend progress signal.",
 		NextOwner:           "backend",
-		NextExpectedEvent:   "Execution worker records a fresh progress update.",
+		NextExpectedEvent:   "Execution worker records a fresh progress update or explicit wait reason.",
 		SuspiciousAfter:     now.Add(10 * time.Minute),
 		LastProgressSummary: "Backend requested a fresh status update for the stalled run.",
+		FollowUp: &RunFollowUp{
+			Kind:        "poke_worker_check",
+			Owner:       "backend_worker",
+			Status:      "pending",
+			Summary:     "Execution worker should acknowledge the poke with fresh progress or an explicit wait reason.",
+			RequestedAt: now,
+			DueAt:       now.Add(5 * time.Minute),
+		},
 	}
 	return s.UpdateRun(ctx, runID, update)
 }
@@ -210,6 +227,14 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 			NextOwner:         "human_or_supervisor",
 			NextExpectedEvent: "Review cleanup failure and resolve the owned checkout manually.",
 			LastProgressSummary: "Interrupt cleanup failed and the owned checkout needs manual review.",
+			FollowUp: &RunFollowUp{
+				Kind:        "cleanup_repair",
+				Owner:       "human_or_supervisor",
+				Status:      "pending",
+				Summary:     "Repair the cleanup-blocked owned checkout before attempting another interrupt or redispatch.",
+				RequestedAt: s.now(),
+				DueAt:       s.now().Add(24 * time.Hour),
+			},
 			RepoLane:          &repoLane,
 			FailureSummary:    resetErr.Error(),
 		}
@@ -225,6 +250,14 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 		NextExpectedEvent: "Review the interrupted run and decide whether to dispatch again.",
 		SuspiciousAfter:   now,
 		LastProgressSummary: "Interrupt restored the owned checkout to its recorded restore commit.",
+		FollowUp: &RunFollowUp{
+			Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),
+		},
 		RepoLane:          &repoLane,
 		CompletedAt:       now,
 	}
@@ -551,6 +584,7 @@ func (s *Service) derivedRunUpdate(run TaskRunView) *TaskRunUpdate {
 	now := s.now()
 	desiredActions := actionsForRun(run, now)
 	desiredAttention := attentionForRun(run, now)
+	desiredFollowUp := desiredFollowUp(run, now)
 
 	var update TaskRunUpdate
 	changed := false
@@ -565,6 +599,10 @@ func (s *Service) derivedRunUpdate(run TaskRunView) *TaskRunUpdate {
 	}
 	if run.Attention != desiredAttention {
 		update.Attention = &desiredAttention
+		changed = true
+	}
+	if !reflect.DeepEqual(run.FollowUp, desiredFollowUp) {
+		update.FollowUp = desiredFollowUp
 		changed = true
 	}
 	if !changed {
@@ -732,6 +770,15 @@ func actionsForRunState(state string) map[string]ActionAvailability {
 
 func actionsForRun(run TaskRunView, now time.Time) map[string]ActionAvailability {
 	actions := actionsForRunState(run.StateEnvelope.State)
+	if run.FollowUp != nil && run.FollowUp.Status == "pending" && run.FollowUp.Kind == "poke_worker_check" {
+		actions[ActionPoke] = ActionAvailability{
+			Allowed: false,
+			BlockReasons: []ActionBlockReason{{
+				Code:    "follow_up_pending",
+				Summary: "Poke is already waiting on a backend-worker follow-up.",
+			}},
+		}
+	}
 	if run.StateEnvelope.State == StateRunning || run.StateEnvelope.State == StateDispatching {
 		if !run.StateEnvelope.SuspiciousAfter.IsZero() && now.After(run.StateEnvelope.SuspiciousAfter) {
 			actions[ActionPoke] = ActionAvailability{Allowed: true}
@@ -777,10 +824,30 @@ func attentionForRunState(state string) AttentionPriority {
 }
 
 func attentionForRun(run TaskRunView, now time.Time) AttentionPriority {
+	if run.FollowUp != nil && run.FollowUp.Status == "overdue" {
+		switch run.FollowUp.Owner {
+		case "backend_worker":
+			return AttentionPriority{Level: AttentionUrgent, Reason: "A backend-worker follow-up is overdue.", SortKey: "11-follow_up_overdue"}
+		default:
+			return AttentionPriority{Level: AttentionUrgent, Reason: "A required follow-up is overdue.", SortKey: "13-follow_up_overdue"}
+		}
+	}
 	if run.StateEnvelope.State == StateWaitingForHuman && run.WaitContract != nil && !run.WaitContract.StaleAfter.IsZero() && now.After(run.WaitContract.StaleAfter) {
 		return AttentionPriority{Level: AttentionUrgent, Reason: "Run is still waiting on a human action past its stale deadline.", SortKey: "12-waiting_stale"}
 	}
 	return attentionForRunState(run.StateEnvelope.State)
+}
+
+func desiredFollowUp(run TaskRunView, now time.Time) *RunFollowUp {
+	if run.FollowUp == nil {
+		return nil
+	}
+	followUp := *run.FollowUp
+	if followUp.Status == "pending" && !followUp.DueAt.IsZero() && now.After(followUp.DueAt) {
+		followUp.Status = "overdue"
+		return &followUp
+	}
+	return run.FollowUp
 }
 
 func staleRunUpdate(run TaskRunView, now time.Time, actions map[string]ActionAvailability, attention AttentionPriority) (TaskRunUpdate, bool) {
@@ -817,6 +884,100 @@ func staleRunUpdate(run TaskRunView, now time.Time, actions map[string]ActionAva
 		}, true
 	}
 	return TaskRunUpdate{}, false
+}
+
+func projectRun(current TaskRunView, update TaskRunUpdate, now time.Time) TaskRunView {
+	projected := current
+	if update.State != "" {
+		projected.StateEnvelope.State = update.State
+	}
+	if update.ReasonCode != "" {
+		projected.StateEnvelope.ReasonCode = update.ReasonCode
+	}
+	if update.StateSummary != "" {
+		projected.StateEnvelope.StateSummary = update.StateSummary
+	}
+	if update.NextOwner != "" {
+		projected.StateEnvelope.NextOwner = update.NextOwner
+	}
+	if update.NextExpectedEvent != "" {
+		projected.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+	}
+	if !update.SuspiciousAfter.IsZero() {
+		projected.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+	}
+	if update.WaitContract != nil {
+		projected.WaitContract = update.WaitContract
+	} else if update.State != "" && update.State != StateWaitingForHuman {
+		projected.WaitContract = nil
+	}
+	if update.RepoLane != nil {
+		projected.RepoLane = *update.RepoLane
+	}
+	if update.FollowUp != nil {
+		if isEmptyRunFollowUp(update.FollowUp) {
+			projected.FollowUp = nil
+		} else {
+			projected.FollowUp = update.FollowUp
+		}
+	}
+	if update.LastProgressSummary != "" {
+		projected.LastProgressSummary = update.LastProgressSummary
+		projected.LastProgressAt = now
+	}
+	if update.FailureSummary != "" {
+		projected.FailureSummary = update.FailureSummary
+	} else if update.State != "" && update.State != StateBlocked && update.State != StateFailed {
+		projected.FailureSummary = ""
+	}
+	if !update.CompletedAt.IsZero() {
+		projected.LastProgressAt = update.CompletedAt
+	}
+	switch projected.StateEnvelope.State {
+	case StateCompleted:
+		projected.Status = "completed"
+	case StateFailed:
+		projected.Status = "failed"
+	case StateInterrupted:
+		projected.Status = "interrupted"
+	default:
+		projected.Status = "active"
+	}
+	return projected
+}
+
+func derivedFollowUp(current TaskRunView, update TaskRunUpdate, now time.Time) *RunFollowUp {
+	if update.FollowUp != nil {
+		return update.FollowUp
+	}
+	if current.FollowUp == nil {
+		return nil
+	}
+	if current.FollowUp.Owner == "backend_worker" && current.FollowUp.Status != "completed" {
+		effectiveState := current.StateEnvelope.State
+		if update.State != "" {
+			effectiveState = update.State
+		}
+		if update.LastProgressSummary != "" && update.ReasonCode != "poke_requested" && effectiveState != StateSleepingOrStalled {
+			completed := *current.FollowUp
+			completed.Status = "completed"
+			completed.CompletedAt = now
+			completed.Summary = "Backend worker follow-up completed with a fresh runtime update."
+			return &completed
+		}
+	}
+	return current.FollowUp
+}
+
+func isEmptyRunFollowUp(followUp *RunFollowUp) bool {
+	return followUp != nil &&
+		followUp.Kind == "" &&
+		followUp.Owner == "" &&
+		followUp.Status == "" &&
+		followUp.Summary == "" &&
+		followUp.RequestedAt.IsZero() &&
+		followUp.DueAt.IsZero() &&
+		followUp.CompletedAt.IsZero()
 }
 
 func collectActionBlockReasons(actions map[string]ActionAvailability) map[string][]ActionBlockReason {

@@ -146,3 +146,82 @@ func TestApplyUpdateClearsWaitContractWhenRunLeavesHumanWait(t *testing.T) {
 		t.Fatal("wait contract should clear once the run leaves waiting_for_human")
 	}
 }
+
+func TestApplyUpdateStoresRunFollowUp(t *testing.T) {
+	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
+	view := InitialView(taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: `C:\Agent\CodexDashboard`,
+			DeclaredTaskRoot:     `C:\Agent\CodexDashboard\Tracking\Task-0008`,
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  "abc123",
+			CapturedAt:           dispatchAt,
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         `C:\Temp\owned`,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        "abc123",
+			ApprovedRestoreCommit: "abc123",
+			ResetStatus:           "not_run",
+		},
+		DispatchRequestedAt: dispatchAt,
+	}, "workflow-id", "run-id")
+
+	applyUpdate(&view, taskrun.TaskRunUpdate{
+		State: taskrun.StateSleepingOrStalled,
+		FollowUp: &taskrun.RunFollowUp{
+			Kind:        "poke_worker_check",
+			Owner:       "backend_worker",
+			Status:      "pending",
+			Summary:     "Execution worker should acknowledge the poke.",
+			RequestedAt: dispatchAt.Add(2 * time.Minute),
+			DueAt:       dispatchAt.Add(7 * time.Minute),
+		},
+	}, dispatchAt.Add(2*time.Minute))
+
+	if view.FollowUp == nil || view.FollowUp.Kind != "poke_worker_check" {
+		t.Fatalf("follow-up = %#v", view.FollowUp)
+	}
+}
+
+func TestApplyUpdateClearsExplicitEmptyFollowUp(t *testing.T) {
+	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
+	view := InitialView(taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: `C:\Agent\CodexDashboard`,
+			DeclaredTaskRoot:     `C:\Agent\CodexDashboard\Tracking\Task-0008`,
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  "abc123",
+			CapturedAt:           dispatchAt,
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         `C:\Temp\owned`,
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        "abc123",
+			ApprovedRestoreCommit: "abc123",
+			ResetStatus:           "not_run",
+		},
+		DispatchRequestedAt: dispatchAt,
+	}, "workflow-id", "run-id")
+
+	applyUpdate(&view, taskrun.TaskRunUpdate{
+		FollowUp: &taskrun.RunFollowUp{
+			Kind:   "cleanup_repair",
+			Owner:  "human_or_supervisor",
+			Status: "pending",
+		},
+	}, dispatchAt.Add(1*time.Minute))
+	applyUpdate(&view, taskrun.TaskRunUpdate{
+		FollowUp: &taskrun.RunFollowUp{},
+	}, dispatchAt.Add(2*time.Minute))
+
+	if view.FollowUp != nil {
+		t.Fatalf("follow-up should be cleared, got %#v", view.FollowUp)
+	}
+}

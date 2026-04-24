@@ -100,7 +100,14 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
   - run-level `failure_summary`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0002.md](./Testing/PASS-0002-BACKEND-SMOKE-0002.md)
 
-What is still missing is worker-side follow-up after poke or interrupt, richer repair workflow over cleanup-blocked runs, and real task execution over those durable runs.
+`PASS-0002` now also has the first durable worker-follow-up loop for `poke`:
+
+- `poke` creates a pending backend-worker follow-up on the run
+- repeated `poke` is blocked while that follow-up is pending
+- a fresh runtime update completes the follow-up durably
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0003.md](./Testing/PASS-0002-BACKEND-SMOKE-0003.md)
+
+What is still missing is a richer repair workflow over cleanup-blocked runs, comparable follow-up behavior around interrupt review or repair, and real task execution over those durable runs.
 
 ## Current Gate
 
@@ -118,8 +125,8 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- keep poke and interrupt behavior tied to durable worker-side follow-up instead of only backend intervention recording
 - turn cleanup-blocked from a truthful readback into a fuller repair or retry workflow
+- decide whether interrupt review and cleanup repair should use the same durable follow-up lifecycle as `poke`
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints

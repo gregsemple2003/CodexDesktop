@@ -164,6 +164,13 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 	if update.Attention != nil {
 		view.Attention = *update.Attention
 	}
+	if update.FollowUp != nil {
+		if isEmptyFollowUp(update.FollowUp) {
+			view.FollowUp = nil
+		} else {
+			view.FollowUp = update.FollowUp
+		}
+	}
 	if update.RepoLane != nil {
 		view.RepoLane = *update.RepoLane
 	}
@@ -193,4 +200,15 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 
 func isTerminalStatus(status string) bool {
 	return status == "completed" || status == "failed" || status == "interrupted"
+}
+
+func isEmptyFollowUp(followUp *taskrun.RunFollowUp) bool {
+	return followUp != nil &&
+		followUp.Kind == "" &&
+		followUp.Owner == "" &&
+		followUp.Status == "" &&
+		followUp.Summary == "" &&
+		followUp.RequestedAt.IsZero() &&
+		followUp.DueAt.IsZero() &&
+		followUp.CompletedAt.IsZero()
 }
