@@ -545,8 +545,75 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	moduleRoot := filepath.Join(ownedRoot, "backend", "orchestration")
 	ownedTaskRoot := filepath.Join(ownedRoot, "Tracking", "Task-0008")
 	writeTaskFile(t, filepath.Join(moduleRoot, "go.mod"), "module example.com/task0008owned/backend/orchestration\n\ngo 1.25.0\n")
-	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), "package taskexec\n\nfunc Name() string { return \"taskexec\" }\n")
-	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "taskrun.go"), "package taskrun\n\nfunc Name() string { return \"taskrun\" }\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "taskrun.go"), `package taskrun
+
+import "time"
+
+type StateEnvelope struct {
+	ReasonCode        string
+	NextExpectedEvent string
+	SuspiciousAfter   time.Time
+}
+
+type RepoLane struct {
+	OwnedRepoRoot         string
+	CheckoutMode          string
+	BaselineCommit        string
+	CurrentCommit         string
+	ApprovedRestoreCommit string
+	RunArtifactRoot       string
+	BootstrapArtifactPath string
+	ResetStatus           string
+}
+
+type TaskDefinitionSnapshot struct {
+	DeclaredWorktreeRoot string
+	DeclaredTaskRoot     string
+	DeclaredTaskRevision string
+	DeclaredGitRevision  string
+	CapturedAt           time.Time
+}
+
+type StartTaskRunRequest struct {
+	RunID                string
+	TaskID               string
+	MeaningSummary       string
+	CapturedTaskSnapshot TaskDefinitionSnapshot
+	RepoLane             RepoLane
+	DispatchRequestedAt  time.Time
+}
+
+type TaskRunView struct {
+	StateEnvelope StateEnvelope
+}
+`)
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), `package taskexec
+
+import (
+	"time"
+
+	"example.com/task0008owned/backend/orchestration/internal/taskrun"
+)
+
+func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executionRunID string) taskrun.TaskRunView {
+	suspiciousAfter := request.DispatchRequestedAt.Add(15 * time.Minute)
+	initialReasonCode := "dispatch_started"
+	initialNextExpectedEvent := "Execution worker records the next task-run state update."
+
+	if request.RepoLane.CurrentCommit != "" {
+		initialReasonCode = "owned_lane_bootstrapped"
+		initialNextExpectedEvent = "Execution worker records the next progress checkpoint."
+	}
+
+	return taskrun.TaskRunView{
+		StateEnvelope: taskrun.StateEnvelope{
+			ReasonCode:        initialReasonCode,
+			NextExpectedEvent: initialNextExpectedEvent,
+			SuspiciousAfter:   suspiciousAfter,
+		},
+	}
+}
+`)
 	writeTaskFile(t, filepath.Join(ownedTaskRoot, "TASK.md"), "## Summary\n\nTask-specific owned lane execution for Task-0008.\n")
 	writeTaskFile(t, filepath.Join(ownedTaskRoot, "HANDOFF.md"), "## Next Recommended Step\n\n- Mutate one bounded backend-owned file in the owned lane.\n")
 	writeTaskFile(t, filepath.Join(ownedTaskRoot, "CONSTRAINTS.md"), "## Active Constraints\n\n- Keep the slice bounded.\n")
@@ -607,7 +674,7 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and edited an existing owned-lane implementation file." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed runtime behavior in an existing owned-lane implementation file." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -618,6 +685,9 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	}
 	if artifact.WorkloadCodePath == "" {
 		t.Fatalf("expected workload code path, got %#v", artifact)
+	}
+	if artifact.BehaviorProbePath == "" {
+		t.Fatalf("expected behavior probe path, got %#v", artifact)
 	}
 	if _, err := os.Stat(artifact.StdoutPath); err != nil {
 		t.Fatalf("stat stdout path: %v", err)
@@ -631,6 +701,9 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if _, err := os.Stat(artifact.WorkloadCodePath); err != nil {
 		t.Fatalf("stat workload code path: %v", err)
 	}
+	if _, err := os.Stat(artifact.BehaviorProbePath); err != nil {
+		t.Fatalf("stat behavior probe path: %v", err)
+	}
 	rawBrief, err := os.ReadFile(artifact.WorkloadOutputPath)
 	if err != nil {
 		t.Fatalf("read workload output path: %v", err)
@@ -642,8 +715,25 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read workload code path: %v", err)
 	}
-	if !strings.Contains(string(rawCode), "Task0008OwnedLaneEditNote:") {
+	if !strings.Contains(string(rawCode), "suspiciousAfter = request.DispatchRequestedAt.Add(5 * time.Minute)") {
 		t.Fatalf("code contents = %q", string(rawCode))
+	}
+	rawProbe, err := os.ReadFile(artifact.BehaviorProbePath)
+	if err != nil {
+		t.Fatalf("read behavior probe path: %v", err)
+	}
+	var probe struct {
+		ReasonCode              string `json:"reason_code"`
+		SuspiciousWindowMinutes int    `json:"suspicious_window_minutes"`
+	}
+	if err := json.Unmarshal(rawProbe, &probe); err != nil {
+		t.Fatalf("decode behavior probe: %v", err)
+	}
+	if probe.ReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("probe reason code = %q", probe.ReasonCode)
+	}
+	if probe.SuspiciousWindowMinutes != 5 {
+		t.Fatalf("probe suspicious window = %d", probe.SuspiciousWindowMinutes)
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)

@@ -209,7 +209,25 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
   - `?? Tracking/Task-0008/OwnedLane/`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0013.md](./Testing/PASS-0002-BACKEND-SMOKE-0013.md)
 
-What is still missing is moving from a bounded comment-level existing-file edit into the first worker-applied implementation change that meaningfully alters existing Task-0008 runtime behavior inside the owned lane.
+`PASS-0002` now also has the first worker-applied implementation change in an existing Task-0008 file that alters runtime behavior:
+
+- after Task-0008 validation and brief generation, the workflow now edits the existing owned-lane implementation path:
+  - `backend/orchestration/internal/taskexec/taskexec.go`
+- that edit now changes the bootstrapped-run suspiciousness window in `InitialView` from:
+  - `15 minutes`
+  to:
+  - `5 minutes`
+- the workflow now runs an owned-lane behavior probe after the code edit and records:
+  - `behavior_probe_path`
+  in the workload result artifact
+- task readback now advances automatically to:
+  - `reason_code = task_0008_existing_file_behavior_changed`
+- the live proof verified:
+  - the owned-lane edited file contains the real code change
+  - the owned-lane behavior probe reported `suspicious_window_minutes = 5`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0014.md](./Testing/PASS-0002-BACKEND-SMOKE-0014.md)
+
+What is still missing is moving from this bounded bootstrap-window behavior change into the next worker-applied existing-file change that affects a broader or later Task-0008 runtime path inside the owned lane.
 
 ## Current Gate
 
@@ -227,7 +245,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from the bounded existing-file edit into the first worker-applied implementation change that meaningfully alters existing Task-0008 runtime behavior inside the owned lane
+- move from the bounded bootstrap-window behavior change into the next worker-applied existing-file change that affects a broader or later Task-0008 runtime path inside the owned lane
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -240,8 +258,9 @@ The next implementation slice should:
 - validation-lane runner restarts on `14318` can serve stale binaries or fail on stdout-log locks; use a clean manual listener when live proof needs trustworthy current code
 - when replaying the fixed active task-run id after workflow-shape changes, reset the disposable validation Temporal volume or the proof lane will correctly fail on old workflow history
 - after a fresh validation-volume reset, a clean manual listener may need a short Temporal warm-up delay before backend startup or it can fail with `error reading server preface: EOF`
+- when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
-- do not mistake a bounded owned-lane existing-file edit for finished implementation work; the next honest step is a worker-applied change that alters existing Task-0008 runtime behavior
+- do not mistake a bounded owned-lane bootstrap-window change for finished implementation work; the next honest step is another worker-applied existing-file change that affects a broader or later Task-0008 runtime path
 - do not broaden this task into dashboard implementation work
 
 ## References

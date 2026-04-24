@@ -181,11 +181,11 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					attentionReason := "Run executed its first workload step and is ready for the next backend step."
 					attentionSortKey := "42-workload_step_executed"
 					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_existing_file_edited"
-						stateSummary = "Run validated Task-0008 and edited an existing owned-lane implementation file."
+						reasonCode = "task_0008_existing_file_behavior_changed"
+						stateSummary = "Run validated Task-0008 and changed runtime behavior in an existing owned-lane implementation file."
 						nextExpectedEvent = "Execution worker applies the next Task-0008-specific behavior change."
-						attentionReason = "Run edited an existing Task-0008 implementation file inside the owned lane and is ready for the next backend step."
-						attentionSortKey = "38-task_0008_existing_file_edited"
+						attentionReason = "Run changed Task-0008 runtime behavior in an existing owned-lane implementation file and is ready for the next backend step."
+						attentionSortKey = "37-task_0008_existing_file_behavior_changed"
 					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
@@ -397,6 +397,7 @@ type workloadExecutionArtifact struct {
 	ExitCode            int       `json:"exit_code,omitempty"`
 	WorkloadOutputPath  string    `json:"workload_output_path,omitempty"`
 	WorkloadCodePath    string    `json:"workload_code_path,omitempty"`
+	BehaviorProbePath   string    `json:"behavior_probe_path,omitempty"`
 	GitStatusShortAfter string    `json:"git_status_short_after,omitempty"`
 	CurrentCommit       string    `json:"current_commit"`
 	ExecutedAt          time.Time `json:"executed_at"`
@@ -544,9 +545,10 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	exitCode := 0
 	workloadOutputPath := ""
 	workloadCodePath := ""
+	behaviorProbePath := ""
 	gitStatusAfter := ""
 	if step.ExecutionKind == "task_0008_backend_validation" {
-		executionSummary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, gitStatusAfter, err = executeTask0008Validation(repoLane, step)
+		executionSummary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, gitStatusAfter, err = executeTask0008Validation(repoLane, step)
 		if err != nil {
 			return workloadExecutionResult{}, err
 		}
@@ -565,6 +567,7 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 		ExitCode:            exitCode,
 		WorkloadOutputPath:  workloadOutputPath,
 		WorkloadCodePath:    workloadCodePath,
+		BehaviorProbePath:   behaviorProbePath,
 		GitStatusShortAfter: gitStatusAfter,
 		CurrentCommit:       currentCommit,
 		ExecutedAt:          time.Now().UTC(),
@@ -582,40 +585,40 @@ func runExecuteWorkloadStep(ctx context.Context, request taskrun.StartTaskRunReq
 	}, nil
 }
 
-func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, string, string, int, string, string, string, error) {
+func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, string, string, int, string, string, string, string, error) {
 	if repoLane.RunArtifactRoot == "" {
-		return "", "", "", 0, "", "", "", fmt.Errorf("run artifact root is missing")
+		return "", "", "", 0, "", "", "", "", fmt.Errorf("run artifact root is missing")
 	}
 	if len(step.ExecutionCommand) == 0 {
-		return "", "", "", 0, "", "", "", fmt.Errorf("execution command is missing")
+		return "", "", "", 0, "", "", "", "", fmt.Errorf("execution command is missing")
 	}
 	workingDir := step.ExecutionWorkingDir
 	if workingDir == "" {
 		workingDir = repoLane.OwnedRepoRoot
 	}
 	if err := os.MkdirAll(repoLane.RunArtifactRoot, 0o755); err != nil {
-		return "", "", "", 0, "", "", "", fmt.Errorf("create run artifact root: %w", err)
+		return "", "", "", 0, "", "", "", "", fmt.Errorf("create run artifact root: %w", err)
 	}
 	stdoutPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stdout.txt")
 	stderrPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-validation.stderr.txt")
 	stdoutFile, err := os.Create(stdoutPath)
 	if err != nil {
-		return "", "", "", 0, "", "", "", fmt.Errorf("create validation stdout log: %w", err)
+		return "", "", "", 0, "", "", "", "", fmt.Errorf("create validation stdout log: %w", err)
 	}
 	defer stdoutFile.Close()
 	stderrFile, err := os.Create(stderrPath)
 	if err != nil {
-		return "", "", "", 0, "", "", "", fmt.Errorf("create validation stderr log: %w", err)
+		return "", "", "", 0, "", "", "", "", fmt.Errorf("create validation stderr log: %w", err)
 	}
 	defer stderrFile.Close()
 
 	workloadOutputPath, err := writeTask0008OwnedLaneBrief(step)
 	if err != nil {
-		return "", stdoutPath, stderrPath, 0, "", "", "", err
+		return "", stdoutPath, stderrPath, 0, "", "", "", "", err
 	}
 	workloadCodePath, err := writeTask0008OwnedLaneCode(step)
 	if err != nil {
-		return "", stdoutPath, stderrPath, 0, workloadOutputPath, "", "", err
+		return "", stdoutPath, stderrPath, 0, workloadOutputPath, "", "", "", err
 	}
 
 	cmd := exec.Command(step.ExecutionCommand[0], step.ExecutionCommand[1:]...)
@@ -630,7 +633,11 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		} else {
 			exitCode = 1
 		}
-		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
+		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", "", fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
+	}
+	behaviorProbePath, err := runTask0008OwnedLaneBehaviorProbe(repoLane, step)
+	if err != nil {
+		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", "", err
 	}
 	gitStatusAfter, err := gitStatusShortPaths(
 		repoLane.OwnedRepoRoot,
@@ -639,11 +646,11 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		filepath.Join("backend", "orchestration", "internal", "taskexec", "taskexec.go"),
 	)
 	if err != nil {
-		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", err
+		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, "", err
 	}
 
-	summary := "Executed Task-0008 backend validation and edited an existing owned-lane implementation file."
-	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, gitStatusAfter, nil
+	summary := "Executed Task-0008 backend validation and changed runtime behavior in an existing owned-lane implementation file."
+	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, gitStatusAfter, nil
 }
 
 func writeTask0008OwnedLaneBrief(step workloadStepArtifact) (string, error) {
@@ -732,48 +739,138 @@ func writeTask0008OwnedLaneCode(step workloadStepArtifact) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read owned-lane implementation file: %w", err)
 	}
-	updated := applyTask0008OwnedLaneEdit(string(raw))
+	updated := applyTask0008OwnedLaneBehaviorChange(string(raw))
+	if updated == string(raw) {
+		return "", fmt.Errorf("owned-lane behavior change was not applied")
+	}
 	if err := os.WriteFile(codePath, []byte(updated), 0o644); err != nil {
 		return "", fmt.Errorf("write owned-lane implementation file: %w", err)
 	}
 	return codePath, nil
 }
 
-func applyTask0008OwnedLaneEdit(source string) string {
-	const noteLine = "// Task0008OwnedLaneEditNote: Advance from bounded owned-lane edits into the next Task-0008 runtime behavior change."
-	const targetLine = "// Task0008OwnedLaneEditTargets: backend/orchestration/internal/taskexec/taskexec.go | backend/orchestration/internal/taskrun/service.go | backend/orchestration/internal/taskrun/types.go"
-
+func applyTask0008OwnedLaneBehaviorChange(source string) string {
+	const insertedLine = "\t\tsuspiciousAfter = request.DispatchRequestedAt.Add(5 * time.Minute)"
 	lines := strings.Split(source, "\n")
 	filtered := make([]string, 0, len(lines))
 	for _, line := range lines {
-		if strings.HasPrefix(line, "// Task0008OwnedLaneEditNote:") || strings.HasPrefix(line, "// Task0008OwnedLaneEditTargets:") {
+		if strings.TrimSpace(line) == strings.TrimSpace(insertedLine) {
 			continue
 		}
 		filtered = append(filtered, line)
 	}
-	lines = filtered
+	source = strings.Join(filtered, "\n")
 
-	insertAt := -1
-	for i, line := range lines {
-		if strings.HasPrefix(line, "package ") {
-			insertAt = i + 1
-			break
+	target := "if request.RepoLane.CurrentCommit != \"\" {"
+	replacement := "if request.RepoLane.CurrentCommit != \"\" {\n" + insertedLine
+	return strings.Replace(source, target, replacement, 1)
+}
+
+func runTask0008OwnedLaneBehaviorProbe(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, error) {
+	if repoLane.RunArtifactRoot == "" {
+		return "", fmt.Errorf("run artifact root is missing")
+	}
+	moduleRoot := step.ExecutionWorkingDir
+	if moduleRoot == "" {
+		moduleRoot = filepath.Join(repoLane.OwnedRepoRoot, "backend", "orchestration")
+	}
+	modulePath, err := modulePathFromGoMod(moduleRoot)
+	if err != nil {
+		return "", err
+	}
+	probeDir := filepath.Join(moduleRoot, ".codex-taskrun", sanitizePathSegment(step.RunID), "behaviorprobe")
+	if err := os.MkdirAll(probeDir, 0o755); err != nil {
+		return "", fmt.Errorf("create behavior probe dir: %w", err)
+	}
+	probePath := filepath.Join(probeDir, "main.go")
+	probeSource := fmt.Sprintf(`package main
+
+import (
+	"encoding/json"
+	"os"
+	"time"
+
+	taskexec "%s/internal/taskexec"
+	taskrun "%s/internal/taskrun"
+)
+
+func main() {
+	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
+	view := taskexec.InitialView(taskrun.StartTaskRunRequest{
+		RunID:          "taskrun--Task-0008--active",
+		TaskID:         "Task-0008",
+		MeaningSummary: "Create the durable backend task-run contract.",
+		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
+			DeclaredWorktreeRoot: "C:\\Agent\\CodexDashboard",
+			DeclaredTaskRoot:     "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008",
+			DeclaredTaskRevision: "revision-1",
+			DeclaredGitRevision:  "abc123",
+			CapturedAt:           dispatchAt,
+		},
+		RepoLane: taskrun.RepoLane{
+			OwnedRepoRoot:         "C:\\Temp\\owned",
+			CheckoutMode:          "git_worktree_detached",
+			BaselineCommit:        "abc123",
+			CurrentCommit:         "abc123",
+			ApprovedRestoreCommit: "abc123",
+			RunArtifactRoot:       "C:\\Temp\\artifacts",
+			BootstrapArtifactPath: "C:\\Temp\\artifacts\\owned-lane-bootstrap.json",
+			ResetStatus:           "not_run",
+		},
+		DispatchRequestedAt: dispatchAt,
+	}, "workflow-id", "run-id")
+
+	result := map[string]any{
+		"reason_code":               view.StateEnvelope.ReasonCode,
+		"suspicious_after":          view.StateEnvelope.SuspiciousAfter.UTC().Format(time.RFC3339),
+		"suspicious_window_minutes": int(view.StateEnvelope.SuspiciousAfter.Sub(dispatchAt).Minutes()),
+		"next_expected_event":       view.StateEnvelope.NextExpectedEvent,
+	}
+	_ = json.NewEncoder(os.Stdout).Encode(result)
+}
+`, modulePath, modulePath)
+	if err := os.WriteFile(probePath, []byte(probeSource), 0o644); err != nil {
+		return "", fmt.Errorf("write behavior probe: %w", err)
+	}
+
+	cmd := exec.Command("go", "run", "./.codex-taskrun/"+sanitizePathSegment(step.RunID)+"/behaviorprobe")
+	cmd.Dir = moduleRoot
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("run owned-lane behavior probe: %w: %s", err, strings.TrimSpace(string(output)))
+	}
+	artifactPath := filepath.Join(repoLane.RunArtifactRoot, "task-specific-behavior-probe.json")
+	if err := os.WriteFile(artifactPath, output, 0o644); err != nil {
+		return "", fmt.Errorf("write behavior probe artifact: %w", err)
+	}
+	var probe struct {
+		SuspiciousWindowMinutes int    `json:"suspicious_window_minutes"`
+		ReasonCode              string `json:"reason_code"`
+	}
+	if err := json.Unmarshal(output, &probe); err != nil {
+		return "", fmt.Errorf("decode behavior probe output: %w", err)
+	}
+	if probe.SuspiciousWindowMinutes != 5 {
+		return "", fmt.Errorf("behavior probe expected a 5 minute suspicious window, got %d", probe.SuspiciousWindowMinutes)
+	}
+	if probe.ReasonCode != "owned_lane_bootstrapped" {
+		return "", fmt.Errorf("behavior probe expected owned_lane_bootstrapped, got %q", probe.ReasonCode)
+	}
+	return artifactPath, nil
+}
+
+func modulePathFromGoMod(moduleRoot string) (string, error) {
+	raw, err := os.ReadFile(filepath.Join(moduleRoot, "go.mod"))
+	if err != nil {
+		return "", fmt.Errorf("read go.mod: %w", err)
+	}
+	for _, line := range strings.Split(string(raw), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(trimmed, "module ")), nil
 		}
 	}
-	if insertAt == -1 {
-		insertAt = 0
-	}
-
-	noteBlock := []string{noteLine, targetLine}
-	result := make([]string, 0, len(lines)+len(noteBlock)+1)
-	result = append(result, lines[:insertAt]...)
-	if insertAt > 0 && insertAt < len(lines) && lines[insertAt] != "" {
-		result = append(result, "")
-	}
-	result = append(result, noteBlock...)
-	result = append(result, "")
-	result = append(result, lines[insertAt:]...)
-	return strings.Join(result, "\n")
+	return "", fmt.Errorf("module path not found in go.mod")
 }
 
 func taskexecExtractMarkdownSection(markdown string, heading string) string {

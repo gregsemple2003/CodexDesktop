@@ -54,3 +54,10 @@ Add new constraints here as they are given.
 ### 2026-04-24 Validation Warm-Up Constraint
 
 - After resetting the disposable validation Temporal volume, allow a short Temporal warm-up window before launching a clean manual listener or Temporal client init can fail with `error reading server preface: EOF`.
+
+### 2026-04-24 Validation Port Override Constraint
+
+- When starting the disposable validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly so it does not collide with the service-lane bindings:
+  - `CODEX_ORCH_POSTGRES_PORT=15432`
+  - `CODEX_ORCH_TEMPORAL_PORT=17233`
+  - `CODEX_ORCH_TEMPORAL_UI_PORT=18080`
