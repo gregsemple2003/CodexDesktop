@@ -227,7 +227,29 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
   - the owned-lane behavior probe reported `suspicious_window_minutes = 5`
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0014.md](./Testing/PASS-0002-BACKEND-SMOKE-0014.md)
 
-What is still missing is moving from this bounded bootstrap-window behavior change into the next worker-applied existing-file change that affects a broader or later Task-0008 runtime path inside the owned lane.
+`PASS-0002` now also has the next worker-applied existing-file change on a later Task-0008 runtime path:
+
+- after Task-0008 validation and brief generation, the workflow now edits the existing owned-lane implementation path:
+  - `backend/orchestration/internal/taskrun/service.go`
+- that edit shortens the interrupt-review follow-up window in the owned lane from:
+  - `24 hours`
+  to:
+  - `2 hours`
+- the workflow now runs an owned-lane behavior probe that exercises `InterruptRun` and records:
+  - `behavior_probe_path`
+  in the workload result artifact
+- task readback now advances automatically to:
+  - `reason_code = task_0008_interrupt_review_window_changed`
+- the live proof verified:
+  - the owned-lane edited file contains the real `DueAt: now.Add(2 * time.Hour)` change
+  - the owned-lane behavior probe reported:
+    - `reason_code = interrupt_requested`
+    - `follow_up_kind = interrupt_review`
+    - `due_window_hours = 2`
+    - `reset_status = restored`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0015.md](./Testing/PASS-0002-BACKEND-SMOKE-0015.md)
+
+What is still missing is moving from this bounded interrupt-review timing change into the next worker-applied existing-file change that affects an even broader or later Task-0008 runtime path inside the owned lane.
 
 ## Current Gate
 
@@ -245,7 +267,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- move from the bounded bootstrap-window behavior change into the next worker-applied existing-file change that affects a broader or later Task-0008 runtime path inside the owned lane
+- move from the bounded interrupt-review timing change into the next worker-applied existing-file change that affects an even broader or later Task-0008 runtime path inside the owned lane
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -260,7 +282,7 @@ The next implementation slice should:
 - after a fresh validation-volume reset, a clean manual listener may need a short Temporal warm-up delay before backend startup or it can fail with `error reading server preface: EOF`
 - when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
-- do not mistake a bounded owned-lane bootstrap-window change for finished implementation work; the next honest step is another worker-applied existing-file change that affects a broader or later Task-0008 runtime path
+- do not mistake a bounded owned-lane interrupt-review timing change for finished implementation work; the next honest step is another worker-applied existing-file change that affects a broader or later Task-0008 runtime path
 - do not broaden this task into dashboard implementation work
 
 ## References

@@ -181,11 +181,11 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 					attentionReason := "Run executed its first workload step and is ready for the next backend step."
 					attentionSortKey := "42-workload_step_executed"
 					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_existing_file_behavior_changed"
-						stateSummary = "Run validated Task-0008 and changed runtime behavior in an existing owned-lane implementation file."
-						nextExpectedEvent = "Execution worker applies the next Task-0008-specific behavior change."
-						attentionReason = "Run changed Task-0008 runtime behavior in an existing owned-lane implementation file and is ready for the next backend step."
-						attentionSortKey = "37-task_0008_existing_file_behavior_changed"
+						reasonCode = "task_0008_interrupt_review_window_changed"
+						stateSummary = "Run validated Task-0008 and changed a later interrupt-review behavior in an existing owned-lane implementation file."
+						nextExpectedEvent = "Execution worker applies the next broader Task-0008 runtime behavior change."
+						attentionReason = "Run changed a later Task-0008 interrupt-review behavior in an existing owned-lane implementation file and is ready for the next backend step."
+						attentionSortKey = "36-task_0008_interrupt_review_window_changed"
 					}
 					applyUpdate(&view, taskrun.TaskRunUpdate{
 						State:               taskrun.StateRunning,
@@ -643,13 +643,13 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 		repoLane.OwnedRepoRoot,
 		".codex-taskrun",
 		filepath.Join("Tracking", "Task-0008", "OwnedLane"),
-		filepath.Join("backend", "orchestration", "internal", "taskexec", "taskexec.go"),
+		filepath.Join("backend", "orchestration", "internal", "taskrun", "service.go"),
 	)
 	if err != nil {
 		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, "", err
 	}
 
-	summary := "Executed Task-0008 backend validation and changed runtime behavior in an existing owned-lane implementation file."
+	summary := "Executed Task-0008 backend validation and changed a later interrupt-review behavior in an existing owned-lane implementation file."
 	return summary, stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, behaviorProbePath, gitStatusAfter, nil
 }
 
@@ -734,12 +734,12 @@ func writeTask0008OwnedLaneBrief(step workloadStepArtifact) (string, error) {
 }
 
 func writeTask0008OwnedLaneCode(step workloadStepArtifact) (string, error) {
-	codePath := filepath.Join(step.OwnedRepoRoot, "backend", "orchestration", "internal", "taskexec", "taskexec.go")
+	codePath := filepath.Join(step.OwnedRepoRoot, "backend", "orchestration", "internal", "taskrun", "service.go")
 	raw, err := os.ReadFile(codePath)
 	if err != nil {
 		return "", fmt.Errorf("read owned-lane implementation file: %w", err)
 	}
-	updated := applyTask0008OwnedLaneBehaviorChange(string(raw))
+	updated := applyTask0008InterruptReviewWindowChange(string(raw))
 	if updated == string(raw) {
 		return "", fmt.Errorf("owned-lane behavior change was not applied")
 	}
@@ -749,21 +749,34 @@ func writeTask0008OwnedLaneCode(step workloadStepArtifact) (string, error) {
 	return codePath, nil
 }
 
-func applyTask0008OwnedLaneBehaviorChange(source string) string {
-	const insertedLine = "\t\tsuspiciousAfter = request.DispatchRequestedAt.Add(5 * time.Minute)"
-	lines := strings.Split(source, "\n")
-	filtered := make([]string, 0, len(lines))
-	for _, line := range lines {
-		if strings.TrimSpace(line) == strings.TrimSpace(insertedLine) {
-			continue
-		}
-		filtered = append(filtered, line)
-	}
-	source = strings.Join(filtered, "\n")
-
-	target := "if request.RepoLane.CurrentCommit != \"\" {"
-	replacement := "if request.RepoLane.CurrentCommit != \"\" {\n" + insertedLine
-	return strings.Replace(source, target, replacement, 1)
+func applyTask0008InterruptReviewWindowChange(source string) string {
+	const oldBlock = `Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),`
+	const newBlock = `Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(2 * time.Hour),`
+	const oldRepairBlock = `Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Cleanup repair completed; review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),`
+	const newRepairBlock = `Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Cleanup repair completed; review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(2 * time.Hour),`
+	updated := strings.ReplaceAll(source, oldBlock, newBlock)
+	updated = strings.ReplaceAll(updated, oldRepairBlock, newRepairBlock)
+	return updated
 }
 
 func runTask0008OwnedLaneBehaviorProbe(repoLane taskrun.RepoLane, step workloadStepArtifact) (string, error) {
@@ -786,49 +799,149 @@ func runTask0008OwnedLaneBehaviorProbe(repoLane taskrun.RepoLane, step workloadS
 	probeSource := fmt.Sprintf(`package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
-	"time"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
-	taskexec "%s/internal/taskexec"
 	taskrun "%s/internal/taskrun"
 )
 
-func main() {
-	dispatchAt := time.Date(2026, time.April, 24, 21, 0, 0, 0, time.UTC)
-	view := taskexec.InitialView(taskrun.StartTaskRunRequest{
-		RunID:          "taskrun--Task-0008--active",
-		TaskID:         "Task-0008",
-		MeaningSummary: "Create the durable backend task-run contract.",
-		CapturedTaskSnapshot: taskrun.TaskDefinitionSnapshot{
-			DeclaredWorktreeRoot: "C:\\Agent\\CodexDashboard",
-			DeclaredTaskRoot:     "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008",
-			DeclaredTaskRevision: "revision-1",
-			DeclaredGitRevision:  "abc123",
-			CapturedAt:           dispatchAt,
-		},
-		RepoLane: taskrun.RepoLane{
-			OwnedRepoRoot:         "C:\\Temp\\owned",
-			CheckoutMode:          "git_worktree_detached",
-			BaselineCommit:        "abc123",
-			CurrentCommit:         "abc123",
-			ApprovedRestoreCommit: "abc123",
-			RunArtifactRoot:       "C:\\Temp\\artifacts",
-			BootstrapArtifactPath: "C:\\Temp\\artifacts\\owned-lane-bootstrap.json",
-			ResetStatus:           "not_run",
-		},
-		DispatchRequestedAt: dispatchAt,
-	}, "workflow-id", "run-id")
-
-	result := map[string]any{
-		"reason_code":               view.StateEnvelope.ReasonCode,
-		"suspicious_after":          view.StateEnvelope.SuspiciousAfter.UTC().Format(time.RFC3339),
-		"suspicious_window_minutes": int(view.StateEnvelope.SuspiciousAfter.Sub(dispatchAt).Minutes()),
-		"next_expected_event":       view.StateEnvelope.NextExpectedEvent,
-	}
-	_ = json.NewEncoder(os.Stdout).Encode(result)
+type fakeRuntime struct {
+	run taskrun.TaskRunView
 }
-`, modulePath, modulePath)
+
+func (f *fakeRuntime) StartTaskRun(ctx context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
+	return taskrun.TaskRunView{}, fmt.Errorf("not implemented")
+}
+
+func (f *fakeRuntime) GetTaskRun(ctx context.Context, runID string) (taskrun.TaskRunView, error) {
+	return f.run, nil
+}
+
+func (f *fakeRuntime) GetActiveTaskRun(ctx context.Context, taskID string) (taskrun.TaskRunView, error) {
+	return f.run, nil
+}
+
+func (f *fakeRuntime) ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot taskrun.TaskDefinitionSnapshot) (taskrun.TaskRunView, error) {
+	return f.run, nil
+}
+
+func (f *fakeRuntime) UpdateTaskRun(ctx context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
+	if update.State != "" {
+		f.run.StateEnvelope.State = update.State
+	}
+	if update.ReasonCode != "" {
+		f.run.StateEnvelope.ReasonCode = update.ReasonCode
+	}
+	if update.StateSummary != "" {
+		f.run.StateEnvelope.StateSummary = update.StateSummary
+	}
+	if update.NextOwner != "" {
+		f.run.StateEnvelope.NextOwner = update.NextOwner
+	}
+	if update.NextExpectedEvent != "" {
+		f.run.StateEnvelope.NextExpectedEvent = update.NextExpectedEvent
+	}
+	if !update.SuspiciousAfter.IsZero() {
+		f.run.StateEnvelope.SuspiciousAfter = update.SuspiciousAfter
+	}
+	if update.FollowUp != nil {
+		f.run.FollowUp = update.FollowUp
+	}
+	if update.RepoLane != nil {
+		f.run.RepoLane = *update.RepoLane
+	}
+	if update.Actions != nil {
+		f.run.Actions = update.Actions
+	}
+	if update.Attention != nil {
+		f.run.Attention = *update.Attention
+	}
+	if !update.CompletedAt.IsZero() {
+		f.run.Status = "interrupted"
+	}
+	return f.run, nil
+}
+
+func mustRun(dir string, name string, args ...string) {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		panic(fmt.Sprintf("%%s %%v failed: %%v %%s", name, args, err, string(output)))
+	}
+}
+
+func mustOutput(dir string, name string, args ...string) string {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		panic(fmt.Sprintf("%%s %%v failed: %%v %%s", name, args, err, string(output)))
+	}
+	return string(output)
+}
+
+func main() {
+	ownedRoot := filepath.Join(os.TempDir(), "cdxow", "task0008-probe-owned", "w")
+	_ = os.RemoveAll(filepath.Dir(ownedRoot))
+	_ = os.MkdirAll(ownedRoot, 0o755)
+	mustRun(ownedRoot, "git", "init")
+	mustRun(ownedRoot, "git", "config", "user.email", "probe@example.com")
+	mustRun(ownedRoot, "git", "config", "user.name", "Probe")
+	_ = os.WriteFile(filepath.Join(ownedRoot, "README.txt"), []byte("owned lane\n"), 0o644)
+	mustRun(ownedRoot, "git", "add", ".")
+	mustRun(ownedRoot, "git", "commit", "-m", "initial")
+	head := strings.TrimSpace(mustOutput(ownedRoot, "git", "rev-parse", "HEAD"))
+
+	rt := &fakeRuntime{
+		run: taskrun.TaskRunView{
+			RunID:  "taskrun--Task-0008--active",
+			TaskID: "Task-0008",
+			Status: "active",
+			StateEnvelope: taskrun.StateEnvelope{
+				State:             taskrun.StateRunning,
+				ReasonCode:        "owned_lane_bootstrapped",
+				StateSummary:      "Run bootstrapped the owned checkout and is ready for backend execution.",
+				NextOwner:         "backend_worker",
+				NextExpectedEvent: "Execution worker records the next progress checkpoint.",
+			},
+			Actions: map[string]taskrun.ActionAvailability{
+				taskrun.ActionDispatch:  {Allowed: false},
+				taskrun.ActionPoke:      {Allowed: false},
+				taskrun.ActionInterrupt: {Allowed: true},
+			},
+			RepoLane: taskrun.RepoLane{
+				OwnedRepoRoot:         ownedRoot,
+				CheckoutMode:          "git_worktree_detached",
+				BaselineCommit:        head,
+				CurrentCommit:         head,
+				ApprovedRestoreCommit: head,
+				ResetStatus:           "not_run",
+			},
+		},
+	}
+
+	service := taskrun.NewService(filepath.Join(os.TempDir(), "task0008-probe-worktree"), filepath.Join(os.TempDir(), "task0008-probe-runs"), rt)
+	result, err := service.InterruptRun(context.Background(), "taskrun--Task-0008--active")
+	if err != nil {
+		panic(err)
+	}
+
+	windowHours := int(result.FollowUp.DueAt.Sub(result.FollowUp.RequestedAt).Hours())
+	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+		"reason_code":         result.StateEnvelope.ReasonCode,
+		"follow_up_kind":      result.FollowUp.Kind,
+		"follow_up_status":    result.FollowUp.Status,
+		"due_window_hours":    windowHours,
+		"reset_status":        result.RepoLane.ResetStatus,
+		"next_expected_event": result.StateEnvelope.NextExpectedEvent,
+	})
+}
+`, modulePath)
 	if err := os.WriteFile(probePath, []byte(probeSource), 0o644); err != nil {
 		return "", fmt.Errorf("write behavior probe: %w", err)
 	}
@@ -844,17 +957,26 @@ func main() {
 		return "", fmt.Errorf("write behavior probe artifact: %w", err)
 	}
 	var probe struct {
-		SuspiciousWindowMinutes int    `json:"suspicious_window_minutes"`
-		ReasonCode              string `json:"reason_code"`
+		DueWindowHours   int    `json:"due_window_hours"`
+		ReasonCode       string `json:"reason_code"`
+		FollowUpKind     string `json:"follow_up_kind"`
+		FollowUpStatus   string `json:"follow_up_status"`
+		ResetStatus      string `json:"reset_status"`
 	}
 	if err := json.Unmarshal(output, &probe); err != nil {
 		return "", fmt.Errorf("decode behavior probe output: %w", err)
 	}
-	if probe.SuspiciousWindowMinutes != 5 {
-		return "", fmt.Errorf("behavior probe expected a 5 minute suspicious window, got %d", probe.SuspiciousWindowMinutes)
+	if probe.DueWindowHours != 2 {
+		return "", fmt.Errorf("behavior probe expected a 2 hour interrupt review window, got %d", probe.DueWindowHours)
 	}
-	if probe.ReasonCode != "owned_lane_bootstrapped" {
-		return "", fmt.Errorf("behavior probe expected owned_lane_bootstrapped, got %q", probe.ReasonCode)
+	if probe.ReasonCode != "interrupt_requested" {
+		return "", fmt.Errorf("behavior probe expected interrupt_requested, got %q", probe.ReasonCode)
+	}
+	if probe.FollowUpKind != "interrupt_review" || probe.FollowUpStatus != "pending" {
+		return "", fmt.Errorf("behavior probe expected pending interrupt_review, got %q / %q", probe.FollowUpKind, probe.FollowUpStatus)
+	}
+	if probe.ResetStatus != "restored" {
+		return "", fmt.Errorf("behavior probe expected restored owned lane, got %q", probe.ResetStatus)
 	}
 	return artifactPath, nil
 }

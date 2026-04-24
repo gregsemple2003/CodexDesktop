@@ -545,12 +545,43 @@ func TestRunExecuteWorkloadStepRunsTaskSpecificValidation(t *testing.T) {
 	moduleRoot := filepath.Join(ownedRoot, "backend", "orchestration")
 	ownedTaskRoot := filepath.Join(ownedRoot, "Tracking", "Task-0008")
 	writeTaskFile(t, filepath.Join(moduleRoot, "go.mod"), "module example.com/task0008owned/backend/orchestration\n\ngo 1.25.0\n")
-	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "taskrun.go"), `package taskrun
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), "package taskexec\n\nfunc Name() string { return \"taskexec\" }\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "types.go"), `package taskrun
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+const (
+	StateRunning     = "running"
+	StateInterrupted = "interrupted"
+	ActionDispatch   = "dispatch"
+	ActionPoke       = "poke"
+	ActionInterrupt  = "interrupt"
+)
+
+type ActionBlockReason struct {
+	Code    string
+	Summary string
+}
+
+type ActionAvailability struct {
+	Allowed      bool
+	BlockReasons []ActionBlockReason
+}
+
+type AttentionPriority struct {
+	Level   string
+	Reason  string
+	SortKey string
+}
 
 type StateEnvelope struct {
+	State             string
 	ReasonCode        string
+	StateSummary      string
+	NextOwner         string
 	NextExpectedEvent string
 	SuspiciousAfter   time.Time
 }
@@ -564,7 +595,24 @@ type RepoLane struct {
 	RunArtifactRoot       string
 	BootstrapArtifactPath string
 	ResetStatus           string
+	LastResetAt           time.Time
+	LastResetTargetCommit string
+	ResetFailureSummary   string
 }
+
+type RunFollowUp struct {
+	Kind        string
+	Owner       string
+	Status      string
+	Summary     string
+	RequestedAt time.Time
+	DueAt       time.Time
+	CompletedAt time.Time
+}
+
+type RunResolution struct{}
+
+type WaitContract struct{}
 
 type TaskDefinitionSnapshot struct {
 	DeclaredWorktreeRoot string
@@ -583,35 +631,186 @@ type StartTaskRunRequest struct {
 	DispatchRequestedAt  time.Time
 }
 
+type TaskRunUpdate struct {
+	State               string
+	ReasonCode          string
+	StateSummary        string
+	NextOwner           string
+	NextExpectedEvent   string
+	SuspiciousAfter     time.Time
+	LastProgressSummary string
+	Attention           *AttentionPriority
+	RepoLane            *RepoLane
+	Actions             map[string]ActionAvailability
+	FollowUp            *RunFollowUp
+	Resolution          *RunResolution
+	CompletedAt         time.Time
+	FailureSummary      string
+}
+
 type TaskRunView struct {
-	StateEnvelope StateEnvelope
+	RunID               string
+	TaskID              string
+	Status              string
+	StateEnvelope       StateEnvelope
+	Actions             map[string]ActionAvailability
+	FollowUp            *RunFollowUp
+	Resolution          *RunResolution
+	RepoLane            RepoLane
+	LastProgressAt      time.Time
+	LastProgressSummary string
+	FailureSummary      string
+	WaitContract        *WaitContract
+	Attention           AttentionPriority
+}
+
+type Runtime interface {
+	StartTaskRun(ctx context.Context, request StartTaskRunRequest) (TaskRunView, error)
+	GetTaskRun(ctx context.Context, runID string) (TaskRunView, error)
+	GetActiveTaskRun(ctx context.Context, taskID string) (TaskRunView, error)
+	ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error)
+	UpdateTaskRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error)
 }
 `)
-	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), `package taskexec
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "service.go"), `package taskrun
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
-
-	"example.com/task0008owned/backend/orchestration/internal/taskrun"
 )
 
-func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executionRunID string) taskrun.TaskRunView {
-	suspiciousAfter := request.DispatchRequestedAt.Add(15 * time.Minute)
-	initialReasonCode := "dispatch_started"
-	initialNextExpectedEvent := "Execution worker records the next task-run state update."
+type Service struct {
+	ownedLaneRoot string
+	runtime       Runtime
+	now           func() time.Time
+}
 
-	if request.RepoLane.CurrentCommit != "" {
-		initialReasonCode = "owned_lane_bootstrapped"
-		initialNextExpectedEvent = "Execution worker records the next progress checkpoint."
-	}
-
-	return taskrun.TaskRunView{
-		StateEnvelope: taskrun.StateEnvelope{
-			ReasonCode:        initialReasonCode,
-			NextExpectedEvent: initialNextExpectedEvent,
-			SuspiciousAfter:   suspiciousAfter,
+func NewService(declaredWorktreeRoot string, runsRoot string, runtimeBackend Runtime) *Service {
+	return &Service{
+		ownedLaneRoot: defaultOwnedLaneRoot(runsRoot),
+		runtime:       runtimeBackend,
+		now: func() time.Time {
+			return time.Now().UTC()
 		},
 	}
+}
+
+func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
+	return s.runtime.GetTaskRun(ctx, runID)
+}
+
+func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
+	return s.runtime.UpdateTaskRun(ctx, runID, update)
+}
+
+func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	availability := run.Actions[ActionInterrupt]
+	if !availability.Allowed {
+		return TaskRunView{}, fmt.Errorf("interrupt blocked")
+	}
+
+	repoLane, resetErr := s.restoreOwnedLane(run.RepoLane)
+	if resetErr != nil {
+		return TaskRunView{}, resetErr
+	}
+
+	now := s.now()
+	update := TaskRunUpdate{
+		State:               StateInterrupted,
+		ReasonCode:          "interrupt_requested",
+		StateSummary:        "Run was interrupted and the owned checkout was restored.",
+		NextOwner:           "human_or_supervisor",
+		NextExpectedEvent:   "Review the interrupted run and decide whether to dispatch again.",
+		SuspiciousAfter:     now,
+		LastProgressSummary: "Interrupt restored the owned checkout to its recorded restore commit.",
+		FollowUp: &RunFollowUp{
+			Kind:        "interrupt_review",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Review the interrupted run and decide whether to redispatch, revise the task docs, or close the attempt.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),
+		},
+		RepoLane:    &repoLane,
+		CompletedAt: now,
+	}
+	return s.UpdateRun(ctx, runID, update)
+}
+
+func defaultOwnedLaneRoot(runsRoot string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(os.TempDir(), "cdxow")
+	}
+	return filepath.Join(runsRoot, "task-owned-checkouts")
+}
+
+func pathWithinRoot(path string, root string) bool {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	rel, err := filepath.Rel(absRoot, absPath)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func gitInWorktree(worktreeRoot string, args ...string) error {
+	argv := []string{}
+	if runtime.GOOS == "windows" {
+		argv = append(argv, "-c", "core.longpaths=true")
+	}
+	argv = append(argv, "-C", worktreeRoot)
+	argv = append(argv, args...)
+	cmd := exec.Command("git", argv...)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
+	now := s.now()
+	repoLane.LastResetAt = now
+	restoreCommit := repoLane.ApprovedRestoreCommit
+	if restoreCommit == "" {
+		restoreCommit = repoLane.BaselineCommit
+	}
+	repoLane.LastResetTargetCommit = restoreCommit
+	repoLane.ResetFailureSummary = ""
+	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
+		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "outside owned lane root"
+		return repoLane, fmt.Errorf("outside owned lane root")
+	}
+	if err := gitInWorktree(repoLane.OwnedRepoRoot, "reset", "--hard", restoreCommit); err != nil {
+		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "reset failed"
+		return repoLane, err
+	}
+	if err := gitInWorktree(repoLane.OwnedRepoRoot, "clean", "-fd"); err != nil {
+		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "clean failed"
+		return repoLane, err
+	}
+	repoLane.ResetStatus = "restored"
+	repoLane.ApprovedRestoreCommit = restoreCommit
+	return repoLane, nil
 }
 `)
 	writeTaskFile(t, filepath.Join(ownedTaskRoot, "TASK.md"), "## Summary\n\nTask-specific owned lane execution for Task-0008.\n")
@@ -674,7 +873,7 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed runtime behavior in an existing owned-lane implementation file." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed a later interrupt-review behavior in an existing owned-lane implementation file." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -715,7 +914,7 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 	if err != nil {
 		t.Fatalf("read workload code path: %v", err)
 	}
-	if !strings.Contains(string(rawCode), "suspiciousAfter = request.DispatchRequestedAt.Add(5 * time.Minute)") {
+	if !strings.Contains(string(rawCode), "DueAt:       now.Add(2 * time.Hour),") {
 		t.Fatalf("code contents = %q", string(rawCode))
 	}
 	rawProbe, err := os.ReadFile(artifact.BehaviorProbePath)
@@ -723,22 +922,31 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 		t.Fatalf("read behavior probe path: %v", err)
 	}
 	var probe struct {
-		ReasonCode              string `json:"reason_code"`
-		SuspiciousWindowMinutes int    `json:"suspicious_window_minutes"`
+		ReasonCode     string `json:"reason_code"`
+		FollowUpKind   string `json:"follow_up_kind"`
+		FollowUpStatus string `json:"follow_up_status"`
+		DueWindowHours int    `json:"due_window_hours"`
+		ResetStatus    string `json:"reset_status"`
 	}
 	if err := json.Unmarshal(rawProbe, &probe); err != nil {
 		t.Fatalf("decode behavior probe: %v", err)
 	}
-	if probe.ReasonCode != "owned_lane_bootstrapped" {
+	if probe.ReasonCode != "interrupt_requested" {
 		t.Fatalf("probe reason code = %q", probe.ReasonCode)
 	}
-	if probe.SuspiciousWindowMinutes != 5 {
-		t.Fatalf("probe suspicious window = %d", probe.SuspiciousWindowMinutes)
+	if probe.FollowUpKind != "interrupt_review" || probe.FollowUpStatus != "pending" {
+		t.Fatalf("probe follow-up = %#v", probe)
+	}
+	if probe.DueWindowHours != 2 {
+		t.Fatalf("probe due window = %d", probe.DueWindowHours)
+	}
+	if probe.ResetStatus != "restored" {
+		t.Fatalf("probe reset status = %q", probe.ResetStatus)
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
-	if !strings.Contains(artifact.GitStatusShortAfter, "backend/orchestration/internal/taskexec/taskexec.go") {
+	if !strings.Contains(artifact.GitStatusShortAfter, "backend/orchestration/internal/taskrun/service.go") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if artifact.ExitCode != 0 {
