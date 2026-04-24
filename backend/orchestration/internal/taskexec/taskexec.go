@@ -158,6 +158,8 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 	}
 	if update.WaitContract != nil {
 		view.WaitContract = update.WaitContract
+	} else if update.State != "" && update.State != taskrun.StateWaitingForHuman {
+		view.WaitContract = nil
 	}
 	if update.Attention != nil {
 		view.Attention = *update.Attention
@@ -183,7 +185,9 @@ func applyUpdate(view *taskrun.TaskRunView, update taskrun.TaskRunUpdate, now ti
 		view.Status = "interrupted"
 	}
 	if update.FailureSummary != "" {
-		view.DocRuntimeDivergenceSummary = update.FailureSummary
+		view.FailureSummary = update.FailureSummary
+	} else if update.State != "" && update.State != taskrun.StateBlocked && update.State != taskrun.StateFailed {
+		view.FailureSummary = ""
 	}
 }
 

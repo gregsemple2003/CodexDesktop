@@ -207,8 +207,9 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 			State:             StateBlocked,
 			ReasonCode:        "interrupt_cleanup_blocked",
 			StateSummary:      "Run interrupt could not restore the owned checkout.",
-			NextOwner:         "backend",
+			NextOwner:         "human_or_supervisor",
 			NextExpectedEvent: "Review cleanup failure and resolve the owned checkout manually.",
+			LastProgressSummary: "Interrupt cleanup failed and the owned checkout needs manual review.",
 			RepoLane:          &repoLane,
 			FailureSummary:    resetErr.Error(),
 		}
@@ -223,6 +224,7 @@ func (s *Service) InterruptRun(ctx context.Context, runID string) (TaskRunView, 
 		NextOwner:         "human_or_supervisor",
 		NextExpectedEvent: "Review the interrupted run and decide whether to dispatch again.",
 		SuspiciousAfter:   now,
+		LastProgressSummary: "Interrupt restored the owned checkout to its recorded restore commit.",
 		RepoLane:          &repoLane,
 		CompletedAt:       now,
 	}
@@ -577,11 +579,14 @@ func (s *Service) provisionOwnedLane(taskID string) (RepoLane, error) {
 		return RepoLane{}, fmt.Errorf("resolve baseline commit for %s", taskID)
 	}
 
-	stamp := fmt.Sprintf("%x", s.now().UnixNano())
-	ownedRepoRoot := filepath.Join(s.ownedLaneRoot, shortTaskSegment(taskID), stamp, "w")
-	if err := os.MkdirAll(filepath.Dir(ownedRepoRoot), 0o755); err != nil {
-		return RepoLane{}, fmt.Errorf("create owned lane parent: %w", err)
+	if err := os.MkdirAll(s.ownedLaneRoot, 0o755); err != nil {
+		return RepoLane{}, fmt.Errorf("create owned lane root: %w", err)
 	}
+	laneDir, err := os.MkdirTemp(s.ownedLaneRoot, shortTaskSegment(taskID)+"-")
+	if err != nil {
+		return RepoLane{}, fmt.Errorf("create owned lane temp dir: %w", err)
+	}
+	ownedRepoRoot := filepath.Join(laneDir, "w")
 
 	args := []string{"-C", s.declaredWorktreeRoot}
 	if runtime.GOOS == "windows" {
@@ -620,28 +625,36 @@ func (s *Service) restoreOwnedLane(repoLane RepoLane) (RepoLane, error) {
 	if restoreCommit == "" {
 		restoreCommit = repoLane.BaselineCommit
 	}
+	repoLane.LastResetTargetCommit = restoreCommit
+	repoLane.ResetFailureSummary = ""
 	if repoLane.OwnedRepoRoot == "" {
 		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "Owned repo root is missing."
 		return repoLane, fmt.Errorf("owned repo root is missing")
 	}
 	if restoreCommit == "" {
 		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "Restore commit is missing."
 		return repoLane, fmt.Errorf("restore commit is missing")
 	}
 	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
 		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = fmt.Sprintf("Owned repo root %q is outside the backend-owned lane root.", repoLane.OwnedRepoRoot)
 		return repoLane, fmt.Errorf("owned repo root %q is outside the backend-owned lane root", repoLane.OwnedRepoRoot)
 	}
 	if err := gitInWorktree(repoLane.OwnedRepoRoot, "reset", "--hard", restoreCommit); err != nil {
 		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = fmt.Sprintf("Reset to %s failed.", restoreCommit)
 		return repoLane, fmt.Errorf("reset owned lane to %s: %w", restoreCommit, err)
 	}
 	if err := gitInWorktree(repoLane.OwnedRepoRoot, "clean", "-fd"); err != nil {
 		repoLane.ResetStatus = "cleanup_blocked"
+		repoLane.ResetFailureSummary = "Git clean failed while restoring the owned checkout."
 		return repoLane, fmt.Errorf("clean owned lane: %w", err)
 	}
 	repoLane.ResetStatus = "restored"
 	repoLane.ApprovedRestoreCommit = restoreCommit
+	repoLane.ResetFailureSummary = ""
 	return repoLane, nil
 }
 
@@ -736,7 +749,7 @@ func actionsForRun(run TaskRunView, now time.Time) map[string]ActionAvailability
 		actions[ActionPoke] = ActionAvailability{
 			Allowed: false,
 			BlockReasons: []ActionBlockReason{{
-				Code:    "waiting_for_human",
+				Code:    "waiting_for_human_stale",
 				Summary: "Poke does not replace the required human action on a stale human wait.",
 			}},
 		}
@@ -795,8 +808,8 @@ func staleRunUpdate(run TaskRunView, now time.Time, actions map[string]ActionAva
 			State:               StateWaitingForHuman,
 			ReasonCode:          "human_wait_stale",
 			StateSummary:        "Run is still waiting for human input and the wait has gone stale.",
-			NextOwner:           "human",
-			NextExpectedEvent:   "Review the stale wait or interrupt the run.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Review the stale human wait or interrupt the run.",
 			SuspiciousAfter:     run.WaitContract.StaleAfter,
 			LastProgressSummary: "Supervision marked the human wait as stale.",
 			Attention:           &attention,

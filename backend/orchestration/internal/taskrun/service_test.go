@@ -124,6 +124,9 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	if !update.CompletedAt.IsZero() {
 		run.LastProgressAt = update.CompletedAt
 	}
+	if update.FailureSummary != "" {
+		run.FailureSummary = update.FailureSummary
+	}
 	switch run.StateEnvelope.State {
 	case StateCompleted:
 		run.Status = "completed"
@@ -500,6 +503,147 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if !task.DispatchReadiness.Ready {
 		t.Fatal("dispatch should be ready again after the latest run is terminal")
+	}
+}
+
+func TestRunReadEscalatesStaleHumanWait(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	_, err = service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:             StateWaitingForHuman,
+		ReasonCode:        "review_required",
+		StateSummary:      "Run is waiting for human review.",
+		NextOwner:         "human",
+		NextExpectedEvent: "Approve the next backend action.",
+		WaitContract: &WaitContract{
+			WaitingOn:           "human_review",
+			WhyBlocked:          "The next backend action needs human approval.",
+			ResumeWhen:          "The human approves the next backend action.",
+			HumanActionRequired: true,
+			HumanActionTarget: &HumanActionTarget{
+				Kind:  "approval_action",
+				Label: "Approve backend review step",
+				URI:   "approval://taskrun/Task-0008",
+			},
+			StaleAfter: time.Now().UTC().Add(-1 * time.Minute),
+		},
+	})
+	if err != nil {
+		t.Fatalf("update run: %v", err)
+	}
+
+	supervised, err := service.Run(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("run detail: %v", err)
+	}
+	if supervised.StateEnvelope.ReasonCode != "human_wait_stale" {
+		t.Fatalf("reason code = %q, want human_wait_stale", supervised.StateEnvelope.ReasonCode)
+	}
+	if supervised.Attention.Level != AttentionUrgent {
+		t.Fatalf("attention level = %q, want urgent", supervised.Attention.Level)
+	}
+	if supervised.Actions[ActionInterrupt].Allowed != true {
+		t.Fatal("interrupt should remain allowed for a stale human wait")
+	}
+	if supervised.Actions[ActionPoke].Allowed {
+		t.Fatal("poke should stay blocked for a stale human wait")
+	}
+	if supervised.Actions[ActionPoke].BlockReasons[0].Code != "waiting_for_human_stale" {
+		t.Fatalf("poke block reason = %q", supervised.Actions[ActionPoke].BlockReasons[0].Code)
+	}
+}
+
+func TestInterruptRunSurfacesCleanupBlockedReadback(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	badRoot := filepath.Join(worktreeRoot, "outside-owned-lane")
+	if err := os.MkdirAll(badRoot, 0o755); err != nil {
+		t.Fatalf("mkdir bad root: %v", err)
+	}
+	current := runtime.byRunID[run.RunID]
+	current.StateEnvelope.State = StateRunning
+	current.Actions = actionsForRunState(StateRunning)
+	current.RepoLane.OwnedRepoRoot = badRoot
+	runtime.byRunID[run.RunID] = current
+	runtime.activeByTask[run.TaskID] = current
+
+	blocked, err := service.InterruptRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+	if blocked.StateEnvelope.ReasonCode != "interrupt_cleanup_blocked" {
+		t.Fatalf("reason code = %q", blocked.StateEnvelope.ReasonCode)
+	}
+	if blocked.RepoLane.ResetStatus != "cleanup_blocked" {
+		t.Fatalf("reset status = %q, want cleanup_blocked", blocked.RepoLane.ResetStatus)
+	}
+	if blocked.RepoLane.ResetFailureSummary == "" {
+		t.Fatal("expected reset failure summary")
+	}
+	if blocked.FailureSummary == "" {
+		t.Fatal("expected run failure summary to be populated")
 	}
 }
 

@@ -174,6 +174,9 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 	if !update.CompletedAt.IsZero() {
 		run.LastProgressAt = update.CompletedAt
 	}
+	if update.FailureSummary != "" {
+		run.FailureSummary = update.FailureSummary
+	}
 	switch run.StateEnvelope.State {
 	case taskrun.StateCompleted:
 		run.Status = "completed"

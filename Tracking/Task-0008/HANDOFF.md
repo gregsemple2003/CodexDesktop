@@ -89,7 +89,18 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 - task readback that releases live-story ownership after terminal runs
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0001.md](./Testing/PASS-0002-BACKEND-SMOKE-0001.md)
 
-What is still missing is deeper stale-wait supervision, richer cleanup-failure handling, and real task execution over those durable runs.
+`PASS-0002` now also has the next supervision refinement slice:
+
+- stale human-wait escalation into `human_wait_stale`
+- explicit `waiting_for_human_stale` poke rejection while keeping interrupt allowed
+- cleanup-blocked interrupt readback with:
+  - `repo_lane.reset_status = cleanup_blocked`
+  - `repo_lane.last_reset_target_commit`
+  - `repo_lane.reset_failure_summary`
+  - run-level `failure_summary`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0002.md](./Testing/PASS-0002-BACKEND-SMOKE-0002.md)
+
+What is still missing is worker-side follow-up after poke or interrupt, richer repair workflow over cleanup-blocked runs, and real task execution over those durable runs.
 
 ## Current Gate
 
@@ -107,9 +118,8 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- add a stronger stale-human-wait supervision path instead of only stale-progress supervision
-- make cleanup-blocked and reset-failure outcomes first-class readback, not just error strings
 - keep poke and interrupt behavior tied to durable worker-side follow-up instead of only backend intervention recording
+- turn cleanup-blocked from a truthful readback into a fuller repair or retry workflow
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints

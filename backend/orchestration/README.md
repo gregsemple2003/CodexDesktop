@@ -35,10 +35,12 @@ Task-0008 also starts the first durable dispatch slice:
 - dispatch captures the baseline commit the owned lane may restore to later
 - task runs can accept backend-owned post-dispatch state updates
 - active-run reads can supervise stale progress into `sleeping_or_stalled`
+- active-run reads can supervise stale human waits into `human_wait_stale`
 - interrupt can restore the owned checkout to its recorded restore commit
+- interrupt cleanup failures surface through dedicated repo-lane reset failure fields
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Further stale-wait supervision, richer cleanup-failure surfacing, and real task execution inside the owned checkout remain future slices.
+Worker-side follow-up after poke or interrupt, richer repair workflow for cleanup-blocked runs, and real task execution inside the owned checkout remain future slices.
 
 ## Scheduling Boundary
 

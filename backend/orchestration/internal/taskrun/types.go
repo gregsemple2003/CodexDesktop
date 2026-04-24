@@ -106,6 +106,8 @@ type RepoLane struct {
 	BaselineCommit        string    `json:"baseline_commit,omitempty"`
 	ApprovedRestoreCommit string    `json:"approved_restore_commit,omitempty"`
 	ResetStatus           string    `json:"reset_status,omitempty"`
+	LastResetTargetCommit string    `json:"last_reset_target_commit,omitempty"`
+	ResetFailureSummary   string    `json:"reset_failure_summary,omitempty"`
 	LastResetAt           time.Time `json:"last_reset_at,omitempty"`
 }
 
@@ -137,6 +139,7 @@ type TaskRunView struct {
 	RepoLane                    RepoLane                      `json:"repo_lane"`
 	LastProgressAt              time.Time                     `json:"last_progress_at,omitempty"`
 	LastProgressSummary         string                        `json:"last_progress_summary,omitempty"`
+	FailureSummary              string                        `json:"failure_summary,omitempty"`
 	CapturedTaskSnapshot        TaskDefinitionSnapshot        `json:"captured_task_snapshot"`
 	DocRuntimeDivergenceStatus  string                        `json:"doc_runtime_divergence_status,omitempty"`
 	DocRuntimeDivergenceSummary string                        `json:"doc_runtime_divergence_summary,omitempty"`
