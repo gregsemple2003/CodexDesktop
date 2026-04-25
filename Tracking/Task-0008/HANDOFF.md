@@ -280,6 +280,17 @@ What is still missing is supervision, poke, interrupt, cleanup behavior, and rea
 
 What is still missing is repairing or replacing the current live Task-0008 owned-lane workload-execution path so later progress does not stall at `workload_execution_failed` before interruption or recovery is exercised.
 
+`PASS-0002` now also has the bounded repair slice on the current live Task-0008 workload-execution path:
+
+- the stale Task-0008 owned-lane mutation recipe was repaired so the owned-lane `go test` step no longer stalls at `workload_execution_failed`
+- the owned-lane existing-file edit is now retargeted to the current `backend/orchestration/internal/taskrun/service.go` baseline
+- that owned-lane edit now escalates blocked-run recovery attention from `needs_attention` to `urgent`
+- the repaired workload step now writes its result artifact again and advances automatically to:
+  - `reason_code = task_0008_workload_failure_attention_escalated`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0018.md](./Testing/PASS-0002-BACKEND-SMOKE-0018.md)
+
+What is still missing is a real backend recovery action for actual `workload_execution_failed` runs, rather than only a repaired owned-lane recipe plus stronger blocked-run attention.
+
 ## Current Gate
 
 Implementation is active under the approved backend-only runtime split:
@@ -296,7 +307,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- keep `PASS-0002` focused on the next honest runtime gap: repair the current Task-0008 owned-lane workload-execution path or replace it with a more truthful backend-driven step before adding more synthetic owned-lane proof edits
+- keep `PASS-0002` focused on the next honest runtime gap: add or repair a real backend recovery action for `workload_execution_failed` runs before piling on more synthetic owned-lane proof edits
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -312,6 +323,7 @@ The next implementation slice should:
 - when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
 - do not mistake a bounded owned-lane recovery improvement for finished implementation work; the next honest step is to fix the current live workload-execution gap before piling on more synthetic owned-lane proof edits
+- do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
 - do not broaden this task into dashboard implementation work
 
 ## References

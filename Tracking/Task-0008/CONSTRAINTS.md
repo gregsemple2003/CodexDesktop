@@ -61,3 +61,7 @@ Add new constraints here as they are given.
   - `CODEX_ORCH_POSTGRES_PORT=15432`
   - `CODEX_ORCH_TEMPORAL_PORT=17233`
   - `CODEX_ORCH_TEMPORAL_UI_PORT=18080`
+
+### 2026-04-24 Owned-Lane Mutation Baseline Constraint
+
+- Keep Task-0008-owned mutation recipes aligned with the current repo baseline; if an owned-lane patch recipe drifts behind the real implementation, the owned-lane `go test` step will correctly fail before later recovery proof can run.

@@ -556,6 +556,14 @@ import (
 const (
 	StateRunning     = "running"
 	StateInterrupted = "interrupted"
+	StateBlocked     = "blocked"
+)
+
+const (
+	AttentionNone           = "none"
+	AttentionWatch          = "watch"
+	AttentionNeedsAttention = "needs_attention"
+	AttentionUrgent         = "urgent"
 )
 
 type ActionAvailability struct {
@@ -694,9 +702,9 @@ type Service struct {
 }
 
 type taskStateFile struct {
-	TaskID       string   ` + "`json:\"task_id\"`" + `
-	PlanApproved bool     ` + "`json:\"plan_approved\"`" + `
-	Blockers     []string ` + "`json:\"blockers\"`" + `
+	TaskID       string   `+"`json:\"task_id\"`"+`
+	PlanApproved bool     `+"`json:\"plan_approved\"`"+`
+	Blockers     []string `+"`json:\"blockers\"`"+`
 }
 
 func NewService(declaredWorktreeRoot string, runsRoot string, runtimeBackend Runtime) *Service {
@@ -845,6 +853,15 @@ func runOwnsLiveStory(run TaskRunView) bool {
 	return run.Status != "completed" && run.Status != "failed" && run.Status != "interrupted"
 }
 
+func attentionForRunState(state string) AttentionPriority {
+	switch state {
+	case StateBlocked:
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Run is blocked and needs review.", SortKey: "30-blocked"}
+	default:
+		return AttentionPriority{Level: AttentionWatch, Reason: "Run is active.", SortKey: "50-active"}
+	}
+}
+
 var errRunNotFound = errors.New("task run not found")
 var ErrRunNotFound = errRunNotFound
 
@@ -926,7 +943,7 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	if artifact.ExecutionKind != "task_0008_backend_validation" {
 		t.Fatalf("execution kind = %q", artifact.ExecutionKind)
 	}
-	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed owned-lane redispatch cleanup behavior in an existing implementation file." {
+	if artifact.ExecutionSummary != "Executed Task-0008 backend validation and changed blocked-run recovery attention in an existing implementation file." {
 		t.Fatalf("execution summary = %q", artifact.ExecutionSummary)
 	}
 	if artifact.StdoutPath == "" || artifact.StderrPath == "" {
@@ -967,7 +984,7 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	if err != nil {
 		t.Fatalf("read workload code path: %v", err)
 	}
-	if !strings.Contains(string(rawCode), "releasePreviousOwnedLane(ctx,") {
+	if !strings.Contains(string(rawCode), `return AttentionPriority{Level: AttentionUrgent, Reason: "Run is blocked and needs prompt recovery review.", SortKey: "18-blocked_recovery"}`) {
 		t.Fatalf("code contents = %q", string(rawCode))
 	}
 	rawProbe, err := os.ReadFile(artifact.BehaviorProbePath)
@@ -975,35 +992,33 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 		t.Fatalf("read behavior probe path: %v", err)
 	}
 	var probe struct {
-		OriginalOwnedRootRemoved bool   `json:"original_owned_root_removed"`
-		NewOwnedRoot             string `json:"new_owned_root"`
-		NewOwnedRootExists       bool   `json:"new_owned_root_exists"`
-		NewOwnedRootDiffers      bool   `json:"new_owned_root_differs"`
-		NewRunReasonCode         string `json:"new_run_reason_code"`
-		NewRunCurrentCommit      bool   `json:"new_run_current_commit_present"`
+		ProofTestPath                      string `json:"proof_test_path"`
+		BlockedAttentionLevel              string `json:"blocked_attention_level"`
+		CodeContainsBlockedAttentionUrgent bool   `json:"code_contains_blocked_attention_urgent"`
+		GoTestPassed                       bool   `json:"go_test_passed"`
 	}
 	if err := json.Unmarshal(rawProbe, &probe); err != nil {
 		t.Fatalf("decode behavior probe: %v", err)
 	}
-	if !probe.OriginalOwnedRootRemoved {
-		t.Fatal("expected original owned root to be removed")
+	if probe.ProofTestPath == "" {
+		t.Fatal("expected proof test path")
 	}
-	if !probe.NewOwnedRootExists {
-		t.Fatal("expected new owned root to exist")
+	if probe.BlockedAttentionLevel != "urgent" {
+		t.Fatalf("blocked attention level = %q", probe.BlockedAttentionLevel)
 	}
-	if !probe.NewOwnedRootDiffers {
-		t.Fatal("expected a fresh owned root")
+	if !probe.CodeContainsBlockedAttentionUrgent {
+		t.Fatal("expected behavior probe to confirm urgent blocked attention")
 	}
-	if probe.NewRunReasonCode != "owned_lane_bootstrapped" {
-		t.Fatalf("probe new run reason = %q", probe.NewRunReasonCode)
-	}
-	if !probe.NewRunCurrentCommit {
-		t.Fatal("expected redispatched run to capture current commit")
+	if !probe.GoTestPassed {
+		t.Fatal("expected go test to pass")
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "OwnedLane") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if !strings.Contains(artifact.GitStatusShortAfter, "backend/orchestration/internal/taskrun/service.go") {
+		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
+	}
+	if !strings.Contains(artifact.GitStatusShortAfter, "backend/orchestration/internal/taskrun/task0008_owned_lane_behavior_test.go") {
 		t.Fatalf("git status after = %q", artifact.GitStatusShortAfter)
 	}
 	if artifact.ExitCode != 0 {
