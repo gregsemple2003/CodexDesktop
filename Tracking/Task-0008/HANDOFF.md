@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0008` is in implementation with `PASS-0003` active.
+`Task-0008` is complete.
 
 This task is a backend-only runtime task:
 
@@ -19,9 +19,21 @@ The first honest operator path can be Codex or direct backend interaction.
 
 This task does not own frontend controls or dashboard wiring.
 
+The shipped backend contract now includes:
+
+- durable dispatch and task-run persistence
+- supervision, poke, interrupt, cleanup retry, and workload retry
+- exclusive owned-lane execution with restore-to-commit semantics
+- deep-context readback for operators and later clients
+- declared-doc drift reconcile with explicit git-vs-runtime divergence reporting
+
+Final closeout evidence is in [Testing/PASS-0004-BACKEND-SMOKE-0001.md](./Testing/PASS-0004-BACKEND-SMOKE-0001.md).
+
 ## Current Objective
 
-Turn `task dispatch` from a vague future UI action into a real durable runtime capability with a state contract strong enough to support humane monitoring.
+No further implementation remains in Task-0008.
+
+This handoff is now the final backend baseline for downstream consumers such as [Task-0009](../Task-0009/TASK.md).
 
 The initial contract note is here:
 
@@ -339,18 +351,27 @@ The remaining gap is no longer proof honesty for workload-failure recovery. The 
 - if the dispatching process can see a session id or transcript path, that best-effort provenance is captured into the run and surfaced in the same `deep_context` contract
 - live proof in [Testing/PASS-0003-BACKEND-SMOKE-0001.md](./Testing/PASS-0003-BACKEND-SMOKE-0001.md)
 
-The task is still not honestly done.
+`PASS-0003` now also has the declared-doc drift and divergence-reconcile slice:
 
-What remains unproven against the approved scope is the git-vs-runtime divergence side of the operator contract:
+- active task readback now performs read-through reconcile and records the newer declared snapshot durably in the active run
+- run readback now exposes:
+  - `doc_runtime_divergence_status = reconciled`
+  - `doc_runtime_divergence_summary` with old-to-new declared task revisions
+- the active run keeps its live runtime story while declared docs drift
+- live proof in [Testing/PASS-0003-BACKEND-SMOKE-0002.md](./Testing/PASS-0003-BACKEND-SMOKE-0002.md)
 
-- task-owned proof does not yet show a live rollback or task-doc drift event where:
-  - current declared task docs change materially
-  - the active run keeps its captured runtime truth
-  - backend readback reports the mismatch explicitly through `doc_runtime_divergence_status` and related snapshot fields
+`PASS-0004` closeout is now complete:
+
+- full backend unit coverage passed again through `go test ./...`
+- Task-0008 task-owned proof now covers dispatch, supervision, interrupt, retry, deep-context, and divergence behavior end to end
+- repo-root regression is honestly `not_applicable` because this task changed backend orchestration only and did not change the desktop app surface
+- final closeout evidence is in [Testing/PASS-0004-BACKEND-SMOKE-0001.md](./Testing/PASS-0004-BACKEND-SMOKE-0001.md)
 
 ## Current Gate
 
-Implementation is active under the approved backend-only runtime split:
+Closure is complete.
+
+Task-0008 shipped the approved backend-only runtime split:
 
 - backend-owned task-run workflow and API contract
 - first proof allowed through Codex or direct backend interactions before frontend work
@@ -360,14 +381,9 @@ Implementation is active under the approved backend-only runtime split:
 
 ## Next Recommended Step
 
-Continue with `PASS-0002` by deepening the supervision surface before any frontend work starts.
+No more implementation remains in Task-0008.
 
-The next implementation slice should:
-
-- keep `PASS-0003` focused on the next honest operator-contract gap: prove and, if needed, harden git-vs-runtime divergence reporting after declared-doc change or rollback
-- keep task and run readback aligned with the declared-doc ingest and reconcile model
-- prepare the runtime shape that later pass work can drive through real execution and recovery events
-- keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
+The next honest work is downstream consumption of this contract, primarily in [Task-0009](../Task-0009/TASK.md), rather than more Task-0008-owned runtime expansion.
 
 ## Watchouts
 
@@ -381,7 +397,7 @@ The next implementation slice should:
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
 - do not mistake a bounded owned-lane recovery improvement for finished implementation work; the next honest step is to fix the current live workload-execution gap before piling on more synthetic owned-lane proof edits
 - the natural workload-failure proof path is intentionally bounded to `Task-0008` and uses a one-shot backend-owned execution directive rather than a generalized fault-injection surface
-- deep-context readback now exposes launch targets, but the task still needs explicit task-owned proof that declared-doc drift or rollback is reported honestly while runtime truth remains preserved
+- declared-doc drift proof on an active run is signal-based; live verification should poll the active run until reconcile becomes visible rather than assuming the immediate task-read response already reflects it
 - do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
 - do not broaden this task into dashboard implementation work
 

@@ -182,7 +182,12 @@ func (b *Backend) ReconcileTaskSnapshot(ctx context.Context, runID string, snaps
 		}
 		return taskrun.TaskRunView{}, fmt.Errorf("signal reconcile for task run %s: %w", runID, err)
 	}
-	return b.GetTaskRun(ctx, runID)
+	return waitForTaskRunCondition(ctx, 10, 50*time.Millisecond, func() (taskrun.TaskRunView, error) {
+		return b.GetTaskRun(ctx, runID)
+	}, func(view taskrun.TaskRunView) bool {
+		return view.CapturedTaskSnapshot.DeclaredTaskRevision == snapshot.DeclaredTaskRevision &&
+			view.DocRuntimeDivergenceStatus == "reconciled"
+	})
 }
 
 func (b *Backend) UpdateTaskRun(ctx context.Context, runID string, update taskrun.TaskRunUpdate) (taskrun.TaskRunView, error) {
@@ -254,6 +259,37 @@ func readUpdatedTaskRun(
 		return taskrun.TaskRunView{}, err
 	}
 	return queryClosed()
+}
+
+func waitForTaskRunCondition(
+	ctx context.Context,
+	maxAttempts int,
+	delay time.Duration,
+	query func() (taskrun.TaskRunView, error),
+	ready func(taskrun.TaskRunView) bool,
+) (taskrun.TaskRunView, error) {
+	var last taskrun.TaskRunView
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		view, err := query()
+		if err != nil {
+			return taskrun.TaskRunView{}, err
+		}
+		last = view
+		if ready(view) {
+			return view, nil
+		}
+		if attempt == maxAttempts-1 {
+			break
+		}
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return last, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return last, nil
 }
 
 func buildScheduleOptions(desired controlplane.DesiredSchedule) client.ScheduleOptions {

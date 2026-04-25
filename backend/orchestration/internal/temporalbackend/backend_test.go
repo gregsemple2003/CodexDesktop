@@ -1,8 +1,10 @@
 package temporalbackend
 
 import (
+	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobs"
@@ -83,6 +85,51 @@ func TestReadUpdatedTaskRunPreservesNonNotFoundError(t *testing.T) {
 	})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestWaitForTaskRunConditionReturnsWhenReady(t *testing.T) {
+	attempts := 0
+	got, err := waitForTaskRunCondition(context.Background(), 3, time.Nanosecond, func() (taskrun.TaskRunView, error) {
+		attempts++
+		if attempts == 1 {
+			return taskrun.TaskRunView{
+				CapturedTaskSnapshot:       taskrun.TaskDefinitionSnapshot{DeclaredTaskRevision: "old"},
+				DocRuntimeDivergenceStatus: "in_sync",
+			}, nil
+		}
+		return taskrun.TaskRunView{
+			CapturedTaskSnapshot:       taskrun.TaskDefinitionSnapshot{DeclaredTaskRevision: "new"},
+			DocRuntimeDivergenceStatus: "reconciled",
+		}, nil
+	}, func(view taskrun.TaskRunView) bool {
+		return view.CapturedTaskSnapshot.DeclaredTaskRevision == "new" && view.DocRuntimeDivergenceStatus == "reconciled"
+	})
+	if err != nil {
+		t.Fatalf("waitForTaskRunCondition returned error: %v", err)
+	}
+	if got.CapturedTaskSnapshot.DeclaredTaskRevision != "new" {
+		t.Fatalf("revision = %q, want new", got.CapturedTaskSnapshot.DeclaredTaskRevision)
+	}
+	if attempts != 2 {
+		t.Fatalf("attempts = %d, want 2", attempts)
+	}
+}
+
+func TestWaitForTaskRunConditionReturnsLastViewWhenNotReady(t *testing.T) {
+	got, err := waitForTaskRunCondition(context.Background(), 2, time.Nanosecond, func() (taskrun.TaskRunView, error) {
+		return taskrun.TaskRunView{
+			CapturedTaskSnapshot:       taskrun.TaskDefinitionSnapshot{DeclaredTaskRevision: "old"},
+			DocRuntimeDivergenceStatus: "in_sync",
+		}, nil
+	}, func(view taskrun.TaskRunView) bool {
+		return view.DocRuntimeDivergenceStatus == "reconciled"
+	})
+	if err != nil {
+		t.Fatalf("waitForTaskRunCondition returned error: %v", err)
+	}
+	if got.DocRuntimeDivergenceStatus != "in_sync" {
+		t.Fatalf("status = %q, want in_sync", got.DocRuntimeDivergenceStatus)
 	}
 }
 

@@ -67,9 +67,10 @@ Task-0008 also starts the first durable dispatch slice:
 - blocked workload-execution failures now expose a pending `workload_recovery` follow-up that clears when retry begins
 - `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise` now drives a natural one-shot `workload_execution_failed` transition through the workflow for bounded proof and recovery testing
 - task and run readback now expose `deep_context` with preferred launch targets and launchable context targets for operator recovery
+- active task readback now records declared-doc drift through read-through reconcile and later run readback exposes `doc_runtime_divergence_status = reconciled` plus an old-to-new declared revision summary
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
-Real task execution inside the owned checkout remains a future slice.
+Task-specific workload recipes inside the owned checkout remain intentionally bounded to Task-0008 proof and recovery flows rather than a generalized autonomous implementation worker.
 
 ## Scheduling Boundary
 

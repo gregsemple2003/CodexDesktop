@@ -110,9 +110,14 @@ func (f *fakeRuntime) ReconcileTaskSnapshot(_ context.Context, runID string, sna
 	if !ok {
 		return TaskRunView{}, ErrRunNotFound
 	}
+	previousRevision := run.CapturedTaskSnapshot.DeclaredTaskRevision
 	run.CapturedTaskSnapshot = snapshot
 	run.DocRuntimeDivergenceStatus = "reconciled"
-	run.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+	if previousRevision != "" && previousRevision != snapshot.DeclaredTaskRevision {
+		run.DocRuntimeDivergenceSummary = "Runtime reconciled the active run from declared task revision " + previousRevision + " to " + snapshot.DeclaredTaskRevision + " during task readback."
+	} else {
+		run.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+	}
 	f.byRunID[runID] = run
 	f.activeByTask[run.TaskID] = run
 	return run, nil
@@ -600,6 +605,74 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if !supervised.Actions[ActionInterrupt].Allowed {
 		t.Fatal("interrupt should stay allowed for a stalled run")
+	}
+}
+
+func TestTaskReadReconcilesDeclaredDocDriftWhileRunStaysActive(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0003",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T22:00:00-04:00"
+}`,
+			planMD:    "# approved plan\n",
+			handoffMD: "# handoff\n\n## Current Status\n\ninitial handoff\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	oldRevision := run.CapturedTaskSnapshot.DeclaredTaskRevision
+
+	writeFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "HANDOFF.md"), "# handoff\n\n## Current Status\n\ndrifted handoff\n")
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail after drift: %v", err)
+	}
+	if task.LatestRun == nil {
+		t.Fatal("expected latest run after drift")
+	}
+	if task.CurrentStory.Status != "active_run" {
+		t.Fatalf("current story = %q, want active_run", task.CurrentStory.Status)
+	}
+	if task.LatestRun.DocRuntimeDivergenceStatus != "reconciled" {
+		t.Fatalf("divergence status = %q, want reconciled", task.LatestRun.DocRuntimeDivergenceStatus)
+	}
+	if task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision == oldRevision {
+		t.Fatalf("captured revision = %q, want new revision not %q", task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision, oldRevision)
+	}
+	if !strings.Contains(task.LatestRun.DocRuntimeDivergenceSummary, oldRevision) {
+		t.Fatalf("divergence summary = %q, want old revision", task.LatestRun.DocRuntimeDivergenceSummary)
+	}
+	if !strings.Contains(task.LatestRun.DocRuntimeDivergenceSummary, task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision) {
+		t.Fatalf("divergence summary = %q, want new revision", task.LatestRun.DocRuntimeDivergenceSummary)
+	}
+	if task.LatestRun.StateEnvelope.ReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("reason code = %q, want owned_lane_bootstrapped", task.LatestRun.StateEnvelope.ReasonCode)
+	}
+	if task.DeclaredTaskRevision != task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision {
+		t.Fatalf("task declared revision = %q, run captured revision = %q", task.DeclaredTaskRevision, task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision)
 	}
 }
 

@@ -64,9 +64,18 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 		selector.AddReceive(reconcileCh, func(c workflow.ReceiveChannel, more bool) {
 			var snapshot taskrun.TaskDefinitionSnapshot
 			c.Receive(ctx, &snapshot)
+			previousRevision := view.CapturedTaskSnapshot.DeclaredTaskRevision
 			view.CapturedTaskSnapshot = snapshot
 			view.DocRuntimeDivergenceStatus = "reconciled"
-			view.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+			if previousRevision != "" && previousRevision != snapshot.DeclaredTaskRevision {
+				view.DocRuntimeDivergenceSummary = fmt.Sprintf(
+					"Runtime reconciled the active run from declared task revision %s to %s during task readback.",
+					previousRevision,
+					snapshot.DeclaredTaskRevision,
+				)
+			} else {
+				view.DocRuntimeDivergenceSummary = "Runtime captured newer task docs during task readback."
+			}
 			view.LastProgressAt = workflow.Now(ctx).UTC()
 			view.LastProgressSummary = "Reconciled declared task docs into runtime state."
 			view.StateEnvelope.SuspiciousAfter = workflow.Now(ctx).UTC().Add(15 * time.Minute)

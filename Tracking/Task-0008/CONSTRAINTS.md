@@ -65,3 +65,7 @@ Add new constraints here as they are given.
 ### 2026-04-24 Owned-Lane Mutation Baseline Constraint
 
 - Keep Task-0008-owned mutation recipes aligned with the current repo baseline; if an owned-lane patch recipe drifts behind the real implementation, the owned-lane `go test` step will correctly fail before later recovery proof can run.
+
+### 2026-04-24 Reconcile Visibility Constraint
+
+- When proving declared-doc drift on an active Temporal task run, do not assume the reconcile signal will be visible in the immediate task-read response while the current workflow activity is still running; poll the active run until `doc_runtime_divergence_status` reflects the reconciled snapshot.
