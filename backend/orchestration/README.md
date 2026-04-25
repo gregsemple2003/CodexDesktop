@@ -31,6 +31,7 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `POST /api/v1/task-runs/{run_id}/retry-workload`
 - expose `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
+- expose deep-context launch targets so backend callers can open task folders, handoff, owned checkout, run artifacts, and the active run API resource without manual search
 
 Task-0008 also starts the first durable dispatch slice:
 
@@ -65,6 +66,7 @@ Task-0008 also starts the first durable dispatch slice:
 - actual `workload_execution_failed` runs can now retry through `POST /api/v1/task-runs/{run_id}/retry-workload`, which releases the failed owned lane, provisions a fresh one, bootstraps it, and reruns the owned-lane workload path
 - blocked workload-execution failures now expose a pending `workload_recovery` follow-up that clears when retry begins
 - `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise` now drives a natural one-shot `workload_execution_failed` transition through the workflow for bounded proof and recovery testing
+- task and run readback now expose `deep_context` with preferred launch targets and launchable context targets for operator recovery
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.

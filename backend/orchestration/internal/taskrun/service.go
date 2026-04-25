@@ -158,6 +158,7 @@ func (s *Service) dispatchWithDirective(ctx context.Context, taskID string, dire
 			Files:                nil,
 		},
 		ExecutionDirective:  directive,
+		ContextSnapshot:     captureDispatchContext(),
 		RepoLane:            repoLane,
 		DispatchRequestedAt: s.now(),
 	}
@@ -179,6 +180,7 @@ func (s *Service) dispatchWithDirective(ctx context.Context, taskID string, dire
 		_ = s.cleanupOwnedLane(repoLane)
 		return TaskRunView{}, err
 	}
+	run.DeepContext = runDeepContext(run)
 	return run, nil
 }
 
@@ -190,7 +192,12 @@ func (s *Service) Run(ctx context.Context, runID string) (TaskRunView, error) {
 	if err != nil {
 		return TaskRunView{}, err
 	}
-	return s.refreshRun(ctx, run)
+	run, err = s.refreshRun(ctx, run)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	run.DeepContext = runDeepContext(run)
+	return run, nil
 }
 
 func (s *Service) UpdateRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error) {
@@ -540,6 +547,7 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 		PlanApproved: metadata.state.PlanApproved,
 		Blockers:     append([]string(nil), metadata.state.Blockers...),
 		UpdatedAt:    metadata.state.UpdatedAt,
+		DeepContext:  taskDeepContext(metadata),
 	}
 
 	view.StateEnvelope = s.deriveStateEnvelope(metadata)
@@ -570,6 +578,7 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 	if err != nil {
 		return TaskView{}, err
 	}
+	run.DeepContext = runDeepContext(run)
 
 	view.LatestRun = &run
 	if runOwnsLiveStory(run) {
@@ -583,6 +592,7 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 		view.Actions = run.Actions
 		view.DispatchReadiness = s.deriveDispatchReadiness(metadata, true)
 		view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
+		view.DeepContext = run.DeepContext
 	} else {
 		view.CurrentStory = StoryOwnership{
 			Status: "no_active_run",
@@ -1430,6 +1440,149 @@ func taskArtifactRef(label string, path string) EvidenceRef {
 func fileURI(path string) string {
 	value := filepath.ToSlash(path)
 	return (&url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(value, "/")}).String()
+}
+
+func apiResourceURI(path string) string {
+	return "api://" + strings.TrimPrefix(path, "/")
+}
+
+func captureDispatchContext() *DeepContext {
+	sessionID := firstNonEmptyEnv("CODEX_SESSION_ID", "CODEX_THREAD_ID", "CODEX_CONVERSATION_ID")
+	transcriptPath := firstNonEmptyEnv("CODEX_TRANSCRIPT_PATH", "CODEX_SESSION_TRANSCRIPT_PATH")
+	if sessionID == "" && transcriptPath == "" {
+		return nil
+	}
+	return &DeepContext{
+		SessionID:      sessionID,
+		TranscriptPath: transcriptPath,
+	}
+}
+
+func firstNonEmptyEnv(keys ...string) string {
+	for _, key := range keys {
+		if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func taskDeepContext(metadata parsedTask) *DeepContext {
+	targets := []LaunchTarget{{
+		Kind:      "task_artifact",
+		Label:     "Task folder",
+		URI:       fileURI(metadata.taskRoot),
+		Command:   []string{"code", metadata.taskRoot},
+		Preferred: true,
+	}}
+	if hasSnapshotFile(metadata.snapshot, "HANDOFF.md") {
+		handoffPath := filepath.Join(metadata.taskRoot, "HANDOFF.md")
+		targets = append(targets, LaunchTarget{
+			Kind:    "task_artifact",
+			Label:   "Task handoff",
+			URI:     fileURI(handoffPath),
+			Command: []string{"code", handoffPath},
+		})
+	}
+	if hasSnapshotFile(metadata.snapshot, "PLAN.md") {
+		planPath := filepath.Join(metadata.taskRoot, "PLAN.md")
+		targets = append(targets, LaunchTarget{
+			Kind:    "task_artifact",
+			Label:   "Task plan",
+			URI:     fileURI(planPath),
+			Command: []string{"code", planPath},
+		})
+	}
+	preferred := targets[0]
+	return &DeepContext{
+		PreferredLaunchTarget: &preferred,
+		LaunchTargets:         targets,
+	}
+}
+
+func runDeepContext(run TaskRunView) *DeepContext {
+	base := &DeepContext{}
+	if run.DeepContext != nil {
+		base.SessionID = run.DeepContext.SessionID
+		base.TranscriptPath = run.DeepContext.TranscriptPath
+	}
+	targets := make([]LaunchTarget, 0, 6)
+	if base.TranscriptPath != "" {
+		targets = append(targets, LaunchTarget{
+			Kind:      "transcript",
+			Label:     "Session transcript",
+			URI:       fileURI(base.TranscriptPath),
+			Command:   []string{"code", base.TranscriptPath},
+			Preferred: true,
+		})
+	}
+	if run.CapturedTaskSnapshot.DeclaredTaskRoot != "" {
+		targets = append(targets, LaunchTarget{
+			Kind:      "task_artifact",
+			Label:     "Task folder",
+			URI:       fileURI(run.CapturedTaskSnapshot.DeclaredTaskRoot),
+			Command:   []string{"code", run.CapturedTaskSnapshot.DeclaredTaskRoot},
+			Preferred: len(targets) == 0,
+		})
+		if hasSnapshotFile(run.CapturedTaskSnapshot, "HANDOFF.md") {
+			handoffPath := filepath.Join(run.CapturedTaskSnapshot.DeclaredTaskRoot, "HANDOFF.md")
+			targets = append(targets, LaunchTarget{
+				Kind:    "task_artifact",
+				Label:   "Task handoff",
+				URI:     fileURI(handoffPath),
+				Command: []string{"code", handoffPath},
+			})
+		}
+	}
+	if run.RepoLane.OwnedRepoRoot != "" {
+		targets = append(targets, LaunchTarget{
+			Kind:    "owned_checkout",
+			Label:   "Owned checkout",
+			URI:     fileURI(run.RepoLane.OwnedRepoRoot),
+			Command: []string{"code", run.RepoLane.OwnedRepoRoot},
+		})
+	}
+	if run.RepoLane.RunArtifactRoot != "" {
+		targets = append(targets, LaunchTarget{
+			Kind:    "run_artifact",
+			Label:   "Run artifacts",
+			URI:     fileURI(run.RepoLane.RunArtifactRoot),
+			Command: []string{"code", run.RepoLane.RunArtifactRoot},
+		})
+	}
+	if run.RunID != "" {
+		targets = append(targets, LaunchTarget{
+			Kind:  "api_resource",
+			Label: "Active run API resource",
+			URI:   apiResourceURI("/api/v1/task-runs/" + run.RunID),
+		})
+	}
+	if len(targets) == 0 && base.SessionID == "" && base.TranscriptPath == "" {
+		return nil
+	}
+	preferredIndex := 0
+	for i := range targets {
+		if targets[i].Preferred {
+			preferredIndex = i
+			break
+		}
+	}
+	if len(targets) > 0 {
+		targets[preferredIndex].Preferred = true
+		preferred := targets[preferredIndex]
+		base.PreferredLaunchTarget = &preferred
+	}
+	base.LaunchTargets = targets
+	return base
+}
+
+func hasSnapshotFile(snapshot TaskDefinitionSnapshot, relativePath string) bool {
+	for _, file := range snapshot.Files {
+		if filepath.ToSlash(file.RelativePath) == filepath.ToSlash(relativePath) {
+			return true
+		}
+	}
+	return false
 }
 
 func writeJSONFile(path string, value any) error {

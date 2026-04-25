@@ -2,7 +2,7 @@
 
 ## Current Status
 
-`Task-0008` is in implementation with `PASS-0002` active.
+`Task-0008` is in implementation with `PASS-0003` active.
 
 This task is a backend-only runtime task:
 
@@ -327,6 +327,27 @@ What is still missing is a less synthetic way to prove workload-execution failur
 
 The remaining gap is no longer proof honesty for workload-failure recovery. The next honest question is whether to keep this bounded failure-exercise path as the durable proof/debug hook, or to move on to the next broader recovery or execution-policy gap in `PASS-0002`.
 
+`PASS-0003` now has its first real context-readback slice:
+
+- task readback now exposes `deep_context` even when no run is active
+- run readback now exposes `deep_context` with launchable targets for:
+  - task folder
+  - task handoff
+  - owned checkout
+  - run artifacts
+  - active run API resource
+- if the dispatching process can see a session id or transcript path, that best-effort provenance is captured into the run and surfaced in the same `deep_context` contract
+- live proof in [Testing/PASS-0003-BACKEND-SMOKE-0001.md](./Testing/PASS-0003-BACKEND-SMOKE-0001.md)
+
+The task is still not honestly done.
+
+What remains unproven against the approved scope is the git-vs-runtime divergence side of the operator contract:
+
+- task-owned proof does not yet show a live rollback or task-doc drift event where:
+  - current declared task docs change materially
+  - the active run keeps its captured runtime truth
+  - backend readback reports the mismatch explicitly through `doc_runtime_divergence_status` and related snapshot fields
+
 ## Current Gate
 
 Implementation is active under the approved backend-only runtime split:
@@ -343,7 +364,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- keep `PASS-0002` focused on the next honest runtime gap after natural workload-failure proof: either formalize the bounded failure-exercise hook as the intended proof/debug path or deepen the next broader backend recovery or execution-policy path
+- keep `PASS-0003` focused on the next honest operator-contract gap: prove and, if needed, harden git-vs-runtime divergence reporting after declared-doc change or rollback
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -360,6 +381,7 @@ The next implementation slice should:
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
 - do not mistake a bounded owned-lane recovery improvement for finished implementation work; the next honest step is to fix the current live workload-execution gap before piling on more synthetic owned-lane proof edits
 - the natural workload-failure proof path is intentionally bounded to `Task-0008` and uses a one-shot backend-owned execution directive rather than a generalized fault-injection surface
+- deep-context readback now exposes launch targets, but the task still needs explicit task-owned proof that declared-doc drift or rollback is reported honestly while runtime truth remains preserved
 - do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
 - do not broaden this task into dashboard implementation work
 

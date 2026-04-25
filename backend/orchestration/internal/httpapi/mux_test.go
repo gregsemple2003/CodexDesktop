@@ -124,6 +124,7 @@ func (f *fakeTaskRuntime) StartTaskRun(_ context.Context, request taskrun.StartT
 		Attention:            attention,
 		RepoLane:             request.RepoLane,
 		CapturedTaskSnapshot: request.CapturedTaskSnapshot,
+		DeepContext:          request.ContextSnapshot,
 	}
 	f.activeByTask[request.TaskID] = run
 	f.byRunID[request.RunID] = run
@@ -383,6 +384,13 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	if taskDetailResponse.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/tasks/{id} status = %d, want 200", taskDetailResponse.Code)
 	}
+	var taskDetail taskrun.TaskView
+	if err := json.Unmarshal(taskDetailResponse.Body.Bytes(), &taskDetail); err != nil {
+		t.Fatalf("decode task detail: %v", err)
+	}
+	if taskDetail.DeepContext == nil || taskDetail.DeepContext.PreferredLaunchTarget == nil {
+		t.Fatalf("task deep context = %#v", taskDetail.DeepContext)
+	}
 
 	dispatchRequest := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil)
 	dispatchResponse := httptest.NewRecorder()
@@ -396,6 +404,13 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(taskRunResponse, taskRunRequest)
 	if taskRunResponse.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/task-runs/{id} status = %d, want 200", taskRunResponse.Code)
+	}
+	var taskRun taskrun.TaskRunView
+	if err := json.Unmarshal(taskRunResponse.Body.Bytes(), &taskRun); err != nil {
+		t.Fatalf("decode task run: %v", err)
+	}
+	if taskRun.DeepContext == nil || len(taskRun.DeepContext.LaunchTargets) == 0 {
+		t.Fatalf("run deep context = %#v", taskRun.DeepContext)
 	}
 
 	failureDispatchResponse := httptest.NewRecorder()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -98,6 +99,7 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 				Actions:             actionsForState(taskrun.StateRunning),
 			}, workflow.Now(ctx).UTC())
 			view.CapturedTaskSnapshot = retryRequest.CapturedTaskSnapshot
+			view.DeepContext = buildDeepContext(request, retryRequest.RepoLane, view.RunID)
 			runOwnedLaneExecution(ctx, request, &view)
 		}
 		if shouldExit(view) {
@@ -370,7 +372,93 @@ func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executi
 		},
 		DocRuntimeDivergenceStatus:  "in_sync",
 		DocRuntimeDivergenceSummary: "Runtime task snapshot matches the declared task docs captured at dispatch.",
+		DeepContext:                 buildDeepContext(request, request.RepoLane, request.RunID),
 	}
+}
+
+func buildDeepContext(request taskrun.StartTaskRunRequest, repoLane taskrun.RepoLane, runID string) *taskrun.DeepContext {
+	base := &taskrun.DeepContext{}
+	if request.ContextSnapshot != nil {
+		base.SessionID = request.ContextSnapshot.SessionID
+		base.TranscriptPath = request.ContextSnapshot.TranscriptPath
+	}
+	targets := make([]taskrun.LaunchTarget, 0, 6)
+	if base.TranscriptPath != "" {
+		targets = append(targets, taskrun.LaunchTarget{
+			Kind:      "transcript",
+			Label:     "Session transcript",
+			URI:       fileURI(base.TranscriptPath),
+			Command:   []string{"code", base.TranscriptPath},
+			Preferred: true,
+		})
+	}
+	if request.CapturedTaskSnapshot.DeclaredTaskRoot != "" {
+		targets = append(targets, taskrun.LaunchTarget{
+			Kind:      "task_artifact",
+			Label:     "Task folder",
+			URI:       fileURI(request.CapturedTaskSnapshot.DeclaredTaskRoot),
+			Command:   []string{"code", request.CapturedTaskSnapshot.DeclaredTaskRoot},
+			Preferred: len(targets) == 0,
+		})
+		if hasSnapshotFile(request.CapturedTaskSnapshot, "HANDOFF.md") {
+			handoffPath := filepath.Join(request.CapturedTaskSnapshot.DeclaredTaskRoot, "HANDOFF.md")
+			targets = append(targets, taskrun.LaunchTarget{
+				Kind:    "task_artifact",
+				Label:   "Task handoff",
+				URI:     fileURI(handoffPath),
+				Command: []string{"code", handoffPath},
+			})
+		}
+	}
+	if repoLane.OwnedRepoRoot != "" {
+		targets = append(targets, taskrun.LaunchTarget{
+			Kind:    "owned_checkout",
+			Label:   "Owned checkout",
+			URI:     fileURI(repoLane.OwnedRepoRoot),
+			Command: []string{"code", repoLane.OwnedRepoRoot},
+		})
+	}
+	if repoLane.RunArtifactRoot != "" {
+		targets = append(targets, taskrun.LaunchTarget{
+			Kind:    "run_artifact",
+			Label:   "Run artifacts",
+			URI:     fileURI(repoLane.RunArtifactRoot),
+			Command: []string{"code", repoLane.RunArtifactRoot},
+		})
+	}
+	if runID != "" {
+		targets = append(targets, taskrun.LaunchTarget{
+			Kind:  "api_resource",
+			Label: "Active run API resource",
+			URI:   "api://" + strings.TrimPrefix("/api/v1/task-runs/"+runID, "/"),
+		})
+	}
+	if len(targets) == 0 && base.SessionID == "" && base.TranscriptPath == "" {
+		return nil
+	}
+	preferredIndex := 0
+	for i := range targets {
+		if targets[i].Preferred {
+			preferredIndex = i
+			break
+		}
+	}
+	if len(targets) > 0 {
+		targets[preferredIndex].Preferred = true
+		preferred := targets[preferredIndex]
+		base.PreferredLaunchTarget = &preferred
+	}
+	base.LaunchTargets = targets
+	return base
+}
+
+func hasSnapshotFile(snapshot taskrun.TaskDefinitionSnapshot, relativePath string) bool {
+	for _, file := range snapshot.Files {
+		if filepath.ToSlash(file.RelativePath) == filepath.ToSlash(relativePath) {
+			return true
+		}
+	}
+	return false
 }
 
 type executionPreflightResult struct {
@@ -884,6 +972,11 @@ func runTask0008OwnedLaneBehaviorProbe(repoLane taskrun.RepoLane, proofTestPath 
 		return "", fmt.Errorf("behavior probe expected blocked attention to escalate to urgent")
 	}
 	return artifactPath, nil
+}
+
+func fileURI(path string) string {
+	value := filepath.ToSlash(path)
+	return (&url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(value, "/")}).String()
 }
 
 func modulePathFromGoMod(moduleRoot string) (string, error) {

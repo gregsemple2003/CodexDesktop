@@ -67,6 +67,21 @@ type HumanActionTarget struct {
 	LineRange string `json:"line_range,omitempty"`
 }
 
+type LaunchTarget struct {
+	Kind      string   `json:"kind"`
+	Label     string   `json:"label"`
+	URI       string   `json:"uri"`
+	Command   []string `json:"command,omitempty"`
+	Preferred bool     `json:"preferred,omitempty"`
+}
+
+type DeepContext struct {
+	SessionID             string         `json:"session_id,omitempty"`
+	TranscriptPath        string         `json:"transcript_path,omitempty"`
+	PreferredLaunchTarget *LaunchTarget  `json:"preferred_launch_target,omitempty"`
+	LaunchTargets         []LaunchTarget `json:"launch_targets,omitempty"`
+}
+
 type WaitContract struct {
 	WaitingOn           string             `json:"waiting_on,omitempty"`
 	WhyBlocked          string             `json:"why_blocked,omitempty"`
@@ -173,6 +188,7 @@ type TaskRunView struct {
 	CapturedTaskSnapshot        TaskDefinitionSnapshot        `json:"captured_task_snapshot"`
 	DocRuntimeDivergenceStatus  string                        `json:"doc_runtime_divergence_status,omitempty"`
 	DocRuntimeDivergenceSummary string                        `json:"doc_runtime_divergence_summary,omitempty"`
+	DeepContext                 *DeepContext                  `json:"deep_context,omitempty"`
 }
 
 type TaskView struct {
@@ -195,6 +211,7 @@ type TaskView struct {
 	PlanApproved         bool                          `json:"plan_approved"`
 	Blockers             []string                      `json:"blockers,omitempty"`
 	UpdatedAt            string                        `json:"updated_at,omitempty"`
+	DeepContext          *DeepContext                  `json:"deep_context,omitempty"`
 }
 
 type Runtime interface {
@@ -213,6 +230,7 @@ type StartTaskRunRequest struct {
 	MeaningSummary       string                 `json:"meaning_summary"`
 	CapturedTaskSnapshot TaskDefinitionSnapshot `json:"captured_task_snapshot"`
 	ExecutionDirective   *ExecutionDirective    `json:"execution_directive,omitempty"`
+	ContextSnapshot      *DeepContext           `json:"context_snapshot,omitempty"`
 	RepoLane             RepoLane               `json:"repo_lane"`
 	DispatchRequestedAt  time.Time              `json:"dispatch_requested_at"`
 }

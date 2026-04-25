@@ -82,6 +82,7 @@ func (f *fakeRuntime) StartTaskRun(_ context.Context, request StartTaskRunReques
 		LastProgressSummary:        lastProgressSummary,
 		CapturedTaskSnapshot:       request.CapturedTaskSnapshot,
 		DocRuntimeDivergenceStatus: "in_sync",
+		DeepContext:                request.ContextSnapshot,
 	}
 	f.activeByTask[request.TaskID] = run
 	f.byRunID[request.RunID] = run
@@ -280,6 +281,12 @@ Create the durable backend task-run contract so later clients do not guess state
 	if task.CurrentStory.Status != "no_active_run" {
 		t.Fatalf("current story status = %q", task.CurrentStory.Status)
 	}
+	if task.DeepContext == nil || task.DeepContext.PreferredLaunchTarget == nil {
+		t.Fatalf("task deep context = %#v", task.DeepContext)
+	}
+	if task.DeepContext.PreferredLaunchTarget.Kind != "task_artifact" {
+		t.Fatalf("preferred launch target kind = %q", task.DeepContext.PreferredLaunchTarget.Kind)
+	}
 }
 
 func TestTaskUsesWaitingForHumanWhenPlanIsNotApproved(t *testing.T) {
@@ -412,6 +419,9 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if run.StateEnvelope.ReasonCode != "owned_lane_bootstrapped" {
 		t.Fatalf("reason code = %q, want owned_lane_bootstrapped", run.StateEnvelope.ReasonCode)
+	}
+	if run.DeepContext == nil || len(run.DeepContext.LaunchTargets) == 0 {
+		t.Fatalf("run deep context = %#v", run.DeepContext)
 	}
 }
 
