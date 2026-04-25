@@ -366,13 +366,17 @@ func (s *Service) ResolveInterruptReview(ctx context.Context, runID string, reso
 		if summary == "" {
 			summary = "Interrupt review approved the run for a later redispatch."
 		}
+		repoLane, progressSummary, err := s.releaseResolvedOwnedLane(run.RepoLane, summary)
+		if err != nil {
+			return TaskRunView{}, err
+		}
 		return s.UpdateRun(ctx, runID, TaskRunUpdate{
 			State:               StateInterrupted,
 			ReasonCode:          "interrupt_review_resolved_redispatch_ready",
-			StateSummary:        "Interrupt review approved the run for redispatch.",
+			StateSummary:        "Interrupt review approved the run for redispatch and backend released the prior owned lane.",
 			NextOwner:           "backend",
 			NextExpectedEvent:   "Dispatch a new run when the task is ready.",
-			LastProgressSummary: summary,
+			LastProgressSummary: progressSummary,
 			FollowUp: &RunFollowUp{
 				Kind:        "interrupt_review",
 				Owner:       "human_or_supervisor",
@@ -389,19 +393,24 @@ func (s *Service) ResolveInterruptReview(ctx context.Context, runID string, reso
 				ResolvedBy: resolvedBy,
 				ResolvedAt: now,
 			},
+			RepoLane: &repoLane,
 		})
 	case "keep_closed":
 		summary := strings.TrimSpace(resolution.Summary)
 		if summary == "" {
 			summary = "Interrupt review closed this interrupted attempt without redispatch."
 		}
+		repoLane, progressSummary, err := s.releaseResolvedOwnedLane(run.RepoLane, summary)
+		if err != nil {
+			return TaskRunView{}, err
+		}
 		return s.UpdateRun(ctx, runID, TaskRunUpdate{
 			State:               StateInterrupted,
 			ReasonCode:          "interrupt_review_resolved_keep_closed",
-			StateSummary:        "Interrupt review closed this interrupted attempt.",
+			StateSummary:        "Interrupt review closed this interrupted attempt and backend released the prior owned lane.",
 			NextOwner:           "none",
 			NextExpectedEvent:   "No further action is required for this run.",
-			LastProgressSummary: summary,
+			LastProgressSummary: progressSummary,
 			FollowUp: &RunFollowUp{
 				Kind:        "interrupt_review",
 				Owner:       "human_or_supervisor",
@@ -418,10 +427,39 @@ func (s *Service) ResolveInterruptReview(ctx context.Context, runID string, reso
 				ResolvedBy: resolvedBy,
 				ResolvedAt: now,
 			},
+			RepoLane: &repoLane,
 		})
 	default:
 		return TaskRunView{}, fmt.Errorf("interrupt review resolution blocked: unsupported decision %q", decision)
 	}
+}
+
+func (s *Service) releaseResolvedOwnedLane(repoLane RepoLane, summary string) (RepoLane, string, error) {
+	if repoLane.OwnedRepoRoot == "" {
+		return repoLane, summary, nil
+	}
+
+	restoreCommit := repoLane.ApprovedRestoreCommit
+	if restoreCommit == "" {
+		restoreCommit = repoLane.BaselineCommit
+	}
+	if err := s.cleanupOwnedLane(repoLane); err != nil {
+		return repoLane, "", fmt.Errorf("release resolved owned lane: %w", err)
+	}
+
+	repoLane.OwnedRepoRoot = ""
+	repoLane.ResetStatus = "released"
+	repoLane.ResetFailureSummary = ""
+	repoLane.LastResetTargetCommit = restoreCommit
+	repoLane.LastResetAt = s.now()
+
+	progressSummary := strings.TrimSpace(summary)
+	if progressSummary == "" {
+		progressSummary = "Interrupt review resolved and backend released the prior owned lane."
+	} else {
+		progressSummary += " Backend released the prior owned lane."
+	}
+	return repoLane, progressSummary, nil
 }
 
 func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, error) {
@@ -894,7 +932,12 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	if !pathWithinRoot(repoLane.OwnedRepoRoot, s.ownedLaneRoot) {
 		return fmt.Errorf("owned repo root %q is outside the backend-owned lane root", repoLane.OwnedRepoRoot)
 	}
-	cmd := exec.Command("git", "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)
+	argv := []string{}
+	if runtime.GOOS == "windows" {
+		argv = append(argv, "-c", "core.longpaths=true")
+	}
+	argv = append(argv, "-C", s.declaredWorktreeRoot, "worktree", "remove", "--force", repoLane.OwnedRepoRoot)
+	cmd := exec.Command("git", argv...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("remove owned worktree: %w: %s", err, strings.TrimSpace(string(output)))
 	}

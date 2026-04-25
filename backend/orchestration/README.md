@@ -47,6 +47,8 @@ Task-0008 also starts the first durable dispatch slice:
 - cleanup retry can restore a cleanup-blocked owned checkout and convert the run into `interrupt_review`
 - pending `interrupt_review` blocks redispatch until the review is explicitly resolved
 - interrupt review resolution records a durable decision and returns the task to dispatch-ready state
+- interrupt review resolution now also releases the prior owned lane immediately and records `repo_lane.reset_status = released`
+- owned-lane cleanup now removes git worktrees with Windows long-path support enabled
 - dispatch can now move a run into backend-produced `running` state without requiring a manual `/state` mutation first
 - the task-run workflow can now advance that `running` state automatically to `execution_preflight_complete`
 - the task-run workflow can now advance again to `workload_step_prepared` after writing the first workload packet inside the owned lane

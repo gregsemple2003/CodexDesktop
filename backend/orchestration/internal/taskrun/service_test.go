@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -943,6 +944,7 @@ Create the durable backend task-run contract so later clients do not guess state
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
+	originalOwnedRoot := run.RepoLane.OwnedRepoRoot
 
 	if _, err := service.InterruptRun(context.Background(), run.RunID); err != nil {
 		t.Fatalf("interrupt run: %v", err)
@@ -965,6 +967,21 @@ Create the durable backend task-run contract so later clients do not guess state
 	if resolved.Attention.Level != AttentionNone {
 		t.Fatalf("attention level = %q, want %q", resolved.Attention.Level, AttentionNone)
 	}
+	if resolved.RepoLane.ResetStatus != "released" {
+		t.Fatalf("reset status = %q, want released", resolved.RepoLane.ResetStatus)
+	}
+	if resolved.RepoLane.OwnedRepoRoot != "" {
+		t.Fatalf("owned repo root = %q, want empty after release", resolved.RepoLane.OwnedRepoRoot)
+	}
+	if resolved.RepoLane.LastResetTargetCommit == "" {
+		t.Fatal("expected last reset target commit after release")
+	}
+	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("expected resolved review to remove the prior owned root, stat err = %v", err)
+	}
+	if !strings.Contains(resolved.LastProgressSummary, "Backend released the prior owned lane.") {
+		t.Fatalf("last progress summary = %q", resolved.LastProgressSummary)
+	}
 
 	task, err := service.Task(context.Background(), "Task-0008")
 	if err != nil {
@@ -975,6 +992,78 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if !task.Actions[ActionDispatch].Allowed {
 		t.Fatal("dispatch action should be allowed after interrupt review resolution")
+	}
+}
+
+func TestResolveInterruptReviewKeepClosedReleasesOwnedLane(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	originalOwnedRoot := run.RepoLane.OwnedRepoRoot
+
+	if _, err := service.InterruptRun(context.Background(), run.RunID); err != nil {
+		t.Fatalf("interrupt run: %v", err)
+	}
+
+	resolved, err := service.ResolveInterruptReview(context.Background(), run.RunID, InterruptReviewResolution{
+		Decision:   "keep_closed",
+		Summary:    "Human review closed this run.",
+		ResolvedBy: "human",
+	})
+	if err != nil {
+		t.Fatalf("resolve interrupt review: %v", err)
+	}
+	if resolved.Resolution == nil || resolved.Resolution.Decision != "keep_closed" {
+		t.Fatalf("resolution = %#v", resolved.Resolution)
+	}
+	if resolved.RepoLane.ResetStatus != "released" {
+		t.Fatalf("reset status = %q, want released", resolved.RepoLane.ResetStatus)
+	}
+	if resolved.RepoLane.OwnedRepoRoot != "" {
+		t.Fatalf("owned repo root = %q, want empty after release", resolved.RepoLane.OwnedRepoRoot)
+	}
+	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("expected resolved keep_closed review to remove the prior owned root, stat err = %v", err)
+	}
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+	if !task.DispatchReadiness.Ready {
+		t.Fatal("task should remain dispatchable after keep_closed review resolution")
+	}
+	if task.CurrentStory.Status != "no_active_run" {
+		t.Fatalf("current story = %q, want no_active_run", task.CurrentStory.Status)
 	}
 }
 
@@ -1025,6 +1114,9 @@ Create the durable backend task-run contract so later clients do not guess state
 		ResolvedBy: "human",
 	}); err != nil {
 		t.Fatalf("resolve interrupt review: %v", err)
+	}
+	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("expected previous owned root to be removed before redispatch, stat err = %v", err)
 	}
 
 	secondRun, err := service.Dispatch(context.Background(), "Task-0008")
