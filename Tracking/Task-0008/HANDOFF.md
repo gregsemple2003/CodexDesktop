@@ -297,10 +297,14 @@ What is still missing is a real backend recovery action for actual `workload_exe
 - workload retry is only allowed from:
   - `state = blocked`
   - `reason_code = workload_execution_failed`
+- blocked workload-execution failures now expose:
+  - `follow_up.kind = workload_recovery`
+  - `follow_up.status = pending`
 - retry releases the failed owned lane, provisions and bootstraps a fresh owned lane, and signals the active Temporal workflow to rerun the owned-lane execution path
 - the active run advances through:
   - `reason_code = workload_retry_requested`
   before re-entering the repaired Task-0008-specific execution path
+- retry clears the pending `workload_recovery` follow-up as the fresh owned lane starts
 - live proof in [Testing/PASS-0002-BACKEND-SMOKE-0019.md](./Testing/PASS-0002-BACKEND-SMOKE-0019.md)
 
 What is still missing is a less synthetic way to prove workload-execution failure recovery than seeding `workload_execution_failed` through the backend update path. The repaired normal live path no longer fails naturally, so later work should decide whether to preserve a bounded fault-injection hook or make a naturally failing recovery case reproducible without regressing the happy path.

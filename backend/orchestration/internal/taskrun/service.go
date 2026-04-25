@@ -1294,14 +1294,31 @@ func derivedFollowUp(current TaskRunView, update TaskRunUpdate, now time.Time) *
 	if update.FollowUp != nil {
 		return update.FollowUp
 	}
+	effectiveState := current.StateEnvelope.State
+	if update.State != "" {
+		effectiveState = update.State
+	}
+	effectiveReason := current.StateEnvelope.ReasonCode
+	if update.ReasonCode != "" {
+		effectiveReason = update.ReasonCode
+	}
+	if effectiveState == StateBlocked && effectiveReason == "workload_execution_failed" && current.FollowUp == nil {
+		return &RunFollowUp{
+			Kind:        "workload_recovery",
+			Owner:       "human_or_supervisor",
+			Status:      "pending",
+			Summary:     "Retry the workload with a fresh owned lane or inspect the failure artifacts before retrying.",
+			RequestedAt: now,
+			DueAt:       now.Add(24 * time.Hour),
+		}
+	}
 	if current.FollowUp == nil {
 		return nil
 	}
+	if current.FollowUp.Kind == "workload_recovery" && (effectiveState != StateBlocked || effectiveReason != "workload_execution_failed") {
+		return &RunFollowUp{}
+	}
 	if current.FollowUp.Owner == "backend_worker" && current.FollowUp.Status != "completed" {
-		effectiveState := current.StateEnvelope.State
-		if update.State != "" {
-			effectiveState = update.State
-		}
 		if update.LastProgressSummary != "" && update.ReasonCode != "poke_requested" && effectiveState != StateSleepingOrStalled {
 			completed := *current.FollowUp
 			completed.Status = "completed"

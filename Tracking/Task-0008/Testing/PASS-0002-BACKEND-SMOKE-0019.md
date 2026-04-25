@@ -16,6 +16,7 @@ Proof for the bounded recovery slice that adds a real backend action for actual 
 - require that retry is only valid from:
   - `state = blocked`
   - `reason_code = workload_execution_failed`
+- expose an explicit pending `workload_recovery` follow-up while that failure is active
 - release the failed owned lane
 - provision and bootstrap a fresh owned lane
 - signal the active Temporal task-run workflow to rerun the owned-lane workload path
@@ -105,8 +106,11 @@ The live manual backend proof on the clean `127.0.0.1:15318` listener then prove
 3. Seeding the active run through `POST /api/v1/task-runs/taskrun--Task-0008--active/state` produced:
    - `state = blocked`
    - `reason_code = workload_execution_failed`
+   - `follow_up.kind = workload_recovery`
+   - `follow_up.status = pending`
 4. `POST /api/v1/task-runs/taskrun--Task-0008--active/retry-workload` returned:
    - `reason_code = workload_retry_requested`
+   - cleared `follow_up`
 5. After the retry, the active run advanced back through the real owned-lane workload path to:
    - `reason_code = task_0008_workload_failure_attention_escalated`
 6. The old failed owned lane was gone on disk:
@@ -127,9 +131,11 @@ This slice adds a real backend recovery action for actual `workload_execution_fa
 The backend now owns the recovery step:
 
 - it rejects invalid retries
+- it exposes an explicit `workload_recovery` follow-up while the run is blocked on workload execution failure
 - it removes the failed owned lane
 - it provisions and bootstraps a fresh owned lane
 - it signals the active Temporal run to rerun the owned-lane workload path
+- it clears the pending recovery follow-up once retry begins
 
 That is a real backend recovery action, not just stronger blocked attention.
 

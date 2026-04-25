@@ -61,6 +61,7 @@ Task-0008 also starts the first durable dispatch slice:
 - for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove that redispatch releases the previous terminal owned lane before opening a fresh one, and advance to `task_0008_redispatch_lane_released`
 - for `Task-0008`, that execution path can now also repair a stale owned-lane mutation recipe, edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove blocked-run recovery attention escalates to `urgent`, and advance to `task_0008_workload_failure_attention_escalated`
 - actual `workload_execution_failed` runs can now retry through `POST /api/v1/task-runs/{run_id}/retry-workload`, which releases the failed owned lane, provisions a fresh one, bootstraps it, and reruns the owned-lane workload path
+- blocked workload-execution failures now expose a pending `workload_recovery` follow-up that clears when retry begins
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.

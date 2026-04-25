@@ -928,6 +928,13 @@ Create the durable backend task-run contract so later clients do not guess state
 	}); err != nil {
 		t.Fatalf("seed workload failure: %v", err)
 	}
+	seeded, err := service.Run(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("read seeded run: %v", err)
+	}
+	if seeded.FollowUp == nil || seeded.FollowUp.Kind != "workload_recovery" || seeded.FollowUp.Status != "pending" {
+		t.Fatalf("seeded follow-up = %#v", seeded.FollowUp)
+	}
 
 	retried, err := service.RetryWorkloadRun(context.Background(), run.RunID)
 	if err != nil {
@@ -947,6 +954,9 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if retried.FailureSummary != "" {
 		t.Fatalf("failure summary = %q, want cleared", retried.FailureSummary)
+	}
+	if retried.FollowUp != nil {
+		t.Fatalf("follow-up should be cleared after retry, got %#v", retried.FollowUp)
 	}
 	if _, err := os.Stat(oldOwnedRoot); !os.IsNotExist(err) {
 		t.Fatalf("old owned lane should be removed, stat err = %v", err)

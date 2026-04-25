@@ -92,6 +92,7 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 				NextExpectedEvent:   "Execution worker reruns the owned-lane workload path.",
 				SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
 				LastProgressSummary: "Backend requested a workload retry with a fresh owned lane.",
+				FollowUp:            &taskrun.RunFollowUp{},
 				RepoLane:            &retryRequest.RepoLane,
 				Actions:             actionsForState(taskrun.StateRunning),
 			}, workflow.Now(ctx).UTC())
@@ -217,6 +218,14 @@ func runOwnedLaneExecution(ctx workflow.Context, request taskrun.StartTaskRunReq
 			NextExpectedEvent:   "Review the workload execution failure before continuing execution.",
 			SuspiciousAfter:     workflow.Now(ctx).UTC(),
 			LastProgressSummary: "The prepared workload step failed during execution inside the owned lane.",
+			FollowUp: &taskrun.RunFollowUp{
+				Kind:        "workload_recovery",
+				Owner:       "human_or_supervisor",
+				Status:      "pending",
+				Summary:     "Retry the workload with a fresh owned lane or inspect the failure artifacts before retrying.",
+				RequestedAt: workflow.Now(ctx).UTC(),
+				DueAt:       workflow.Now(ctx).UTC().Add(24 * time.Hour),
+			},
 			Attention: &taskrun.AttentionPriority{
 				Level:   taskrun.AttentionUrgent,
 				Reason:  "Run could not execute the prepared workload step inside the owned lane.",

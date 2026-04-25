@@ -556,14 +556,27 @@ func TestMuxExposesRetryWorkloadRoute(t *testing.T) {
 	runID := taskrun.ActiveRunID("Task-0008")
 	current := taskRuntime.byRunID[runID]
 	originalOwnedRoot := current.RepoLane.OwnedRepoRoot
-	current.StateEnvelope.State = taskrun.StateBlocked
-	current.StateEnvelope.ReasonCode = "workload_execution_failed"
-	current.StateEnvelope.StateSummary = "Run could not execute the prepared workload step inside the owned lane."
-	current.StateEnvelope.NextOwner = "human_or_supervisor"
-	current.StateEnvelope.NextExpectedEvent = "Retry the workload path with a fresh owned lane."
-	current.FailureSummary = "simulated workload execution failure"
-	taskRuntime.byRunID[runID] = current
-	taskRuntime.activeByTask[current.TaskID] = current
+	updateBody := strings.NewReader(`{
+  "state": "blocked",
+  "reason_code": "workload_execution_failed",
+  "state_summary": "Run could not execute the prepared workload step inside the owned lane.",
+  "next_owner": "human_or_supervisor",
+  "next_expected_event": "Retry the workload path with a fresh owned lane."
+}`)
+	updateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/state", updateBody)
+	updateRequest.Header.Set("Content-Type", "application/json")
+	updateResponse := httptest.NewRecorder()
+	mux.ServeHTTP(updateResponse, updateRequest)
+	if updateResponse.Code != http.StatusAccepted {
+		t.Fatalf("state update status = %d, want 202", updateResponse.Code)
+	}
+	var seeded taskrun.TaskRunView
+	if err := json.Unmarshal(updateResponse.Body.Bytes(), &seeded); err != nil {
+		t.Fatalf("decode state update response: %v", err)
+	}
+	if seeded.FollowUp == nil || seeded.FollowUp.Kind != "workload_recovery" || seeded.FollowUp.Status != "pending" {
+		t.Fatalf("seeded follow-up = %#v", seeded.FollowUp)
+	}
 
 	retryResponse := httptest.NewRecorder()
 	mux.ServeHTTP(retryResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/retry-workload", nil))
@@ -582,6 +595,9 @@ func TestMuxExposesRetryWorkloadRoute(t *testing.T) {
 	}
 	if retried.FailureSummary != "" {
 		t.Fatalf("failure summary = %q, want cleared", retried.FailureSummary)
+	}
+	if retried.FollowUp != nil {
+		t.Fatalf("follow-up should be cleared after retry, got %#v", retried.FollowUp)
 	}
 	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
 		t.Fatalf("old owned lane should be removed, stat err = %v", err)
