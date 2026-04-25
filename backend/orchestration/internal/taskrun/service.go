@@ -111,6 +111,19 @@ func (s *Service) Task(ctx context.Context, taskID string) (TaskView, error) {
 }
 
 func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, error) {
+	return s.dispatchWithDirective(ctx, taskID, nil)
+}
+
+func (s *Service) DispatchWorkloadFailureExercise(ctx context.Context, taskID string) (TaskRunView, error) {
+	if taskID != "Task-0008" {
+		return TaskRunView{}, fmt.Errorf("workload failure exercise is only implemented for Task-0008")
+	}
+	return s.dispatchWithDirective(ctx, taskID, &ExecutionDirective{
+		FailureMode: ExecutionFailureModeTask0008WorkloadFailureOnce,
+	})
+}
+
+func (s *Service) dispatchWithDirective(ctx context.Context, taskID string, directive *ExecutionDirective) (TaskRunView, error) {
 	if s.runtime == nil {
 		return TaskRunView{}, fmt.Errorf("task runtime backend is not configured")
 	}
@@ -144,6 +157,7 @@ func (s *Service) Dispatch(ctx context.Context, taskID string) (TaskRunView, err
 			CapturedAt:           s.now(),
 			Files:                nil,
 		},
+		ExecutionDirective:  directive,
 		RepoLane:            repoLane,
 		DispatchRequestedAt: s.now(),
 	}

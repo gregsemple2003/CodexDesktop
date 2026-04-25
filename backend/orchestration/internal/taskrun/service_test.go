@@ -415,6 +415,55 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 }
 
+func TestDispatchWorkloadFailureExerciseCapturesOneShotDirective(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T16:44:31-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+
+	run, err := service.DispatchWorkloadFailureExercise(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch workload failure exercise: %v", err)
+	}
+	if len(runtime.started) != 1 {
+		t.Fatalf("started requests = %d, want 1", len(runtime.started))
+	}
+	request := runtime.started[0]
+	if request.ExecutionDirective == nil {
+		t.Fatal("expected execution directive")
+	}
+	if request.ExecutionDirective.FailureMode != ExecutionFailureModeTask0008WorkloadFailureOnce {
+		t.Fatalf("failure mode = %q", request.ExecutionDirective.FailureMode)
+	}
+	if run.StateEnvelope.ReasonCode != "owned_lane_bootstrapped" {
+		t.Fatalf("reason code = %q, want owned_lane_bootstrapped", run.StateEnvelope.ReasonCode)
+	}
+}
+
 func TestUpdateRunAppliesRicherStateContract(t *testing.T) {
 	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
 		"Task-0008": {

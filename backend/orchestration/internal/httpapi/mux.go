@@ -144,6 +144,31 @@ func handleTaskAPIRoute(w http.ResponseWriter, r *http.Request, taskService *tas
 		writeJSON(w, http.StatusAccepted, run)
 		return
 	}
+	if strings.HasSuffix(trimmed, "/dispatch-workload-failure-exercise") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		taskID := strings.TrimSuffix(trimmed, "/dispatch-workload-failure-exercise")
+		taskID = strings.TrimSuffix(taskID, "/")
+		if taskID == "" || strings.Contains(taskID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.DispatchWorkloadFailureExercise(ctx, taskID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

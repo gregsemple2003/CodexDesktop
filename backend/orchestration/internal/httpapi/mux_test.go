@@ -26,6 +26,7 @@ type fakeBackend struct {
 type fakeTaskRuntime struct {
 	activeByTask map[string]taskrun.TaskRunView
 	byRunID      map[string]taskrun.TaskRunView
+	started      []taskrun.StartTaskRunRequest
 }
 
 func newFakeBackend() *fakeBackend {
@@ -90,6 +91,7 @@ func (b *fakeBackend) StartJobRun(_ context.Context, request controlplane.JobRun
 }
 
 func (f *fakeTaskRuntime) StartTaskRun(_ context.Context, request taskrun.StartTaskRunRequest) (taskrun.TaskRunView, error) {
+	f.started = append(f.started, request)
 	state := taskrun.StateDispatching
 	reasonCode := "dispatch_started"
 	stateSummary := "Run is dispatching in an owned checkout."
@@ -396,6 +398,12 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 		t.Fatalf("GET /api/v1/task-runs/{id} status = %d, want 200", taskRunResponse.Code)
 	}
 
+	failureDispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(failureDispatchResponse, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch-workload-failure-exercise", nil))
+	if failureDispatchResponse.Code != http.StatusBadRequest {
+		t.Fatalf("POST /api/v1/tasks/{id}/dispatch-workload-failure-exercise status = %d, want 400 while active run exists", failureDispatchResponse.Code)
+	}
+
 	updateBody := strings.NewReader(`{
   "state": "waiting_for_human",
   "reason_code": "review_required",
@@ -530,6 +538,37 @@ func TestMuxExposesRetryCleanupRoute(t *testing.T) {
 	}
 	if repaired.RepoLane.ResetStatus != "restored" {
 		t.Fatalf("reset status = %q", repaired.RepoLane.ResetStatus)
+	}
+}
+
+func TestMuxExposesWorkloadFailureExerciseDispatchRoute(t *testing.T) {
+	taskRuntime := newFakeTaskRuntime()
+	worktreeRoot := writeTaskTrackingRoot(t)
+	taskService := taskrun.NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), taskRuntime)
+	mux := NewMux(config.Config{
+		BindAddress:     "127.0.0.1:4318",
+		JobsRoot:        t.TempDir(),
+		WorktreeRoot:    worktreeRoot,
+		TrackingRoot:    filepath.Join(worktreeRoot, "Tracking"),
+		Namespace:       "default",
+		TaskQueue:       "codex-orchestration",
+		TemporalAddress: "127.0.0.1:7233",
+	}, controlplane.NewService(t.TempDir(), newFakeBackend()), taskService)
+
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch-workload-failure-exercise", nil))
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("dispatch-workload-failure-exercise status = %d, want 202", response.Code)
+	}
+	if len(taskRuntime.started) != 1 {
+		t.Fatalf("started requests = %d, want 1", len(taskRuntime.started))
+	}
+	request := taskRuntime.started[0]
+	if request.ExecutionDirective == nil {
+		t.Fatal("expected execution directive")
+	}
+	if request.ExecutionDirective.FailureMode != taskrun.ExecutionFailureModeTask0008WorkloadFailureOnce {
+		t.Fatalf("failure mode = %q", request.ExecutionDirective.FailureMode)
 	}
 }
 

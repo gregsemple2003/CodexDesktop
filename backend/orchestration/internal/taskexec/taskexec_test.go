@@ -1026,6 +1026,219 @@ func (s *Service) cleanupOwnedLane(repoLane RepoLane) error {
 	}
 }
 
+func TestRunExecuteWorkloadStepCanExerciseNaturalTask0008Failure(t *testing.T) {
+	ownedRoot := t.TempDir()
+	runTaskExecCommand(t, ownedRoot, "git", "init")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.email", "taskexec-tests@example.com")
+	runTaskExecCommand(t, ownedRoot, "git", "config", "user.name", "TaskExec Tests")
+	moduleRoot := filepath.Join(ownedRoot, "backend", "orchestration")
+	ownedTaskRoot := filepath.Join(ownedRoot, "Tracking", "Task-0008")
+	writeTaskFile(t, filepath.Join(moduleRoot, "go.mod"), "module example.com/task0008owned/backend/orchestration\n\ngo 1.25.0\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskexec", "taskexec.go"), "package taskexec\n\nfunc Name() string { return \"taskexec\" }\n")
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "types.go"), `package taskrun
+
+import (
+	"context"
+	"time"
+)
+
+const (
+	StateRunning     = "running"
+	StateInterrupted = "interrupted"
+	StateBlocked     = "blocked"
+)
+
+const (
+	AttentionNone           = "none"
+	AttentionWatch          = "watch"
+	AttentionNeedsAttention = "needs_attention"
+	AttentionUrgent         = "urgent"
+)
+
+type ActionAvailability struct {
+	Allowed bool
+}
+
+type AttentionPriority struct {
+	Level   string
+	Reason  string
+	SortKey string
+}
+
+type StateEnvelope struct {
+	State             string
+	ReasonCode        string
+	StateSummary      string
+	NextOwner         string
+	NextExpectedEvent string
+	SuspiciousAfter   time.Time
+}
+
+type RepoLane struct {
+	OwnedRepoRoot         string
+	CheckoutMode          string
+	BaselineCommit        string
+	CurrentCommit         string
+	ApprovedRestoreCommit string
+	RunArtifactRoot       string
+	BootstrapArtifactPath string
+	ResetStatus           string
+	LastResetAt           time.Time
+	LastResetTargetCommit string
+	ResetFailureSummary   string
+}
+
+type RunFollowUp struct {
+	Kind        string
+	Owner       string
+	Status      string
+	Summary     string
+	RequestedAt time.Time
+	DueAt       time.Time
+	CompletedAt time.Time
+}
+
+type RunResolution struct {
+	Kind       string
+	Decision   string
+	Summary    string
+	ResolvedBy string
+	ResolvedAt time.Time
+}
+
+type WaitContract struct{}
+
+type TaskDefinitionSnapshot struct {
+	DeclaredWorktreeRoot string
+	DeclaredTaskRoot     string
+	DeclaredTaskRevision string
+	DeclaredGitRevision  string
+	CapturedAt           time.Time
+}
+
+type StartTaskRunRequest struct {
+	RunID                string
+	TaskID               string
+	MeaningSummary       string
+	CapturedTaskSnapshot TaskDefinitionSnapshot
+	RepoLane             RepoLane
+	DispatchRequestedAt  time.Time
+}
+
+type TaskRunUpdate struct {
+	State               string
+	ReasonCode          string
+	StateSummary        string
+	NextOwner           string
+	NextExpectedEvent   string
+	SuspiciousAfter     time.Time
+	LastProgressSummary string
+	Attention           *AttentionPriority
+	RepoLane            *RepoLane
+	Actions             map[string]ActionAvailability
+	FollowUp            *RunFollowUp
+	Resolution          *RunResolution
+	CompletedAt         time.Time
+	FailureSummary      string
+}
+
+type TaskRunView struct {
+	RunID               string
+	TaskID              string
+	Status              string
+	StateEnvelope       StateEnvelope
+	Actions             map[string]ActionAvailability
+	FollowUp            *RunFollowUp
+	Resolution          *RunResolution
+	RepoLane            RepoLane
+	LastProgressAt      time.Time
+	LastProgressSummary string
+	FailureSummary      string
+	WaitContract        *WaitContract
+	Attention           AttentionPriority
+}
+
+type Runtime interface {
+	StartTaskRun(ctx context.Context, request StartTaskRunRequest) (TaskRunView, error)
+	GetTaskRun(ctx context.Context, runID string) (TaskRunView, error)
+	GetActiveTaskRun(ctx context.Context, taskID string) (TaskRunView, error)
+	ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error)
+	UpdateTaskRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error)
+}
+`)
+	writeTaskFile(t, filepath.Join(moduleRoot, "internal", "taskrun", "service.go"), `package taskrun
+
+type AttentionPriority struct {
+	Level   string
+	Reason  string
+	SortKey string
+}
+
+const (
+	StateBlocked          = "blocked"
+	AttentionNeedsAttention = "needs_attention"
+)
+
+func attentionForRunState(state string) AttentionPriority {
+	switch state {
+	case StateBlocked:
+		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Run is blocked and needs review.", SortKey: "30-blocked"}
+	default:
+		return AttentionPriority{}
+	}
+}
+`)
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "TASK.md"), "# Task-0008\n\n## Summary\n\nTask summary.\n")
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "HANDOFF.md"), "# Handoff\n\n## Next Recommended Step\n\nKeep the next step bounded.\n")
+	writeTaskFile(t, filepath.Join(ownedTaskRoot, "CONSTRAINTS.md"), "# Constraints\n\n## Active Constraints\n\n- Keep the slice bounded.\n")
+	runTaskExecCommand(t, ownedRoot, "git", "add", ".")
+	runTaskExecCommand(t, ownedRoot, "git", "commit", "-m", "initial")
+
+	runArtifactsRoot := filepath.Join(t.TempDir(), "artifacts")
+	stepPath := filepath.Join(ownedRoot, ".codex-taskrun", "taskrun--Task-0008--active", "workload-step-0001.json")
+	writeTaskFile(t, stepPath, mustTaskExecJSON(t, workloadStepArtifact{
+		TaskID:               "Task-0008",
+		RunID:                "taskrun--Task-0008--active",
+		MeaningSummary:       "Meaning summary.",
+		OwnedRepoRoot:        ownedRoot,
+		OwnedTaskRoot:        ownedTaskRoot,
+		DeclaredTaskRoot:     ownedTaskRoot,
+		DeclaredTaskRevision: "probe",
+		DeclaredGitRevision:  stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
+		CurrentCommit:        stringsTrim(runTaskExecOutput(t, ownedRoot, "git", "rev-parse", "HEAD")),
+		GeneratedAt:          time.Now().UTC(),
+		WorkloadInstruction:  "Run focused Task-0008 backend validation from the owned checkout.",
+		FailureMode:          taskrun.ExecutionFailureModeTask0008WorkloadFailureOnce,
+		ExecutionKind:        "task_0008_backend_validation",
+		ExecutionWorkingDir:  moduleRoot,
+		ExecutionCommand:     []string{"go", "test", "./internal/taskexec", "./internal/taskrun"},
+	}))
+	repoLane := taskrun.RepoLane{
+		OwnedRepoRoot:    ownedRoot,
+		RunArtifactRoot:  runArtifactsRoot,
+		WorkloadStepPath: stepPath,
+	}
+
+	_, err := runExecuteWorkloadStep(context.Background(), taskrun.StartTaskRunRequest{
+		TaskID: "Task-0008",
+		RunID:  "taskrun--Task-0008--active",
+	}, repoLane)
+	if err == nil {
+		t.Fatal("expected workload execution failure")
+	}
+	if !strings.Contains(err.Error(), "task0008_owned_lane_failure_exercise_test.go") {
+		t.Fatalf("error = %v", err)
+	}
+	failureExercisePath := filepath.Join(moduleRoot, "internal", "taskrun", "task0008_owned_lane_failure_exercise_test.go")
+	if _, statErr := os.Stat(failureExercisePath); statErr != nil {
+		t.Fatalf("expected failure exercise test file: %v", statErr)
+	}
+	stderrPath := filepath.Join(runArtifactsRoot, "task-specific-validation.stderr.txt")
+	if _, statErr := os.Stat(stderrPath); statErr != nil {
+		t.Fatalf("expected stderr log: %v", statErr)
+	}
+}
+
 func writeTaskFile(t *testing.T, path string, contents string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -1034,6 +1247,15 @@ func writeTaskFile(t *testing.T, path string, contents string) {
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
+}
+
+func mustTaskExecJSON(t *testing.T, value any) string {
+	t.Helper()
+	raw, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal json: %v", err)
+	}
+	return string(raw)
 }
 
 func runTaskExecCommand(t *testing.T, dir string, exe string, args ...string) {

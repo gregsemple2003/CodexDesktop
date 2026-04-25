@@ -22,6 +22,7 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `GET /api/v1/tasks`
 - expose `GET /api/v1/tasks/{task_id}`
 - expose `POST /api/v1/tasks/{task_id}/dispatch`
+- expose `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise`
 - expose `GET /api/v1/task-runs/{run_id}`
 - expose `POST /api/v1/task-runs/{run_id}/state`
 - expose `POST /api/v1/task-runs/{run_id}/poke`
@@ -34,6 +35,7 @@ Task-0008 extends that backend with the first task-readback contract:
 Task-0008 also starts the first durable dispatch slice:
 
 - dispatch creates a Temporal-backed task run
+- dispatch can also start a bounded one-shot workload-failure exercise for `Task-0008` without relying on `/state` mutation
 - dispatch provisions an exclusive backend-owned checkout lane
 - dispatch captures the baseline commit the owned lane may restore to later
 - dispatch bootstraps the owned lane, captures its current commit, and writes a bootstrap artifact under the backend run-artifact root
@@ -62,6 +64,7 @@ Task-0008 also starts the first durable dispatch slice:
 - for `Task-0008`, that execution path can now also repair a stale owned-lane mutation recipe, edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove blocked-run recovery attention escalates to `urgent`, and advance to `task_0008_workload_failure_attention_escalated`
 - actual `workload_execution_failed` runs can now retry through `POST /api/v1/task-runs/{run_id}/retry-workload`, which releases the failed owned lane, provisions a fresh one, bootstraps it, and reruns the owned-lane workload path
 - blocked workload-execution failures now expose a pending `workload_recovery` follow-up that clears when retry begins
+- `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise` now drives a natural one-shot `workload_execution_failed` transition through the workflow for bounded proof and recovery testing
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.
@@ -103,8 +106,8 @@ The current backend slice proves:
   - `GET /api/v1/jobs/{job_id}`
   - `GET /api/v1/jobs/{job_id}/runs`
   - `GET /api/v1/tasks`
-  - `GET /api/v1/tasks/{task_id}`
-  - `GET /api/v1/task-runs/{run_id}`
+- `GET /api/v1/tasks/{task_id}`
+- `GET /api/v1/task-runs/{run_id}`
 - task-run mutation API:
 - `POST /api/v1/task-runs/{run_id}/state`
 - `POST /api/v1/task-runs/{run_id}/poke`
@@ -114,6 +117,7 @@ The current backend slice proves:
 - `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - task dispatch API:
   - `POST /api/v1/tasks/{task_id}/dispatch`
+  - `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise`
 - `codex exec` command assembly with per-run artifact paths for JSONL events and final-message capture
 - local dev-stack layout for Temporal plus Postgres
 
@@ -213,6 +217,7 @@ Invoke-WebRequest http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-dige
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks | Select-Object -ExpandProperty Content
 Invoke-WebRequest http://127.0.0.1:4318/api/v1/tasks/Task-0008 | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch-workload-failure-exercise | Select-Object -ExpandProperty Content
 $dispatch = Invoke-RestMethod -Method Post http://127.0.0.1:4318/api/v1/tasks/Task-0008/dispatch
 Get-Content -Raw $dispatch.repo_lane.bootstrap_artifact_path
 $run = Invoke-RestMethod http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active

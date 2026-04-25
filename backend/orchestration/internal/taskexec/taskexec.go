@@ -82,6 +82,7 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 		selector.Select(ctx)
 		if retryRequested {
 			request.CapturedTaskSnapshot = retryRequest.CapturedTaskSnapshot
+			request.ExecutionDirective = nil
 			request.RepoLane = retryRequest.RepoLane
 			request.DispatchRequestedAt = retryRequest.RetryRequestedAt
 			applyUpdate(&view, taskrun.TaskRunUpdate{
@@ -416,6 +417,7 @@ type workloadStepArtifact struct {
 	CurrentCommit         string    `json:"current_commit"`
 	GeneratedAt           time.Time `json:"generated_at"`
 	WorkloadInstruction   string    `json:"workload_instruction"`
+	FailureMode           string    `json:"failure_mode,omitempty"`
 	ExecutionKind         string    `json:"execution_kind,omitempty"`
 	ExecutionWorkingDir   string    `json:"execution_working_dir,omitempty"`
 	ExecutionCommand      []string  `json:"execution_command,omitempty"`
@@ -540,6 +542,9 @@ func runWorkloadStep(ctx context.Context, request taskrun.StartTaskRunRequest, r
 		CurrentCommit:         currentCommit,
 		GeneratedAt:           time.Now().UTC(),
 		WorkloadInstruction:   "Use the owned task root and captured task snapshot to execute the next backend-owned task step from inside this owned lane.",
+	}
+	if request.ExecutionDirective != nil {
+		artifact.FailureMode = request.ExecutionDirective.FailureMode
 	}
 	if request.TaskID == "Task-0008" {
 		artifact.WorkloadInstruction = "Run focused Task-0008 backend validation from the owned checkout so the first real task-specific execution step happens inside the backend-owned lane."
@@ -670,6 +675,13 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 	if err != nil {
 		return "", stdoutPath, stderrPath, 0, workloadOutputPath, workloadCodePath, "", "", err
 	}
+	failureExercisePath := ""
+	if step.FailureMode == taskrun.ExecutionFailureModeTask0008WorkloadFailureOnce {
+		failureExercisePath, err = writeTask0008OwnedLaneFailureExerciseTest(step)
+		if err != nil {
+			return "", stdoutPath, stderrPath, 0, workloadOutputPath, workloadCodePath, "", "", err
+		}
+	}
 
 	cmd := exec.Command(step.ExecutionCommand[0], step.ExecutionCommand[1:]...)
 	cmd.Dir = workingDir
@@ -682,6 +694,9 @@ func executeTask0008Validation(repoLane taskrun.RepoLane, step workloadStepArtif
 			exitCode = exitErr.ExitCode()
 		} else {
 			exitCode = 1
+		}
+		if failureExercisePath != "" {
+			return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", "", fmt.Errorf("task-specific validation failed with exit code %d after writing failure exercise test %s: %w", exitCode, failureExercisePath, err)
 		}
 		return "", stdoutPath, stderrPath, exitCode, workloadOutputPath, workloadCodePath, "", "", fmt.Errorf("task-specific validation failed with exit code %d: %w", exitCode, err)
 	}
@@ -815,6 +830,22 @@ func TestTask0008OwnedLaneBlockedAttentionIsUrgent(t *testing.T) {
 `
 	if err := os.WriteFile(testPath, []byte(testBody), 0o644); err != nil {
 		return "", fmt.Errorf("write owned-lane proof test: %w", err)
+	}
+	return testPath, nil
+}
+
+func writeTask0008OwnedLaneFailureExerciseTest(step workloadStepArtifact) (string, error) {
+	testPath := filepath.Join(step.OwnedRepoRoot, "backend", "orchestration", "internal", "taskrun", "task0008_owned_lane_failure_exercise_test.go")
+	testBody := `package taskrun
+
+import "testing"
+
+func TestTask0008OwnedLaneFailureExercise(t *testing.T) {
+	t.Fatalf("intentional workload failure exercise for Task-0008")
+}
+`
+	if err := os.WriteFile(testPath, []byte(testBody), 0o644); err != nil {
+		return "", fmt.Errorf("write owned-lane failure exercise test: %w", err)
 	}
 	return testPath, nil
 }

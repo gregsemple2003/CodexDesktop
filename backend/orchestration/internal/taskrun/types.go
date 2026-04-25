@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const ExecutionFailureModeTask0008WorkloadFailureOnce = "task_0008_workload_execution_failure_once"
+
 var ErrRunNotFound = errors.New("task run not found")
 
 const (
@@ -210,8 +212,13 @@ type StartTaskRunRequest struct {
 	Title                string                 `json:"title"`
 	MeaningSummary       string                 `json:"meaning_summary"`
 	CapturedTaskSnapshot TaskDefinitionSnapshot `json:"captured_task_snapshot"`
+	ExecutionDirective   *ExecutionDirective    `json:"execution_directive,omitempty"`
 	RepoLane             RepoLane               `json:"repo_lane"`
 	DispatchRequestedAt  time.Time              `json:"dispatch_requested_at"`
+}
+
+type ExecutionDirective struct {
+	FailureMode string `json:"failure_mode,omitempty"`
 }
 
 type InterruptReviewResolution struct {

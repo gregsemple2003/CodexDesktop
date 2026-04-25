@@ -309,6 +309,24 @@ What is still missing is a real backend recovery action for actual `workload_exe
 
 What is still missing is a less synthetic way to prove workload-execution failure recovery than seeding `workload_execution_failed` through the backend update path. The repaired normal live path no longer fails naturally, so later work should decide whether to preserve a bounded fault-injection hook or make a naturally failing recovery case reproducible without regressing the happy path.
 
+`PASS-0002` now also removes that `/state` seeding dependency for proof:
+
+- `POST /api/v1/tasks/{task_id}/dispatch-workload-failure-exercise`
+- for `Task-0008`, that bounded dispatch path starts a one-shot backend-owned workload-failure exercise instead of relying on a synthetic `POST /state` mutation
+- the workload packet records:
+  - `failure_mode = task_0008_workload_execution_failure_once`
+- the run now reaches:
+  - `reason_code = workload_execution_failed`
+  naturally through the workflow and activity path
+- the run exposes:
+  - `follow_up.kind = workload_recovery`
+  - `follow_up.status = pending`
+- `POST /api/v1/task-runs/{run_id}/retry-workload` then clears the follow-up and reruns the repaired happy path back to:
+  - `reason_code = task_0008_workload_failure_attention_escalated`
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0020.md](./Testing/PASS-0002-BACKEND-SMOKE-0020.md)
+
+The remaining gap is no longer proof honesty for workload-failure recovery. The next honest question is whether to keep this bounded failure-exercise path as the durable proof/debug hook, or to move on to the next broader recovery or execution-policy gap in `PASS-0002`.
+
 ## Current Gate
 
 Implementation is active under the approved backend-only runtime split:
@@ -325,7 +343,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- keep `PASS-0002` focused on the next honest runtime gap after `retry-workload`: either make workload-failure recovery provable without seeded `/state` mutation or deepen the next real backend recovery or execution path
+- keep `PASS-0002` focused on the next honest runtime gap after natural workload-failure proof: either formalize the bounded failure-exercise hook as the intended proof/debug path or deepen the next broader backend recovery or execution-policy path
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -341,7 +359,7 @@ The next implementation slice should:
 - when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
 - do not mistake a bounded owned-lane recovery improvement for finished implementation work; the next honest step is to fix the current live workload-execution gap before piling on more synthetic owned-lane proof edits
-- the current `retry-workload` proof still seeds `workload_execution_failed` through the backend update path because the repaired live happy path no longer fails naturally
+- the natural workload-failure proof path is intentionally bounded to `Task-0008` and uses a one-shot backend-owned execution directive rather than a generalized fault-injection surface
 - do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
 - do not broaden this task into dashboard implementation work
 
