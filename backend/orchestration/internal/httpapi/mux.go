@@ -284,6 +284,31 @@ func handleTaskRunDetail(w http.ResponseWriter, r *http.Request, taskService *ta
 		writeJSON(w, http.StatusAccepted, run)
 		return
 	}
+	if strings.HasSuffix(trimmed, "/retry-workload") {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		runID := strings.TrimSuffix(trimmed, "/retry-workload")
+		runID = strings.TrimSuffix(runID, "/")
+		if runID == "" || strings.Contains(runID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		ctx, cancel := contextWithTimeout(r, 30*time.Second)
+		defer cancel()
+		run, err := taskService.RetryWorkloadRun(ctx, runID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				http.NotFound(w, r)
+				return
+			}
+			writeJSONError(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, run)
+		return
+	}
 	if strings.HasSuffix(trimmed, "/resolve-interrupt-review") {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)

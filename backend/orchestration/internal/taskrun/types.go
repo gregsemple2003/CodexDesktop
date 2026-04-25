@@ -201,6 +201,7 @@ type Runtime interface {
 	GetActiveTaskRun(ctx context.Context, taskID string) (TaskRunView, error)
 	ReconcileTaskSnapshot(ctx context.Context, runID string, snapshot TaskDefinitionSnapshot) (TaskRunView, error)
 	UpdateTaskRun(ctx context.Context, runID string, update TaskRunUpdate) (TaskRunView, error)
+	RetryTaskRunWorkload(ctx context.Context, runID string, request WorkloadRetryRequest) (TaskRunView, error)
 }
 
 type StartTaskRunRequest struct {
@@ -217,6 +218,12 @@ type InterruptReviewResolution struct {
 	Decision   string `json:"decision"`
 	Summary    string `json:"summary,omitempty"`
 	ResolvedBy string `json:"resolved_by,omitempty"`
+}
+
+type WorkloadRetryRequest struct {
+	CapturedTaskSnapshot TaskDefinitionSnapshot `json:"captured_task_snapshot"`
+	RepoLane             RepoLane               `json:"repo_lane"`
+	RetryRequestedAt     time.Time              `json:"retry_requested_at"`
 }
 
 type TaskRunUpdate struct {

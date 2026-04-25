@@ -344,6 +344,46 @@ func (s *Service) RetryCleanupRun(ctx context.Context, runID string) (TaskRunVie
 	return s.UpdateRun(ctx, runID, update)
 }
 
+func (s *Service) RetryWorkloadRun(ctx context.Context, runID string) (TaskRunView, error) {
+	run, err := s.Run(ctx, runID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	if run.StateEnvelope.State != StateBlocked || run.StateEnvelope.ReasonCode != "workload_execution_failed" {
+		return TaskRunView{}, fmt.Errorf("workload retry blocked: run is not waiting on workload execution recovery")
+	}
+
+	if err := s.cleanupOwnedLane(run.RepoLane); err != nil {
+		return TaskRunView{}, fmt.Errorf("workload retry blocked: %w", err)
+	}
+
+	metadata, err := s.loadTask(taskRootForID(s.trackingRoot, run.TaskID))
+	if err != nil {
+		return TaskRunView{}, err
+	}
+
+	repoLane, err := s.provisionOwnedLane(run.TaskID)
+	if err != nil {
+		return TaskRunView{}, err
+	}
+	repoLane, err = s.bootstrapOwnedLane(run.TaskID, run.RunID, metadata.snapshot, repoLane)
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
+
+	retried, err := s.runtime.RetryTaskRunWorkload(ctx, runID, WorkloadRetryRequest{
+		CapturedTaskSnapshot: metadata.snapshot,
+		RepoLane:             repoLane,
+		RetryRequestedAt:     s.now(),
+	})
+	if err != nil {
+		_ = s.cleanupOwnedLane(repoLane)
+		return TaskRunView{}, err
+	}
+	return retried, nil
+}
+
 func (s *Service) ResolveInterruptReview(ctx context.Context, runID string, resolution InterruptReviewResolution) (TaskRunView, error) {
 	run, err := s.Run(ctx, runID)
 	if err != nil {

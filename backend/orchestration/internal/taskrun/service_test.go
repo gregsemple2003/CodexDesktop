@@ -192,6 +192,37 @@ func (f *fakeRuntime) UpdateTaskRun(_ context.Context, runID string, update Task
 	return run, nil
 }
 
+func (f *fakeRuntime) RetryTaskRunWorkload(_ context.Context, runID string, request WorkloadRetryRequest) (TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return TaskRunView{}, ErrRunNotFound
+	}
+	run.CapturedTaskSnapshot = request.CapturedTaskSnapshot
+	run.RepoLane = request.RepoLane
+	run.Status = "active"
+	run.StateEnvelope.State = StateRunning
+	run.StateEnvelope.ReasonCode = "workload_retry_requested"
+	run.StateEnvelope.StateSummary = "Backend reprovisioned a fresh owned lane and is retrying workload execution."
+	run.StateEnvelope.NextOwner = "backend_worker"
+	run.StateEnvelope.NextExpectedEvent = "Execution worker reruns the owned-lane workload path."
+	run.StateEnvelope.SuspiciousAfter = request.RetryRequestedAt.Add(15 * time.Minute)
+	run.Actions = actionsForRunState(StateRunning)
+	run.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(run.Actions)
+	run.FailureSummary = ""
+	run.FollowUp = nil
+	run.Resolution = nil
+	run.LastProgressAt = request.RetryRequestedAt
+	run.LastProgressSummary = "Backend requested a workload retry with a fresh owned lane."
+	run.Attention = AttentionPriority{
+		Level:   AttentionWatch,
+		Reason:  "Run is active after the backend reprovisioned a fresh owned lane.",
+		SortKey: "36-workload_retry_requested",
+	}
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
+
 func TestListTasksParsesMeaningAndReadyState(t *testing.T) {
 	worktreeRoot := writeTaskTrackingRoot(t, map[string]taskFixture{
 		"Task-0008": {
@@ -848,6 +879,122 @@ Create the durable backend task-run contract so later clients do not guess state
 
 	if _, err := service.RetryCleanupRun(context.Background(), run.RunID); err == nil {
 		t.Fatal("expected retry cleanup to reject a non-cleanup-blocked run")
+	}
+}
+
+func TestRetryWorkloadRunReprovisionsOwnedLane(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	oldOwnedRoot := run.RepoLane.OwnedRepoRoot
+	if _, err := service.UpdateRun(context.Background(), run.RunID, TaskRunUpdate{
+		State:               StateBlocked,
+		ReasonCode:          "workload_execution_failed",
+		StateSummary:        "Run could not execute the prepared workload step inside the owned lane.",
+		NextOwner:           "human_or_supervisor",
+		NextExpectedEvent:   "Retry the workload path with a fresh owned lane.",
+		LastProgressSummary: "The prepared workload step failed during execution inside the owned lane.",
+		FailureSummary:      "simulated workload execution failure",
+	}); err != nil {
+		t.Fatalf("seed workload failure: %v", err)
+	}
+
+	retried, err := service.RetryWorkloadRun(context.Background(), run.RunID)
+	if err != nil {
+		t.Fatalf("retry workload: %v", err)
+	}
+	if retried.StateEnvelope.State != StateRunning {
+		t.Fatalf("state = %q, want %q", retried.StateEnvelope.State, StateRunning)
+	}
+	if retried.StateEnvelope.ReasonCode != "workload_retry_requested" {
+		t.Fatalf("reason = %q, want workload_retry_requested", retried.StateEnvelope.ReasonCode)
+	}
+	if retried.RepoLane.OwnedRepoRoot == "" {
+		t.Fatal("expected fresh owned repo root")
+	}
+	if retried.RepoLane.OwnedRepoRoot == oldOwnedRoot {
+		t.Fatalf("owned repo root = %q, want fresh lane", retried.RepoLane.OwnedRepoRoot)
+	}
+	if retried.FailureSummary != "" {
+		t.Fatalf("failure summary = %q, want cleared", retried.FailureSummary)
+	}
+	if _, err := os.Stat(oldOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("old owned lane should be removed, stat err = %v", err)
+	}
+	if _, err := os.Stat(retried.RepoLane.OwnedRepoRoot); err != nil {
+		t.Fatalf("fresh owned lane missing: %v", err)
+	}
+	if retried.RepoLane.BaselineCommit == "" {
+		t.Fatal("expected baseline commit in fresh owned lane")
+	}
+}
+
+func TestRetryWorkloadRunRejectsNonWorkloadFailure(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T17:10:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	if _, err := service.RetryWorkloadRun(context.Background(), run.RunID); err == nil {
+		t.Fatal("expected workload retry to reject a non-workload-failed run")
 	}
 }
 

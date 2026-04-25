@@ -235,6 +235,56 @@ func (f *fakeTaskRuntime) UpdateTaskRun(_ context.Context, runID string, update 
 	return run, nil
 }
 
+func (f *fakeTaskRuntime) RetryTaskRunWorkload(_ context.Context, runID string, request taskrun.WorkloadRetryRequest) (taskrun.TaskRunView, error) {
+	run, ok := f.byRunID[runID]
+	if !ok {
+		return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+	}
+	run.CapturedTaskSnapshot = request.CapturedTaskSnapshot
+	run.RepoLane = request.RepoLane
+	run.Status = "active"
+	run.StateEnvelope.State = taskrun.StateRunning
+	run.StateEnvelope.ReasonCode = "workload_retry_requested"
+	run.StateEnvelope.StateSummary = "Backend reprovisioned a fresh owned lane and is retrying workload execution."
+	run.StateEnvelope.NextOwner = "backend_worker"
+	run.StateEnvelope.NextExpectedEvent = "Execution worker reruns the owned-lane workload path."
+	run.StateEnvelope.SuspiciousAfter = request.RetryRequestedAt.Add(15 * time.Minute)
+	run.Actions = map[string]taskrun.ActionAvailability{
+		taskrun.ActionDispatch: {
+			Allowed: false,
+			BlockReasons: []taskrun.ActionBlockReason{{
+				Code:    "active_run_exists",
+				Summary: "Dispatch is blocked while this run owns the current live story.",
+			}},
+		},
+		taskrun.ActionPoke: {
+			Allowed: false,
+			BlockReasons: []taskrun.ActionBlockReason{{
+				Code:    "run_not_suspicious_yet",
+				Summary: "Poke stays blocked until the run misses its next expected progress deadline.",
+			}},
+		},
+		taskrun.ActionInterrupt: {Allowed: true},
+	}
+	run.StateEnvelope.ActionBlockReasons = map[string][]taskrun.ActionBlockReason{}
+	for action, availability := range run.Actions {
+		run.StateEnvelope.ActionBlockReasons[action] = append([]taskrun.ActionBlockReason(nil), availability.BlockReasons...)
+	}
+	run.FailureSummary = ""
+	run.FollowUp = nil
+	run.Resolution = nil
+	run.LastProgressAt = request.RetryRequestedAt
+	run.LastProgressSummary = "Backend requested a workload retry with a fresh owned lane."
+	run.Attention = taskrun.AttentionPriority{
+		Level:   taskrun.AttentionWatch,
+		Reason:  "Run is active after the backend reprovisioned a fresh owned lane.",
+		SortKey: "36-workload_retry_requested",
+	}
+	f.byRunID[runID] = run
+	f.activeByTask[run.TaskID] = run
+	return run, nil
+}
+
 func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	root := writeJobsRoot(t, []jobs.Spec{
 		{
@@ -480,6 +530,61 @@ func TestMuxExposesRetryCleanupRoute(t *testing.T) {
 	}
 	if repaired.RepoLane.ResetStatus != "restored" {
 		t.Fatalf("reset status = %q", repaired.RepoLane.ResetStatus)
+	}
+}
+
+func TestMuxExposesRetryWorkloadRoute(t *testing.T) {
+	taskRuntime := newFakeTaskRuntime()
+	worktreeRoot := writeTaskTrackingRoot(t)
+	taskService := taskrun.NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), taskRuntime)
+	mux := NewMux(config.Config{
+		BindAddress:     "127.0.0.1:4318",
+		JobsRoot:        t.TempDir(),
+		WorktreeRoot:    worktreeRoot,
+		TrackingRoot:    filepath.Join(worktreeRoot, "Tracking"),
+		Namespace:       "default",
+		TaskQueue:       "codex-orchestration",
+		TemporalAddress: "127.0.0.1:7233",
+	}, controlplane.NewService(t.TempDir(), newFakeBackend()), taskService)
+
+	dispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(dispatchResponse, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil))
+	if dispatchResponse.Code != http.StatusAccepted {
+		t.Fatalf("dispatch status = %d, want 202", dispatchResponse.Code)
+	}
+
+	runID := taskrun.ActiveRunID("Task-0008")
+	current := taskRuntime.byRunID[runID]
+	originalOwnedRoot := current.RepoLane.OwnedRepoRoot
+	current.StateEnvelope.State = taskrun.StateBlocked
+	current.StateEnvelope.ReasonCode = "workload_execution_failed"
+	current.StateEnvelope.StateSummary = "Run could not execute the prepared workload step inside the owned lane."
+	current.StateEnvelope.NextOwner = "human_or_supervisor"
+	current.StateEnvelope.NextExpectedEvent = "Retry the workload path with a fresh owned lane."
+	current.FailureSummary = "simulated workload execution failure"
+	taskRuntime.byRunID[runID] = current
+	taskRuntime.activeByTask[current.TaskID] = current
+
+	retryResponse := httptest.NewRecorder()
+	mux.ServeHTTP(retryResponse, httptest.NewRequest(http.MethodPost, "/api/v1/task-runs/"+runID+"/retry-workload", nil))
+	if retryResponse.Code != http.StatusAccepted {
+		t.Fatalf("retry-workload status = %d, want 202", retryResponse.Code)
+	}
+	var retried taskrun.TaskRunView
+	if err := json.Unmarshal(retryResponse.Body.Bytes(), &retried); err != nil {
+		t.Fatalf("decode retry-workload response: %v", err)
+	}
+	if retried.StateEnvelope.ReasonCode != "workload_retry_requested" {
+		t.Fatalf("reason code = %q", retried.StateEnvelope.ReasonCode)
+	}
+	if retried.RepoLane.OwnedRepoRoot == "" || retried.RepoLane.OwnedRepoRoot == originalOwnedRoot {
+		t.Fatalf("owned repo root = %q, want fresh lane replacing %q", retried.RepoLane.OwnedRepoRoot, originalOwnedRoot)
+	}
+	if retried.FailureSummary != "" {
+		t.Fatalf("failure summary = %q, want cleared", retried.FailureSummary)
+	}
+	if _, err := os.Stat(originalOwnedRoot); !os.IsNotExist(err) {
+		t.Fatalf("old owned lane should be removed, stat err = %v", err)
 	}
 }
 

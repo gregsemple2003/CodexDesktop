@@ -291,6 +291,20 @@ What is still missing is repairing or replacing the current live Task-0008 owned
 
 What is still missing is a real backend recovery action for actual `workload_execution_failed` runs, rather than only a repaired owned-lane recipe plus stronger blocked-run attention.
 
+`PASS-0002` now also has that real backend recovery action for actual `workload_execution_failed` runs:
+
+- `POST /api/v1/task-runs/{run_id}/retry-workload`
+- workload retry is only allowed from:
+  - `state = blocked`
+  - `reason_code = workload_execution_failed`
+- retry releases the failed owned lane, provisions and bootstraps a fresh owned lane, and signals the active Temporal workflow to rerun the owned-lane execution path
+- the active run advances through:
+  - `reason_code = workload_retry_requested`
+  before re-entering the repaired Task-0008-specific execution path
+- live proof in [Testing/PASS-0002-BACKEND-SMOKE-0019.md](./Testing/PASS-0002-BACKEND-SMOKE-0019.md)
+
+What is still missing is a less synthetic way to prove workload-execution failure recovery than seeding `workload_execution_failed` through the backend update path. The repaired normal live path no longer fails naturally, so later work should decide whether to preserve a bounded fault-injection hook or make a naturally failing recovery case reproducible without regressing the happy path.
+
 ## Current Gate
 
 Implementation is active under the approved backend-only runtime split:
@@ -307,7 +321,7 @@ Continue with `PASS-0002` by deepening the supervision surface before any fronte
 
 The next implementation slice should:
 
-- keep `PASS-0002` focused on the next honest runtime gap: add or repair a real backend recovery action for `workload_execution_failed` runs before piling on more synthetic owned-lane proof edits
+- keep `PASS-0002` focused on the next honest runtime gap after `retry-workload`: either make workload-failure recovery provable without seeded `/state` mutation or deepen the next real backend recovery or execution path
 - keep task and run readback aligned with the declared-doc ingest and reconcile model
 - prepare the runtime shape that later pass work can drive through real execution and recovery events
 - keep [CONSTRAINTS.md](./CONSTRAINTS.md) current if the human adds new constraints
@@ -323,6 +337,7 @@ The next implementation slice should:
 - when starting the validation compose stack directly from `backend/orchestration`, set the validation-lane port overrides explicitly or Postgres can collide with the service lane on `5432`
 - do not mistake owned-lane task-artifact mutation for finished implementation work; it is only the first repo-state change in the bounded task-specific worker path
 - do not mistake a bounded owned-lane recovery improvement for finished implementation work; the next honest step is to fix the current live workload-execution gap before piling on more synthetic owned-lane proof edits
+- the current `retry-workload` proof still seeds `workload_execution_failed` through the backend update path because the repaired live happy path no longer fails naturally
 - do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
 - do not broaden this task into dashboard implementation work
 

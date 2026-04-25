@@ -23,6 +23,7 @@ const (
 	TaskRunStateQueryName       = "taskrun.current_state"
 	ReconcileSnapshotSignalName = "taskrun.reconcile_snapshot"
 	UpdateRunSignalName         = "taskrun.update_state"
+	RetryWorkloadSignalName     = "taskrun.retry_workload"
 	RunExecutionPreflightName   = "taskrun.execution_preflight"
 	RunWorkloadStepName         = "taskrun.workload_step"
 	RunExecuteWorkloadName      = "taskrun.execute_workload_step"
@@ -50,167 +51,14 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 		return taskrun.TaskRunView{}, err
 	}
 
-	if request.RepoLane.RunArtifactRoot != "" {
-		activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-			StartToCloseTimeout: 2 * time.Minute,
-			RetryPolicy: &temporal.RetryPolicy{
-				MaximumAttempts: 1,
-			},
-		})
-		var preflight executionPreflightResult
-		if err := workflow.ExecuteActivity(activityCtx, RunExecutionPreflightName, request).Get(activityCtx, &preflight); err != nil {
-			applyUpdate(&view, taskrun.TaskRunUpdate{
-				State:               taskrun.StateBlocked,
-				ReasonCode:          "execution_preflight_failed",
-				StateSummary:        "Run could not complete owned-lane execution preflight.",
-				NextOwner:           "human_or_supervisor",
-				NextExpectedEvent:   "Review the preflight failure before continuing execution.",
-				SuspiciousAfter:     workflow.Now(ctx).UTC(),
-				LastProgressSummary: "Execution preflight failed before the first workload step.",
-				Attention: &taskrun.AttentionPriority{
-					Level:   taskrun.AttentionUrgent,
-					Reason:  "Run could not prepare the owned lane for execution.",
-					SortKey: "14-execution_preflight_failed",
-				},
-				Actions:        actionsForState(taskrun.StateBlocked),
-				FailureSummary: err.Error(),
-			}, workflow.Now(ctx).UTC())
-		} else {
-			repoLane := view.RepoLane
-			if preflight.CurrentCommit != "" {
-				repoLane.CurrentCommit = preflight.CurrentCommit
-			}
-			if preflight.PreflightArtifactPath != "" {
-				repoLane.PreflightArtifactPath = preflight.PreflightArtifactPath
-			}
-			applyUpdate(&view, taskrun.TaskRunUpdate{
-				State:               taskrun.StateRunning,
-				ReasonCode:          "execution_preflight_complete",
-				StateSummary:        "Run completed owned-lane execution preflight.",
-				NextOwner:           "backend_worker",
-				NextExpectedEvent:   "Execution worker records the first workload step.",
-				SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
-				LastProgressSummary: preflight.ProgressSummary,
-				Attention: &taskrun.AttentionPriority{
-					Level:   taskrun.AttentionWatch,
-					Reason:  "Run completed execution preflight and is ready for the first workload step.",
-					SortKey: "44-execution_preflight_complete",
-				},
-				RepoLane: &repoLane,
-				Actions:  actionsForState(taskrun.StateRunning),
-			}, workflow.Now(ctx).UTC())
-
-			var workload workloadStepResult
-			if err := workflow.ExecuteActivity(activityCtx, RunWorkloadStepName, request, repoLane).Get(activityCtx, &workload); err != nil {
-				applyUpdate(&view, taskrun.TaskRunUpdate{
-					State:               taskrun.StateBlocked,
-					ReasonCode:          "workload_step_failed",
-					StateSummary:        "Run could not prepare the first workload step inside the owned lane.",
-					NextOwner:           "human_or_supervisor",
-					NextExpectedEvent:   "Review the owned-lane workload step failure before continuing execution.",
-					SuspiciousAfter:     workflow.Now(ctx).UTC(),
-					LastProgressSummary: "The first workload step failed after execution preflight completed.",
-					Attention: &taskrun.AttentionPriority{
-						Level:   taskrun.AttentionUrgent,
-						Reason:  "Run could not prepare its first workload step inside the owned lane.",
-						SortKey: "14-workload_step_failed",
-					},
-					RepoLane:       &repoLane,
-					Actions:        actionsForState(taskrun.StateBlocked),
-					FailureSummary: err.Error(),
-				}, workflow.Now(ctx).UTC())
-			} else {
-				if workload.CurrentCommit != "" {
-					repoLane.CurrentCommit = workload.CurrentCommit
-				}
-				if workload.WorkloadStepPath != "" {
-					repoLane.WorkloadStepPath = workload.WorkloadStepPath
-				}
-				applyUpdate(&view, taskrun.TaskRunUpdate{
-					State:               taskrun.StateRunning,
-					ReasonCode:          "workload_step_prepared",
-					StateSummary:        "Run prepared the first backend workload step inside the owned lane.",
-					NextOwner:           "backend_worker",
-					NextExpectedEvent:   "Execution worker executes the prepared workload step.",
-					SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
-					LastProgressSummary: workload.ProgressSummary,
-					Attention: &taskrun.AttentionPriority{
-						Level:   taskrun.AttentionWatch,
-						Reason:  "Run prepared its first workload step and is ready for backend execution.",
-						SortKey: "43-workload_step_prepared",
-					},
-					RepoLane: &repoLane,
-					Actions:  actionsForState(taskrun.StateRunning),
-				}, workflow.Now(ctx).UTC())
-
-				var execution workloadExecutionResult
-				if err := workflow.ExecuteActivity(activityCtx, RunExecuteWorkloadName, request, repoLane).Get(activityCtx, &execution); err != nil {
-					applyUpdate(&view, taskrun.TaskRunUpdate{
-						State:               taskrun.StateBlocked,
-						ReasonCode:          "workload_execution_failed",
-						StateSummary:        "Run could not execute the prepared workload step inside the owned lane.",
-						NextOwner:           "human_or_supervisor",
-						NextExpectedEvent:   "Review the workload execution failure before continuing execution.",
-						SuspiciousAfter:     workflow.Now(ctx).UTC(),
-						LastProgressSummary: "The prepared workload step failed during execution inside the owned lane.",
-						Attention: &taskrun.AttentionPriority{
-							Level:   taskrun.AttentionUrgent,
-							Reason:  "Run could not execute the prepared workload step inside the owned lane.",
-							SortKey: "13-workload_execution_failed",
-						},
-						RepoLane:       &repoLane,
-						Actions:        actionsForState(taskrun.StateBlocked),
-						FailureSummary: err.Error(),
-					}, workflow.Now(ctx).UTC())
-				} else {
-					if execution.CurrentCommit != "" {
-						repoLane.CurrentCommit = execution.CurrentCommit
-					}
-					if execution.WorkloadResultPath != "" {
-						repoLane.WorkloadResultPath = execution.WorkloadResultPath
-					}
-					if execution.WorkloadOutputPath != "" {
-						repoLane.WorkloadOutputPath = execution.WorkloadOutputPath
-					}
-					if execution.WorkloadCodePath != "" {
-						repoLane.WorkloadCodePath = execution.WorkloadCodePath
-					}
-					reasonCode := "workload_step_executed"
-					stateSummary := "Run executed the first backend workload step inside the owned lane."
-					nextExpectedEvent := "Execution worker prepares or executes the next workload step."
-					attentionReason := "Run executed its first workload step and is ready for the next backend step."
-					attentionSortKey := "42-workload_step_executed"
-					if request.TaskID == "Task-0008" {
-						reasonCode = "task_0008_workload_failure_attention_escalated"
-						stateSummary = "Run validated Task-0008 and changed blocked-run recovery attention in an existing implementation file."
-						nextExpectedEvent = "Execution worker applies the next broader Task-0008 recovery or redispatch behavior change."
-						attentionReason = "Run changed blocked-run recovery attention in an existing Task-0008 implementation file and is ready for the next backend step."
-						attentionSortKey = "35-task_0008_workload_failure_attention_escalated"
-					}
-					applyUpdate(&view, taskrun.TaskRunUpdate{
-						State:               taskrun.StateRunning,
-						ReasonCode:          reasonCode,
-						StateSummary:        stateSummary,
-						NextOwner:           "backend_worker",
-						NextExpectedEvent:   nextExpectedEvent,
-						SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
-						LastProgressSummary: execution.ProgressSummary,
-						Attention: &taskrun.AttentionPriority{
-							Level:   taskrun.AttentionWatch,
-							Reason:  attentionReason,
-							SortKey: attentionSortKey,
-						},
-						RepoLane: &repoLane,
-						Actions:  actionsForState(taskrun.StateRunning),
-					}, workflow.Now(ctx).UTC())
-				}
-			}
-		}
-	}
+	runOwnedLaneExecution(ctx, request, &view)
 
 	reconcileCh := workflow.GetSignalChannel(ctx, ReconcileSnapshotSignalName)
 	updateCh := workflow.GetSignalChannel(ctx, UpdateRunSignalName)
+	retryWorkloadCh := workflow.GetSignalChannel(ctx, RetryWorkloadSignalName)
 	for {
+		var retryRequest taskrun.WorkloadRetryRequest
+		retryRequested := false
 		selector := workflow.NewSelector(ctx)
 		selector.AddReceive(reconcileCh, func(c workflow.ReceiveChannel, more bool) {
 			var snapshot taskrun.TaskDefinitionSnapshot
@@ -227,11 +75,200 @@ func TaskRunWorkflow(ctx workflow.Context, request taskrun.StartTaskRunRequest) 
 			c.Receive(ctx, &update)
 			applyUpdate(&view, update, workflow.Now(ctx).UTC())
 		})
+		selector.AddReceive(retryWorkloadCh, func(c workflow.ReceiveChannel, more bool) {
+			c.Receive(ctx, &retryRequest)
+			retryRequested = true
+		})
 		selector.Select(ctx)
+		if retryRequested {
+			request.CapturedTaskSnapshot = retryRequest.CapturedTaskSnapshot
+			request.RepoLane = retryRequest.RepoLane
+			request.DispatchRequestedAt = retryRequest.RetryRequestedAt
+			applyUpdate(&view, taskrun.TaskRunUpdate{
+				State:               taskrun.StateRunning,
+				ReasonCode:          "workload_retry_requested",
+				StateSummary:        "Backend reprovisioned a fresh owned lane and is retrying workload execution.",
+				NextOwner:           "backend_worker",
+				NextExpectedEvent:   "Execution worker reruns the owned-lane workload path.",
+				SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+				LastProgressSummary: "Backend requested a workload retry with a fresh owned lane.",
+				RepoLane:            &retryRequest.RepoLane,
+				Actions:             actionsForState(taskrun.StateRunning),
+			}, workflow.Now(ctx).UTC())
+			view.CapturedTaskSnapshot = retryRequest.CapturedTaskSnapshot
+			runOwnedLaneExecution(ctx, request, &view)
+		}
 		if shouldExit(view) {
 			return view, nil
 		}
 	}
+}
+
+func runOwnedLaneExecution(ctx workflow.Context, request taskrun.StartTaskRunRequest, view *taskrun.TaskRunView) {
+	if request.RepoLane.RunArtifactRoot == "" {
+		return
+	}
+
+	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: 2 * time.Minute,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
+	})
+	var preflight executionPreflightResult
+	if err := workflow.ExecuteActivity(activityCtx, RunExecutionPreflightName, request).Get(activityCtx, &preflight); err != nil {
+		applyUpdate(view, taskrun.TaskRunUpdate{
+			State:               taskrun.StateBlocked,
+			ReasonCode:          "execution_preflight_failed",
+			StateSummary:        "Run could not complete owned-lane execution preflight.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Review the preflight failure before continuing execution.",
+			SuspiciousAfter:     workflow.Now(ctx).UTC(),
+			LastProgressSummary: "Execution preflight failed before the first workload step.",
+			Attention: &taskrun.AttentionPriority{
+				Level:   taskrun.AttentionUrgent,
+				Reason:  "Run could not prepare the owned lane for execution.",
+				SortKey: "14-execution_preflight_failed",
+			},
+			Actions:        actionsForState(taskrun.StateBlocked),
+			FailureSummary: err.Error(),
+		}, workflow.Now(ctx).UTC())
+		return
+	}
+
+	repoLane := view.RepoLane
+	if preflight.CurrentCommit != "" {
+		repoLane.CurrentCommit = preflight.CurrentCommit
+	}
+	if preflight.PreflightArtifactPath != "" {
+		repoLane.PreflightArtifactPath = preflight.PreflightArtifactPath
+	}
+	applyUpdate(view, taskrun.TaskRunUpdate{
+		State:               taskrun.StateRunning,
+		ReasonCode:          "execution_preflight_complete",
+		StateSummary:        "Run completed owned-lane execution preflight.",
+		NextOwner:           "backend_worker",
+		NextExpectedEvent:   "Execution worker records the first workload step.",
+		SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+		LastProgressSummary: preflight.ProgressSummary,
+		Attention: &taskrun.AttentionPriority{
+			Level:   taskrun.AttentionWatch,
+			Reason:  "Run completed execution preflight and is ready for the first workload step.",
+			SortKey: "44-execution_preflight_complete",
+		},
+		RepoLane: &repoLane,
+		Actions:  actionsForState(taskrun.StateRunning),
+	}, workflow.Now(ctx).UTC())
+	request.RepoLane = repoLane
+
+	var workload workloadStepResult
+	if err := workflow.ExecuteActivity(activityCtx, RunWorkloadStepName, request, repoLane).Get(activityCtx, &workload); err != nil {
+		applyUpdate(view, taskrun.TaskRunUpdate{
+			State:               taskrun.StateBlocked,
+			ReasonCode:          "workload_step_failed",
+			StateSummary:        "Run could not prepare the first workload step inside the owned lane.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Review the owned-lane workload step failure before continuing execution.",
+			SuspiciousAfter:     workflow.Now(ctx).UTC(),
+			LastProgressSummary: "The first workload step failed after execution preflight completed.",
+			Attention: &taskrun.AttentionPriority{
+				Level:   taskrun.AttentionUrgent,
+				Reason:  "Run could not prepare its first workload step inside the owned lane.",
+				SortKey: "14-workload_step_failed",
+			},
+			RepoLane:       &repoLane,
+			Actions:        actionsForState(taskrun.StateBlocked),
+			FailureSummary: err.Error(),
+		}, workflow.Now(ctx).UTC())
+		return
+	}
+
+	if workload.CurrentCommit != "" {
+		repoLane.CurrentCommit = workload.CurrentCommit
+	}
+	if workload.WorkloadStepPath != "" {
+		repoLane.WorkloadStepPath = workload.WorkloadStepPath
+	}
+	applyUpdate(view, taskrun.TaskRunUpdate{
+		State:               taskrun.StateRunning,
+		ReasonCode:          "workload_step_prepared",
+		StateSummary:        "Run prepared the first backend workload step inside the owned lane.",
+		NextOwner:           "backend_worker",
+		NextExpectedEvent:   "Execution worker executes the prepared workload step.",
+		SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+		LastProgressSummary: workload.ProgressSummary,
+		Attention: &taskrun.AttentionPriority{
+			Level:   taskrun.AttentionWatch,
+			Reason:  "Run prepared its first workload step and is ready for backend execution.",
+			SortKey: "43-workload_step_prepared",
+		},
+		RepoLane: &repoLane,
+		Actions:  actionsForState(taskrun.StateRunning),
+	}, workflow.Now(ctx).UTC())
+	request.RepoLane = repoLane
+
+	var execution workloadExecutionResult
+	if err := workflow.ExecuteActivity(activityCtx, RunExecuteWorkloadName, request, repoLane).Get(activityCtx, &execution); err != nil {
+		applyUpdate(view, taskrun.TaskRunUpdate{
+			State:               taskrun.StateBlocked,
+			ReasonCode:          "workload_execution_failed",
+			StateSummary:        "Run could not execute the prepared workload step inside the owned lane.",
+			NextOwner:           "human_or_supervisor",
+			NextExpectedEvent:   "Review the workload execution failure before continuing execution.",
+			SuspiciousAfter:     workflow.Now(ctx).UTC(),
+			LastProgressSummary: "The prepared workload step failed during execution inside the owned lane.",
+			Attention: &taskrun.AttentionPriority{
+				Level:   taskrun.AttentionUrgent,
+				Reason:  "Run could not execute the prepared workload step inside the owned lane.",
+				SortKey: "13-workload_execution_failed",
+			},
+			RepoLane:       &repoLane,
+			Actions:        actionsForState(taskrun.StateBlocked),
+			FailureSummary: err.Error(),
+		}, workflow.Now(ctx).UTC())
+		return
+	}
+
+	if execution.CurrentCommit != "" {
+		repoLane.CurrentCommit = execution.CurrentCommit
+	}
+	if execution.WorkloadResultPath != "" {
+		repoLane.WorkloadResultPath = execution.WorkloadResultPath
+	}
+	if execution.WorkloadOutputPath != "" {
+		repoLane.WorkloadOutputPath = execution.WorkloadOutputPath
+	}
+	if execution.WorkloadCodePath != "" {
+		repoLane.WorkloadCodePath = execution.WorkloadCodePath
+	}
+	reasonCode := "workload_step_executed"
+	stateSummary := "Run executed the first backend workload step inside the owned lane."
+	nextExpectedEvent := "Execution worker prepares or executes the next workload step."
+	attentionReason := "Run executed its first workload step and is ready for the next backend step."
+	attentionSortKey := "42-workload_step_executed"
+	if request.TaskID == "Task-0008" {
+		reasonCode = "task_0008_workload_failure_attention_escalated"
+		stateSummary = "Run validated Task-0008 and changed blocked-run recovery attention in an existing implementation file."
+		nextExpectedEvent = "Execution worker applies the next broader Task-0008 recovery or redispatch behavior change."
+		attentionReason = "Run changed blocked-run recovery attention in an existing Task-0008 implementation file and is ready for the next backend step."
+		attentionSortKey = "35-task_0008_workload_failure_attention_escalated"
+	}
+	applyUpdate(view, taskrun.TaskRunUpdate{
+		State:               taskrun.StateRunning,
+		ReasonCode:          reasonCode,
+		StateSummary:        stateSummary,
+		NextOwner:           "backend_worker",
+		NextExpectedEvent:   nextExpectedEvent,
+		SuspiciousAfter:     workflow.Now(ctx).UTC().Add(15 * time.Minute),
+		LastProgressSummary: execution.ProgressSummary,
+		Attention: &taskrun.AttentionPriority{
+			Level:   taskrun.AttentionWatch,
+			Reason:  attentionReason,
+			SortKey: attentionSortKey,
+		},
+		RepoLane: &repoLane,
+		Actions:  actionsForState(taskrun.StateRunning),
+	}, workflow.Now(ctx).UTC())
 }
 
 func InitialView(request taskrun.StartTaskRunRequest, workflowID string, executionRunID string) taskrun.TaskRunView {

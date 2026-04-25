@@ -207,6 +207,28 @@ func (b *Backend) UpdateTaskRun(ctx context.Context, runID string, update taskru
 	})
 }
 
+func (b *Backend) RetryTaskRunWorkload(ctx context.Context, runID string, request taskrun.WorkloadRetryRequest) (taskrun.TaskRunView, error) {
+	current, err := b.GetTaskRun(ctx, runID)
+	if err != nil {
+		return taskrun.TaskRunView{}, err
+	}
+
+	if err := b.client.SignalWorkflow(ctx, runID, "", taskexec.RetryWorkloadSignalName, request); err != nil {
+		if isTemporalNotFound(err) {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return taskrun.TaskRunView{}, fmt.Errorf("signal workload retry for task run %s: %w", runID, err)
+	}
+	return readUpdatedTaskRun(func() (taskrun.TaskRunView, error) {
+		return b.GetTaskRun(ctx, runID)
+	}, func() (taskrun.TaskRunView, error) {
+		if current.TemporalExecutionRunID == "" {
+			return taskrun.TaskRunView{}, taskrun.ErrRunNotFound
+		}
+		return b.getClosedTaskRunResult(ctx, runID, current.TemporalExecutionRunID)
+	})
+}
+
 func (b *Backend) getClosedTaskRunResult(ctx context.Context, workflowID string, executionRunID string) (taskrun.TaskRunView, error) {
 	workflowRun := b.client.GetWorkflow(ctx, workflowID, executionRunID)
 

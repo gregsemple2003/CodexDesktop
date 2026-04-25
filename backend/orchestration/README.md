@@ -27,6 +27,7 @@ Task-0008 extends that backend with the first task-readback contract:
 - expose `POST /api/v1/task-runs/{run_id}/poke`
 - expose `POST /api/v1/task-runs/{run_id}/interrupt`
 - expose `POST /api/v1/task-runs/{run_id}/retry-cleanup`
+- expose `POST /api/v1/task-runs/{run_id}/retry-workload`
 - expose `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - keep task meaning, state envelope, dispatch-readiness, and attention inputs in backend readback rather than client heuristics
 
@@ -59,6 +60,7 @@ Task-0008 also starts the first durable dispatch slice:
 - for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove a shortened interrupt-review follow-up window through an owned-lane behavior probe, and advance to `task_0008_interrupt_review_window_changed`
 - for `Task-0008`, that execution path can now also edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove that redispatch releases the previous terminal owned lane before opening a fresh one, and advance to `task_0008_redispatch_lane_released`
 - for `Task-0008`, that execution path can now also repair a stale owned-lane mutation recipe, edit the existing owned-lane implementation file `backend/orchestration/internal/taskrun/service.go`, prove blocked-run recovery attention escalates to `urgent`, and advance to `task_0008_workload_failure_attention_escalated`
+- actual `workload_execution_failed` runs can now retry through `POST /api/v1/task-runs/{run_id}/retry-workload`, which releases the failed owned lane, provisions a fresh one, bootstraps it, and reruns the owned-lane workload path
 - terminal runs stop owning the task's current live story so the task can become dispatchable again
 
 Real task execution inside the owned checkout remains a future slice.
@@ -107,6 +109,7 @@ The current backend slice proves:
 - `POST /api/v1/task-runs/{run_id}/poke`
 - `POST /api/v1/task-runs/{run_id}/interrupt`
 - `POST /api/v1/task-runs/{run_id}/retry-cleanup`
+- `POST /api/v1/task-runs/{run_id}/retry-workload`
 - `POST /api/v1/task-runs/{run_id}/resolve-interrupt-review`
 - task dispatch API:
   - `POST /api/v1/tasks/{task_id}/dispatch`
@@ -226,6 +229,7 @@ Invoke-WebRequest -Method Post -Uri http://127.0.0.1:4318/api/v1/task-runs/taskr
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/poke | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/interrupt | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/retry-cleanup | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/task-runs/taskrun--Task-0008--active/retry-workload | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/jobs/codex-daily-agentic-swe-digest/run | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/api/v1/webhooks/digests/physical-agents | Select-Object -ExpandProperty Content
 Invoke-WebRequest -Method Post http://127.0.0.1:4318/sync | Select-Object -ExpandProperty Content
