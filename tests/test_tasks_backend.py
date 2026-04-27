@@ -11,6 +11,7 @@ from app.codex_dashboard.tasks_backend import (
     configured_tasks_backend_url,
     fetch_tasks_snapshot,
     map_backend_tasks_snapshot,
+    provenance_detail,
     provenance_label,
 )
 
@@ -73,6 +74,54 @@ class TasksBackendTests(unittest.TestCase):
             provenance_label({"task_id": "Task-0012", "source": "candidate", "promoted": True}),
             "Promoted",
         )
+
+    def test_promotion_provenance_maps_dream_source_and_refs(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0012",
+                        "title": "Promoted Dream task",
+                        "meaning_summary": "A promoted option task.",
+                        "promotion_provenance": {
+                            "source": "dream",
+                            "source_packet": "2026-04-26 Dream packet",
+                            "source_problem": "Problem 0003",
+                            "source_winner": "Winner B",
+                            "source_option_task": "Option task 2",
+                            "source_packet_uri": "C:/reports/dream.md",
+                        },
+                    }
+                ]
+            }
+        )
+
+        task = snapshot["tasks"][0]
+        self.assertEqual(task["provenance_label"], "Promoted from Dream")
+        self.assertIn("Source packet: 2026-04-26 Dream packet", task["provenance_detail"])
+        self.assertIn(
+            {"label": "Source packet", "uri": "C:/reports/dream.md", "kind": "provenance"},
+            task["artifacts"],
+        )
+
+    def test_unpromoted_review_candidate_is_filtered_even_with_provenance_object(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "review-42",
+                        "title": "Pending review",
+                        "kind": "task_candidate",
+                        "promotion_provenance": {"source": "review", "promotion_status": "candidate"},
+                    }
+                ]
+            }
+        )
+
+        self.assertEqual(snapshot["tasks"], [])
+
+    def test_provenance_detail_falls_back_to_label(self) -> None:
+        self.assertEqual(provenance_detail({"task_id": "Task-0001", "source": "authored"}), "Authored")
 
     def test_fixture_path_loads_snapshot_without_http(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

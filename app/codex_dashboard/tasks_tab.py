@@ -42,13 +42,15 @@ def task_state_color(task: dict[str, object]) -> str:
 
 
 def task_detail_sections(task: dict[str, object]) -> list[tuple[str, str]]:
-    return [
+    sections = [
         ("Summary", str(task.get("meaning_summary") or "")),
         ("Why this task exists", str(task.get("why") or "")),
+        ("Source provenance", str(task.get("provenance_detail") or task.get("provenance_label") or "")),
         ("Current state", f"{task.get('state_label', 'Unknown')} - {task.get('reason', '')}"),
         ("What changed recently", str(task.get("recent_change") or "")),
         ("Next expected step", str(task.get("next_expected_event") or "")),
     ]
+    return [(title, value) for title, value in sections if value]
 
 
 def first_task_id(tasks: Iterable[dict[str, object]]) -> str | None:

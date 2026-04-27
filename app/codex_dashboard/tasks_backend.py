@@ -149,6 +149,7 @@ def map_backend_task(task_payload: dict[str, Any]) -> dict[str, object] | None:
         "next_expected_event": next_expected_event,
         "freshness_label": freshness_label(latest_run, task_payload),
         "provenance_label": provenance_label(task_payload),
+        "provenance_detail": provenance_detail(task_payload),
         "artifacts": artifacts,
         "actions": visible_actions(actions, task_payload, latest_run, launch_targets),
         "launch_targets": launch_targets,
@@ -201,14 +202,24 @@ def stream_group(state: str, attention: dict[str, Any] | None = None) -> str:
 
 
 def provenance_label(task_payload: dict[str, Any]) -> str:
+    provenance = _promotion_provenance(task_payload)
     raw = (
         _text(task_payload.get("provenance_label"))
         or _text(task_payload.get("source_provenance"))
         or _text(task_payload.get("source"))
         or _text(task_payload.get("origin"))
         or _text(task_payload.get("kind"))
+        or _text(provenance.get("source"))
+        or _text(provenance.get("source_type"))
+        or _text(provenance.get("source_surface"))
     )
-    promoted_from = _text(task_payload.get("promoted_from"))
+    promoted_from = (
+        _text(task_payload.get("promoted_from"))
+        or _text(provenance.get("promoted_from"))
+        or _text(provenance.get("source"))
+        or _text(provenance.get("source_type"))
+        or _text(provenance.get("source_surface"))
+    )
     if promoted_from:
         return f"Promoted from {promoted_from.replace('_', ' ').title()}"
     if not raw:
@@ -225,6 +236,29 @@ def provenance_label(task_payload: dict[str, Any]) -> str:
     if normalized in {"system", "system authored"}:
         return "System-authored"
     return raw.replace("_", " ").title()
+
+
+def provenance_detail(task_payload: dict[str, Any]) -> str:
+    provenance = _promotion_provenance(task_payload)
+    if not provenance:
+        return provenance_label(task_payload)
+    parts: list[str] = []
+    for label, key in (
+        ("Source packet", "source_packet"),
+        ("Problem", "source_problem"),
+        ("Winner", "source_winner"),
+        ("Option task", "source_option_task"),
+        ("Promoted by", "promoted_by"),
+    ):
+        value = _text(provenance.get(key))
+        if value:
+            parts.append(f"{label}: {value}")
+    promoted_at = _text(provenance.get("promoted_at"))
+    if promoted_at:
+        parts.append(f"Promoted at: {promoted_at}")
+    if parts:
+        return ". ".join(parts) + "."
+    return provenance_label(task_payload)
 
 
 def visible_actions(
@@ -360,14 +394,30 @@ def _is_unpromoted_candidate(task_payload: dict[str, Any]) -> bool:
             (
                 _text(task_payload.get("kind")),
                 _text(task_payload.get("status")),
+                _text(task_payload.get("lifecycle_state")),
+                _text(task_payload.get("promotion_status")),
+                _text(task_payload.get("review_status")),
                 _text(task_payload.get("provenance_label")),
                 _text(task_payload.get("source_provenance")),
                 _text(task_payload.get("source")),
             ),
         )
     ).lower()
+    provenance = _promotion_provenance(task_payload)
+    provenance_state = " ".join(
+        filter(
+            None,
+            (
+                _text(provenance.get("status")),
+                _text(provenance.get("promotion_status")),
+                _text(provenance.get("source")),
+                _text(provenance.get("source_type")),
+            ),
+        )
+    ).lower()
+    durable_state = f"{durable_state} {provenance_state}".strip()
     promoted = bool(task_payload.get("promoted")) or "promoted" in durable_state
-    committed = bool(task_payload.get("committed")) or task_id.startswith("Task-")
+    committed = bool(task_payload.get("committed")) or "committed" in durable_state or task_id.startswith("Task-")
     return "candidate" in durable_state and not promoted and not committed
 
 
@@ -413,6 +463,24 @@ def _artifact_refs(
             )
     for target in _launch_targets(deep_context):
         refs.append({"label": target.get("label", "Context"), "uri": target.get("uri", ""), "kind": target.get("kind", "context")})
+    provenance = _promotion_provenance(task_payload)
+    for label, key in (
+        ("Source packet", "source_packet_uri"),
+        ("Source problem", "source_problem_uri"),
+        ("Source winner", "source_winner_uri"),
+        ("Source option task", "source_option_task_uri"),
+    ):
+        value = _text(provenance.get(key))
+        if value:
+            refs.append({"label": label, "uri": value, "kind": "provenance"})
+    for ref in _dict_list(provenance.get("refs")) + _dict_list(provenance.get("evidence_refs")):
+        refs.append(
+            {
+                "label": _text(ref.get("label"), default=_text(ref.get("type"), default="Provenance")),
+                "uri": _text(ref.get("uri"), default=""),
+                "kind": _text(ref.get("type"), default="provenance"),
+            }
+        )
     for label, key in (("Task folder", "declared_task_root"), ("Worktree", "declared_worktree_root")):
         value = _text(task_payload.get(key))
         if value:
@@ -421,6 +489,14 @@ def _artifact_refs(
     if run_artifact_root:
         refs.append({"label": "Run artifacts", "uri": run_artifact_root, "kind": "path"})
     return refs[:8]
+
+
+def _promotion_provenance(task_payload: dict[str, Any]) -> dict[str, Any]:
+    for key in ("promotion_provenance", "promotion", "provenance"):
+        value = task_payload.get(key)
+        if isinstance(value, dict):
+            return value
+    return {}
 
 
 def _launch_targets(deep_context: dict[str, Any]) -> list[dict[str, object]]:

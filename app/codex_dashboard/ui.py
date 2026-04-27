@@ -2262,6 +2262,11 @@ class DashboardApp:
                 for action in list(selected_task.get("actions", []))
                 if isinstance(action, dict)
             ]
+            provenance_labels = [
+                str(task.get("provenance_label"))
+                for task in list(self.tasks_snapshot.get("tasks", []))
+                if isinstance(task, dict)
+            ]
             summary_lines.extend(
                 [
                     f"tasks_backend={self.tasks_backend_url}",
@@ -2272,6 +2277,7 @@ class DashboardApp:
                     f"tasks_ready={self.tasks_summary_values['ready'].cget('text')}",
                     f"tasks_selected={self.tasks_detail_task_id}",
                     f"tasks_selected_actions={','.join(action_labels)}",
+                    f"tasks_provenance_labels={','.join(provenance_labels)}",
                 ]
             )
         summary = "\n".join(summary_lines)

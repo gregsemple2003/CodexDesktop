@@ -7,8 +7,8 @@
 Current lifecycle state:
 
 - phase: `implementation`
-- current pass: `PASS-0003`
-- last completed pass: `PASS-0002`
+- current pass: `PASS-0004`
+- last completed pass: `PASS-0003`
 - current gate: `implementation`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -32,7 +32,7 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 
 ## Current Objective
 
-Execute `PASS-0003`, integrating reviewed and promoted work provenance without turning `Tasks` into the intake queue.
+Execute `PASS-0004`, polishing, auditing, and running repo-root regression for the first `Tasks` tab slice.
 
 The design work for that lives in:
 
@@ -139,6 +139,30 @@ Result:
 - the smoke summary records selected actions for the fixture-backed selected task
 - the desktop smoke again used isolated Task-0009 config, SQLite, fixture data, and validation-lane backend URLs
 
+### PASS-0003 Integrate Reviewed And Promoted Work Provenance
+
+Completed in this checkpoint.
+
+Primary outputs:
+
+- promotion provenance parsing in [app/codex_dashboard/tasks_backend.py](../../app/codex_dashboard/tasks_backend.py)
+- source provenance detail rendering through [app/codex_dashboard/tasks_tab.py](../../app/codex_dashboard/tasks_tab.py)
+- action/provenance smoke summary additions in [app/codex_dashboard/ui.py](../../app/codex_dashboard/ui.py)
+- action-aware and provenance-aware fixture data in [Testing/Fixtures/tasks-snapshot.json](./Testing/Fixtures/tasks-snapshot.json)
+
+Audit and proof:
+
+- [Testing/PASS-0003-AUDIT.md](./Testing/PASS-0003-AUDIT.md)
+- [Testing/PASS-0003-SMOKE-0001/overlay.png](./Testing/PASS-0003-SMOKE-0001/overlay.png)
+- [Testing/PASS-0003-SMOKE-0001/overlay-summary.txt](./Testing/PASS-0003-SMOKE-0001/overlay-summary.txt)
+
+Result:
+
+- unpromoted review candidates remain filtered from `Tasks`
+- promoted Dream and Review work gets explicit committed-task provenance labels
+- source packet/problem/winner/option-task details can appear in the selected-task detail pane
+- Task-0009 consumes likely Task-0010 provenance shapes without defining a second promotion mechanism
+
 ## Current Baseline
 
 The repo currently has:
@@ -147,18 +171,13 @@ The repo currently has:
 - the backend-backed `Jobs` tab
 - task-owned markdown artifacts under `Tracking/`
 
-The first action-wired humane surface now exists. It does not yet complete:
+The first action-wired, provenance-aware humane surface now exists. It does not yet complete:
 
-- Task-0010 promotion provenance integration
 - final polish/audit/regression closure
 
 ## Next Recommended Step
 
-Start `PASS-0003` by tightening promoted-work provenance integration:
-
-- keep unpromoted candidates off `Tasks`
-- show committed promoted work with durable provenance
-- preserve the owner split with Task-0010 and Task-0011
+Start `PASS-0004` by polishing the tab against the design contract and running repo-root regression on isolated Task-0009 data/lane only.
 
 ## Watchouts
 

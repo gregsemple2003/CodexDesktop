@@ -113,6 +113,14 @@
       "meaning_summary": "Connect reviewed work to committed task provenance after promotion.",
       "why": "Promoted work should appear in Tasks only after it is durable committed work.",
       "promoted_from": "dream",
+      "promotion_provenance": {
+        "source": "dream",
+        "source_packet": "Task-0007 intervention packet",
+        "source_problem": "Committed-work cockpit gap",
+        "source_winner": "Separate Review and Tasks surfaces",
+        "source_option_task": "Promotion contract for reviewed work",
+        "source_packet_uri": "Tracking/Task-0007/HANDOFF.md"
+      },
       "updated_at": "2026-04-26T20:45:00-04:00",
       "state_envelope": {
         "state": "ready",
