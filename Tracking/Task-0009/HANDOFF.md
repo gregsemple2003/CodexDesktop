@@ -2,14 +2,14 @@
 
 ## Current Status
 
-`Task-0009` is in implementation after completing the first product-code pass.
+`Task-0009` is complete.
 
 Current lifecycle state:
 
-- phase: `implementation`
-- current pass: `PASS-0004`
-- last completed pass: `PASS-0003`
-- current gate: `implementation`
+- phase: `closure`
+- current pass: `null`
+- last completed pass: `PASS-0004`
+- current gate: `closure`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
 
@@ -32,7 +32,7 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 
 ## Current Objective
 
-Execute `PASS-0004`, polishing, auditing, and running repo-root regression for the first `Tasks` tab slice.
+No further implementation remains in Task-0009.
 
 The design work for that lives in:
 
@@ -163,6 +163,29 @@ Result:
 - source packet/problem/winner/option-task details can appear in the selected-task detail pane
 - Task-0009 consumes likely Task-0010 provenance shapes without defining a second promotion mechanism
 
+### PASS-0004 Polish, Audit, And Regression
+
+Completed in this checkpoint.
+
+Primary outputs:
+
+- final scrollbar polish in [app/codex_dashboard/ui.py](../../app/codex_dashboard/ui.py)
+- task-owned regression telemetry fixture at [Testing/Fixtures/codex-root/sessions/2026/04/26/rollout-task-0009-regression.jsonl](./Testing/Fixtures/codex-root/sessions/2026/04/26/rollout-task-0009-regression.jsonl)
+
+Audit and proof:
+
+- [Testing/PASS-0004-AUDIT.md](./Testing/PASS-0004-AUDIT.md)
+- [Testing/REGRESSION-RUN-0001.md](./Testing/REGRESSION-RUN-0001.md)
+- [Testing/PASS-0004-REGRESSION-0001/overlay.png](./Testing/PASS-0004-REGRESSION-0001/overlay.png)
+- [Testing/PASS-0004-REGRESSION-0001/overlay-summary.txt](./Testing/PASS-0004-REGRESSION-0001/overlay-summary.txt)
+
+Result:
+
+- compile validation passed
+- unit discovery passed with `88` tests
+- repo-root REG-003 regression passed using isolated Task-0009 data and runtime
+- disposable runtime was cleaned after regression
+
 ## Current Baseline
 
 The repo currently has:
@@ -171,13 +194,17 @@ The repo currently has:
 - the backend-backed `Jobs` tab
 - task-owned markdown artifacts under `Tracking/`
 
-The first action-wired, provenance-aware humane surface now exists. It does not yet complete:
+The first action-wired, provenance-aware humane surface now exists.
 
-- final polish/audit/regression closure
+Follow-on product work remains intentionally split:
+
+- Task-0010 owns the final live promotion endpoint and promotion writer.
+- Task-0011 owns the provisional intake `Review` tab.
+- Task-0008 owns backend runtime semantics.
 
 ## Next Recommended Step
 
-Start `PASS-0004` by polishing the tab against the design contract and running repo-root regression on isolated Task-0009 data/lane only.
+No Task-0009 implementation step remains. Future work should continue in the adjacent owning tasks rather than reopening this task's scope.
 
 ## Watchouts
 

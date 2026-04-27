@@ -531,6 +531,21 @@ class DashboardApp:
             foreground="#8fa8bb",
             font=("Inter", 9),
         )
+        style.configure(
+            "Vertical.TScrollbar",
+            background="#2b3440",
+            troughcolor="#10141a",
+            bordercolor="#10141a",
+            arrowcolor="#9fbdcc",
+            darkcolor="#1c2026",
+            lightcolor="#2b3440",
+        )
+        style.map(
+            "Vertical.TScrollbar",
+            background=[("active", "#374555")],
+            arrowcolor=[("active", "#c3f5ff")],
+        )
+
     def _build_overlay(self) -> None:
         self.container = ttk.Frame(self.overlay, style="Overlay.TFrame", padding=28)
         self.container.pack(fill="both", expand=True)

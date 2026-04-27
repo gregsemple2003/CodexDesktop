@@ -1,0 +1,1 @@
+{"timestamp":"2026-04-26T21:56:00.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"total_tokens":160000},"last_token_usage":{"input_tokens":1200,"cached_input_tokens":400,"output_tokens":300,"reasoning_output_tokens":50,"total_tokens":1500}},"rate_limits":{"secondary":{"used_percent":0.04,"window_minutes":10080,"resets_at":1777240800}}}}
