@@ -8,7 +8,7 @@ Current lifecycle state:
 
 - phase: `closure`
 - current pass: `null`
-- last completed pass: `PASS-0004`
+- last completed pass: `PASS-0005`
 - current gate: `closure`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -33,6 +33,19 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 ## Current Objective
 
 No further implementation remains in Task-0009.
+
+Post-closure bugfix [BUG-0002](./BUG-0002.md) is closed. The human-facing
+dashboard frontend now has a pinned release flow comparable to the backend
+service lane:
+
+- backend release: `20260427T042647Z-055bdcd6a597`
+- frontend release: `20260427T042724Z-055bdcd6a597`
+- shared git commit: `055bdcd6a597cee5963a3384de012fbe63e5635c`
+- frontend source mode: `git_commit`
+- frontend source dirty: `false`
+
+Closure proof is recorded in
+[Testing/REGRESSION-RUN-0002.md](./Testing/REGRESSION-RUN-0002.md).
 
 The design work for that lives in:
 
