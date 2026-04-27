@@ -423,11 +423,53 @@ class DesktopSupportTests(unittest.TestCase):
         app._render_tasks_snapshot.assert_called_once_with()
 
     def test_launch_target_allows_vscodium_commands_only(self) -> None:
+        self.assertTrue(DashboardApp._is_allowed_launch_command("codium.cmd"))
+        self.assertTrue(DashboardApp._is_allowed_launch_command("C:/Program Files/VSCodium/VSCodium.exe"))
+        self.assertFalse(DashboardApp._is_allowed_launch_command("powershell.exe"))
+
+    def test_open_task_launch_target_falls_back_from_code_to_vscodium(self) -> None:
         app = SimpleNamespace()
 
-        self.assertTrue(DashboardApp._is_allowed_launch_command(app, "codium.cmd"))
-        self.assertTrue(DashboardApp._is_allowed_launch_command(app, "C:/Program Files/VSCodium/VSCodium.exe"))
-        self.assertFalse(DashboardApp._is_allowed_launch_command(app, "powershell.exe"))
+        def fake_which(name: str) -> str | None:
+            if name == "codium":
+                return "C:/Program Files/VSCodium/bin/codium.cmd"
+            return None
+
+        with mock.patch("app.codex_dashboard.ui.shutil.which", side_effect=fake_which), mock.patch(
+            "app.codex_dashboard.ui.subprocess.Popen"
+        ) as popen:
+            DashboardApp._open_task_launch_target(
+                app,
+                {
+                    "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"],
+                    "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+                },
+            )
+
+        popen.assert_called_once()
+        self.assertEqual(
+            popen.call_args.args[0],
+            ["C:/Program Files/VSCodium/bin/codium.cmd", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"],
+        )
+
+    def test_open_task_launch_target_falls_back_to_normalized_file_uri(self) -> None:
+        app = SimpleNamespace()
+
+        with mock.patch("app.codex_dashboard.ui.shutil.which", return_value=None), mock.patch(
+            "app.codex_dashboard.ui.subprocess.Popen"
+        ) as popen, mock.patch("app.codex_dashboard.ui.os.startfile", create=True) as startfile:
+            DashboardApp._open_task_launch_target(
+                app,
+                {
+                    "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"],
+                    "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+                },
+            )
+
+        popen.assert_not_called()
+        startfile.assert_called_once()
+        opened = startfile.call_args.args[0].replace("\\", "/")
+        self.assertEqual(opened, "C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md")
 
     def test_write_overlay_capture_uses_window_bounds(self) -> None:
         overlay = SimpleNamespace(

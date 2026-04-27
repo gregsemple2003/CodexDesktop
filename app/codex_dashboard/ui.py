@@ -11,6 +11,7 @@ import tkinter as tk
 from datetime import UTC, datetime, timedelta, tzinfo
 from pathlib import Path
 from tkinter import ttk
+from urllib.parse import unquote, urlparse
 
 from .aggregation import (
     INTERVAL_SECONDS,
@@ -99,6 +100,11 @@ ALLOWED_LAUNCH_COMMANDS = {
     "vscodium.cmd",
     "vscodium.exe",
     "code.exe",
+}
+LAUNCH_COMMAND_FALLBACKS = {
+    "code": ("codium", "codium.cmd", "vscodium", "vscodium.cmd", "vscodium.exe"),
+    "code.cmd": ("codium.cmd", "codium", "vscodium.cmd", "vscodium", "vscodium.exe"),
+    "code.exe": ("codium", "codium.cmd", "vscodium", "vscodium.cmd", "vscodium.exe"),
 }
 
 
@@ -1312,25 +1318,66 @@ class DashboardApp:
     def _open_task_launch_target(self, target: dict[str, object]) -> None:
         command = target.get("command")
         uri = str(target.get("uri") or "").strip()
+        launch_error: Exception | None = None
         if isinstance(command, list) and command:
             argv = [str(part) for part in command if str(part).strip()]
-            if argv and self._is_allowed_launch_command(argv[0]):
-                kwargs: dict[str, object] = {}
-                if hasattr(subprocess, "CREATE_NO_WINDOW"):
-                    kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-                subprocess.Popen(argv, **kwargs)
-                return
+            if argv and DashboardApp._is_allowed_launch_command(argv[0]):
+                resolved = DashboardApp._resolve_allowed_launch_command(argv[0])
+                if resolved:
+                    launch_argv = [resolved, *argv[1:]]
+                    kwargs: dict[str, object] = {}
+                    if hasattr(subprocess, "CREATE_NO_WINDOW"):
+                        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+                    try:
+                        subprocess.Popen(launch_argv, **kwargs)
+                        return
+                    except OSError as exc:
+                        launch_error = exc
         if uri:
+            uri = DashboardApp._normalize_launch_uri(uri)
             if hasattr(os, "startfile"):
                 os.startfile(uri)  # type: ignore[attr-defined]
                 return
             subprocess.Popen(["xdg-open", uri])
             return
+        if launch_error is not None:
+            raise launch_error
         raise ValueError("No launch target URI or allowed command was provided.")
 
-    def _is_allowed_launch_command(self, executable: str) -> bool:
+    @staticmethod
+    def _is_allowed_launch_command(executable: str) -> bool:
         name = Path(executable).name.lower()
         return name in ALLOWED_LAUNCH_COMMANDS
+
+    @staticmethod
+    def _resolve_allowed_launch_command(executable: str) -> str:
+        name = Path(executable).name.lower()
+        if name not in ALLOWED_LAUNCH_COMMANDS:
+            return ""
+        if Path(executable).exists():
+            return executable
+        resolved = shutil.which(executable)
+        if resolved:
+            return resolved
+        for fallback in LAUNCH_COMMAND_FALLBACKS.get(name, ()):
+            resolved = shutil.which(fallback)
+            if resolved:
+                return resolved
+        return ""
+
+    @staticmethod
+    def _normalize_launch_uri(uri: str) -> str:
+        parsed = urlparse(uri)
+        if parsed.scheme.lower() != "file":
+            return uri
+        if parsed.netloc and parsed.netloc.lower() != "localhost":
+            path = f"//{parsed.netloc}{parsed.path}"
+        else:
+            path = parsed.path
+        path = unquote(path)
+        if len(path) >= 3 and path[0] == "/" and path[2] == ":":
+            path = path[1:]
+        return path.replace("/", os.sep)
 
     def _refresh_tasks_scroll_region(self, _event=None) -> None:
         self.tasks_scroll_canvas.configure(scrollregion=self.tasks_scroll_canvas.bbox("all"))

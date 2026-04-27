@@ -174,6 +174,47 @@ class TasksBackendTests(unittest.TestCase):
         self.assertNotIn("Pause", labels)
         self.assertNotIn("Poke", labels)
 
+    def test_task_artifact_launch_targets_get_distinct_action_labels(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0011",
+                        "title": "Planning task",
+                        "state_envelope": {"state": "waiting_for_human"},
+                        "actions": {"dispatch": {"allowed": False}},
+                        "deep_context": {
+                            "preferred_launch_target": {
+                                "kind": "task_artifact",
+                                "label": "Task folder",
+                                "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+                                "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"],
+                            },
+                            "launch_targets": [
+                                {
+                                    "kind": "task_artifact",
+                                    "label": "Task handoff",
+                                    "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+                                    "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\HANDOFF.md"],
+                                },
+                                {
+                                    "kind": "task_artifact",
+                                    "label": "Task plan",
+                                    "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+                                    "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"],
+                                },
+                            ],
+                        },
+                    }
+                ]
+            }
+        )
+
+        labels = [action["label"] for action in snapshot["tasks"][0]["actions"]]
+        self.assertEqual(labels.count("Open Task"), 1)
+        self.assertIn("Open Handoff", labels)
+        self.assertIn("Open Plan", labels)
+
     def test_promotion_provenance_maps_dream_source_and_refs(self) -> None:
         snapshot = map_backend_tasks_snapshot(
             {

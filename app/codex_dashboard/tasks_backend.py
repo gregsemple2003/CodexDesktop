@@ -545,6 +545,12 @@ def _launch_action_label(target: dict[str, object]) -> str:
     kind = _text(target.get("kind"), default="context")
     label = _text(target.get("label"), default="")
     combined = f"{kind} {label}".lower()
+    if "handoff" in combined:
+        return "Open Handoff"
+    if "plan" in combined:
+        return "Open Plan"
+    if "task-state" in combined or "task state" in combined:
+        return "Open Task State"
     if "live" in combined and "thread" in combined:
         return "Open Live Thread"
     if "thread" in combined or "session" in combined:
@@ -553,6 +559,8 @@ def _launch_action_label(target: dict[str, object]) -> str:
         return "Open Transcript"
     if "work" in combined or "repo" in combined or "context" in combined:
         return "Open Working Context"
+    if "task folder" in combined or "task.md" in combined or "task artifact" in combined:
+        return "Open Task"
     return "Open Task"
 
 
