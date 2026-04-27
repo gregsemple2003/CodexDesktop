@@ -66,6 +66,7 @@ python -m app.codex_dashboard --scan-once --print-summary
 - parse real `token_count` events from `C:\Users\gregs\.codex\sessions\`
 - keep the first version Windows-only and hotkey-first
 - treat repo-root `REGRESSION.md` as canonical for task-level regression in this repo
+- for agent-run validation and regression, treat the human's personal dashboard lane, config, database, and live Codex data as off-limits unless the human explicitly authorizes that run; task-closure regression must use the isolated lane/data flow in `TESTING.md`
 
 ## Jobs And Scheduling
 
