@@ -7,7 +7,8 @@
 Current lifecycle state:
 
 - phase: `implementation`
-- current pass: `PASS-0000`
+- current pass: `PASS-0001`
+- last completed pass: `PASS-0000`
 - current gate: `implementation`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -31,7 +32,7 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 
 ## Current Objective
 
-Execute `PASS-0000`, locking the first humane product surface contract before product code hardens around backend convenience.
+Execute `PASS-0001`, building the first read-only `Tasks` tab surface from the locked product contract.
 
 The design work for that lives in:
 
@@ -64,6 +65,27 @@ Implementation must stay aligned with the active generated mockup and style refe
 - `Open Live Thread` is the preferred instruction path when available
 - no AI task-run progress bars unless a future backend contract proves trustworthy bounded progress
 
+## Completed Passes
+
+### PASS-0000 Lock The Product Surface
+
+Completed in this checkpoint.
+
+Primary output:
+
+- [Design/PASS-0000-PRODUCT-SURFACE-CONTRACT.md](./Design/PASS-0000-PRODUCT-SURFACE-CONTRACT.md)
+
+Audit:
+
+- [Testing/PASS-0000-AUDIT.md](./Testing/PASS-0000-AUDIT.md)
+
+Result:
+
+- the first-release information architecture is explicit
+- the active mockup is accepted as a style reference, with candidate/progress-bar drift overridden
+- action copy and instruction flow are frozen for implementation
+- validation and regression lane isolation is explicit
+
 ## Current Baseline
 
 The repo currently has:
@@ -84,7 +106,7 @@ That missing surface is why this task exists.
 
 ## Next Recommended Step
 
-Start `PASS-0000` and produce the product-surface contract that resolves the first-release information architecture, row/status taxonomy, summary regions, action affordances, visual mockup drift overrides, and isolated validation/regression expectations.
+Start `PASS-0001` by implementing the read-only `Tasks` tab shell, grouped stream, selected detail pane, state/provenance rendering, and loading/empty/stale/backend-unavailable states against isolated validation data.
 
 ## Watchouts
 
