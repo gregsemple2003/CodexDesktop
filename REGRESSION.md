@@ -135,6 +135,79 @@ Expected result:
 - no progress bar implies false precision for AI task-run progress
 - the validation lane or fixture can be exercised without using the persistent service lane, the human's dashboard config, the human's active database, or live Codex data
 
+### REG-004 Semantic Dashboard State Reconciliation
+
+Goal:
+
+Confirm the real dashboard window makes true claims. This case is not satisfied
+by proving that the app launched, the backend responded, or a screenshot exists.
+Every visible dashboard claim under test must reconcile against the authoritative
+durable source for that claim.
+
+Steps:
+
+1. Launch the real dashboard app surface under the pinned release or an isolated
+   validation build whose release/process identity is recorded.
+2. Use an isolated app config and SQLite database unless the human explicitly
+   authorizes inspecting the human lane.
+3. Point backend-backed surfaces at the lane under test and record whether that
+   lane is `service`, `validation`, or task-specific.
+4. Open the actual dashboard window and inspect the visible `Tasks` surface.
+5. Build a reconciliation matrix with one row per visible claim:
+   - visible claim
+   - authoritative source
+   - expected value
+   - actual visible value
+   - pass/fail
+   - linked bug if failed
+6. Reconcile task inventory:
+   - every visible task row against `Tracking/Task-*/TASK-STATE.json` and
+     backend `/api/v1/tasks`
+   - summary counts against visible rows and backend-classified groups
+   - selected-task detail labels against the selected task's durable state
+7. Reconcile completed-task semantics:
+   - `status: complete` and `phase: closure` must not appear as `Waiting on you`,
+     `Needs you`, `Ready`, or dispatchable
+   - completed work must be absent from active-work buckets or shown only in an
+     explicit completed/history treatment
+8. Reconcile human-wait semantics:
+   - `Waiting on you` or `Needs you` must only appear when durable truth assigns
+     the next action to the human, such as plan approval or an active run waiting
+     for human input
+   - backend-review or unmapped/internal states must not be translated into
+     human-owned waiting copy
+9. Reconcile Temporal/task-run state:
+   - `Running`, `Paused`, `Sleeping`, `Poke`, `Pause`, and `Resume`/`Continue`
+     must match backend run state and action availability
+   - no active run means run-control actions are absent or disabled with a true
+     reason
+10. Reconcile provenance and action copy:
+    - authored/promoted labels match durable provenance
+    - unpromoted candidates are absent
+    - no visible `Candidate`, `Prov: Candidate`, or backend-internal `Interrupt`
+      copy appears on committed-work task rows
+11. Capture a screenshot as supporting evidence, but do not treat the screenshot
+    as the proof. The reconciliation matrix is the proof.
+12. For every divergence, open or update a task-owned `BUG-<NNNN>.md` before
+    calling the regression run complete.
+
+Expected result:
+
+- visible task counts equal the reconciled durable/backend state
+- completed tasks are not presented as waiting on the human
+- human-wait copy appears only for real human-owned waits
+- run-control actions match Temporal/backend action availability
+- provenance and action labels match the committed-work product contract
+- all divergences have bug records with evidence, root-cause hypothesis, and
+  required closure proof
+
+Interpretation:
+
+- this is the canonical semantic dashboard regression for the `Tasks` surface
+- release/process proof can identify which build was inspected, but it does not
+  replace semantic reconciliation
+- API-only, parser-only, and screenshot-only checks do not satisfy this case
+
 ## Supporting Smoke
 
 ### SMOKE-001 Ingest Core

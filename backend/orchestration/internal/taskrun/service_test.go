@@ -359,6 +359,194 @@ func TestCanonicalTaskFixtureRepoStartsAndDispatchesTask8And9(t *testing.T) {
 	}
 }
 
+func TestCompleteTaskStateIsTerminalAndNotDispatchReady(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0001": {
+			taskMD: `# Task 0001
+
+## Title
+
+Completed task.
+
+## Summary
+
+This task is already done.
+`,
+			taskState: `{
+  "task_id": "Task-0001",
+  "status": "complete",
+  "phase": "closure",
+  "plan_approved": true,
+  "current_pass": "PASS-0006",
+  "current_gate": "closure",
+  "blockers": [],
+  "updated_at": "2026-04-27T00:30:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), newFakeRuntime())
+
+	task, err := service.Task(context.Background(), "Task-0001")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+
+	if task.StateEnvelope.State != StateCompleted {
+		t.Fatalf("state = %q, want %q", task.StateEnvelope.State, StateCompleted)
+	}
+	if task.StateEnvelope.ReasonCode != "task_complete" {
+		t.Fatalf("reason code = %q, want task_complete", task.StateEnvelope.ReasonCode)
+	}
+	if task.LatestRun != nil {
+		t.Fatalf("completed task should not expose a live run, got %#v", task.LatestRun)
+	}
+	if task.DispatchReadiness.Ready {
+		t.Fatal("completed task should not be dispatch-ready")
+	}
+	if !hasBlockReason(task.DispatchReadiness.BlockReasons, "task_terminal") {
+		t.Fatalf("dispatch blockers = %#v, want task_terminal", task.DispatchReadiness.BlockReasons)
+	}
+	if task.Actions[ActionDispatch].Allowed {
+		t.Fatal("completed task should not allow dispatch")
+	}
+	if task.Actions[ActionInterrupt].Allowed {
+		t.Fatal("completed task should not expose interrupt")
+	}
+	if task.Attention.Level != AttentionNone {
+		t.Fatalf("attention level = %q, want %q", task.Attention.Level, AttentionNone)
+	}
+	if task.CurrentStory.Status != "no_active_run" {
+		t.Fatalf("current story = %q, want no_active_run", task.CurrentStory.Status)
+	}
+}
+
+func TestCancelledTaskStateIsTerminalAndNotDispatchReady(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0004": {
+			taskMD: `# Task 0004
+
+## Title
+
+Cancelled task.
+
+## Summary
+
+This task was cancelled before dispatch.
+`,
+			taskState: `{
+  "task_id": "Task-0004",
+  "status": "cancelled",
+  "phase": "closure",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "closure",
+  "blockers": [],
+  "updated_at": "2026-04-27T00:31:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), newFakeRuntime())
+
+	task, err := service.Task(context.Background(), "Task-0004")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+
+	if task.StateEnvelope.State != StateCancelled {
+		t.Fatalf("state = %q, want %q", task.StateEnvelope.State, StateCancelled)
+	}
+	if task.StateEnvelope.ReasonCode != "task_cancelled" {
+		t.Fatalf("reason code = %q, want task_cancelled", task.StateEnvelope.ReasonCode)
+	}
+	if task.LatestRun != nil {
+		t.Fatalf("cancelled task should not expose a live run, got %#v", task.LatestRun)
+	}
+	if task.DispatchReadiness.Ready {
+		t.Fatal("cancelled task should not be dispatch-ready")
+	}
+	if !hasBlockReason(task.DispatchReadiness.BlockReasons, "task_terminal") {
+		t.Fatalf("dispatch blockers = %#v, want task_terminal", task.DispatchReadiness.BlockReasons)
+	}
+	if task.Actions[ActionDispatch].Allowed {
+		t.Fatal("cancelled task should not allow dispatch")
+	}
+	if task.Actions[ActionInterrupt].Allowed {
+		t.Fatal("cancelled task should not expose interrupt")
+	}
+	if task.Attention.Level != AttentionNone {
+		t.Fatalf("attention level = %q, want %q", task.Attention.Level, AttentionNone)
+	}
+}
+
+func TestTerminalTaskStateOverridesStaleActiveRun(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Completed task with stale runtime.
+
+## Summary
+
+The durable state has closed even if runtime still has an active record.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "complete",
+  "phase": "closure",
+  "plan_approved": true,
+  "current_pass": "PASS-0005",
+  "current_gate": "closure",
+  "blockers": [],
+  "updated_at": "2026-04-27T00:32:00-04:00"
+}`,
+			planMD: "# approved plan\n",
+		},
+	})
+	runtime := newFakeRuntime()
+	staleRun := TaskRunView{
+		RunID:  "stale-run",
+		TaskID: "Task-0008",
+		Status: "active",
+		StateEnvelope: StateEnvelope{
+			State:        StateRunning,
+			ReasonCode:   "stale_active_run",
+			StateSummary: "Stale runtime still thinks this task is running.",
+		},
+		Actions: map[string]ActionAvailability{
+			ActionInterrupt: {Allowed: true},
+		},
+		CapturedTaskSnapshot: TaskDefinitionSnapshot{DeclaredTaskRevision: "stale-revision"},
+	}
+	runtime.activeByTask["Task-0008"] = staleRun
+	runtime.byRunID["stale-run"] = staleRun
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+
+	task, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail: %v", err)
+	}
+
+	if task.StateEnvelope.State != StateCompleted {
+		t.Fatalf("state = %q, want %q", task.StateEnvelope.State, StateCompleted)
+	}
+	if task.LatestRun != nil {
+		t.Fatalf("terminal durable state should suppress stale active run, got %#v", task.LatestRun)
+	}
+	if task.Actions[ActionInterrupt].Allowed {
+		t.Fatal("terminal durable state should not expose Pause/interrupt from stale runtime")
+	}
+	if len(runtime.reconciled) != 0 {
+		t.Fatalf("terminal task should not reconcile stale active runtime, got %#v", runtime.reconciled)
+	}
+	if task.CurrentStory.Status != "no_active_run" {
+		t.Fatalf("current story = %q, want no_active_run", task.CurrentStory.Status)
+	}
+}
+
 func TestTaskUsesWaitingForHumanWhenPlanIsNotApproved(t *testing.T) {
 	worktreeRoot := writeTaskTrackingRoot(t, map[string]taskFixture{
 		"Task-0012": {
@@ -1824,6 +2012,15 @@ Create the durable backend task-run contract so later clients do not guess state
 	if supervised.Attention.Level != AttentionUrgent {
 		t.Fatalf("attention level = %q, want urgent", supervised.Attention.Level)
 	}
+}
+
+func hasBlockReason(reasons []ActionBlockReason, code string) bool {
+	for _, reason := range reasons {
+		if reason.Code == code {
+			return true
+		}
+	}
+	return false
 }
 
 type taskFixture struct {

@@ -102,12 +102,22 @@ def map_backend_task(task_payload: dict[str, Any]) -> dict[str, object] | None:
     if _is_unpromoted_candidate(task_payload):
         return None
 
+    top_level_state_envelope = _dict(task_payload.get("state_envelope"))
+    top_level_state = _text(
+        top_level_state_envelope.get("state"),
+        default=_text(task_payload.get("status")),
+    )
+    if top_level_state in {"completed", "cancelled"}:
+        return None
+
     latest_run = _dict(task_payload.get("latest_run"))
-    state_envelope = _dict(latest_run.get("state_envelope")) or _dict(task_payload.get("state_envelope"))
+    state_envelope = _dict(latest_run.get("state_envelope")) or top_level_state_envelope
     attention = _dict(latest_run.get("attention")) or _dict(task_payload.get("attention"))
     wait_contract = _dict(latest_run.get("wait_contract"))
     deep_context = _dict(latest_run.get("deep_context")) or _dict(task_payload.get("deep_context"))
     state = _text(state_envelope.get("state"), default=_text(latest_run.get("status"), default="ready"))
+    if state in {"completed", "cancelled"}:
+        return None
     actions = _dict(latest_run.get("actions")) or _dict(task_payload.get("actions"))
 
     task_id = _text(task_payload.get("task_id"), default="unknown-task")
@@ -158,9 +168,6 @@ def map_backend_task(task_payload: dict[str, Any]) -> dict[str, object] | None:
 
 
 def state_label(state: str, attention: dict[str, Any] | None = None) -> str:
-    level = _text((attention or {}).get("attention_level"))
-    if level in {"urgent", "needs_attention"}:
-        return "Waiting on you"
     labels = {
         "ready": "Ready",
         "queued": "Queued",
@@ -171,14 +178,14 @@ def state_label(state: str, attention: dict[str, Any] | None = None) -> str:
         "sleeping_or_stalled": "Sleeping",
         "interrupted": "Paused",
         "completed": "Completed",
+        "cancelled": "Cancelled",
         "failed": "Failed",
     }
     return labels.get(state, state.replace("_", " ").title())
 
 
 def summary_bucket(state: str, attention: dict[str, Any] | None = None) -> str:
-    level = _text((attention or {}).get("attention_level"))
-    if level in {"urgent", "needs_attention"} or state in {"waiting_for_human", "interrupted"}:
+    if state == "waiting_for_human":
         return "needs_you"
     if state in {"running", "queued", "dispatching"}:
         return "running"
@@ -280,6 +287,8 @@ def visible_actions(
     ):
         availability = _dict(backend_actions.get(backend_name))
         if availability:
+            if backend_name in {"interrupt", "poke", "retry-workload", "resume", "continue"} and not run_id:
+                continue
             actions.append(
                 {
                     "label": label,

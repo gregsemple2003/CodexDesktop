@@ -76,6 +76,104 @@ class TasksBackendTests(unittest.TestCase):
             "Promoted",
         )
 
+    def test_terminal_tasks_are_filtered_from_active_tasks_surface(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0001",
+                        "title": "Done task",
+                        "state_envelope": {"state": "completed"},
+                    },
+                    {
+                        "task_id": "Task-0004",
+                        "title": "Cancelled task",
+                        "status": "cancelled",
+                    },
+                    {
+                        "task_id": "Task-0010",
+                        "title": "Needs plan approval",
+                        "state_envelope": {"state": "waiting_for_human"},
+                    },
+                ]
+            }
+        )
+
+        self.assertEqual([task["task_id"] for task in snapshot["tasks"]], ["Task-0010"])
+        self.assertEqual(snapshot["summary"]["needs_you"], 1)
+        self.assertEqual(snapshot["summary"]["running"], 0)
+        self.assertEqual(snapshot["summary"]["blocked"], 0)
+        self.assertNotIn("Task-0001", json.dumps(snapshot))
+        self.assertNotIn("Task-0004", json.dumps(snapshot))
+
+    def test_terminal_top_level_state_overrides_stale_latest_run(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0008",
+                        "title": "Completed task with stale run",
+                        "state_envelope": {"state": "completed"},
+                        "latest_run": {
+                            "run_id": "stale-run",
+                            "state_envelope": {"state": "running"},
+                            "actions": {"interrupt": {"allowed": True}},
+                        },
+                    }
+                ]
+            }
+        )
+
+        self.assertEqual(snapshot["tasks"], [])
+        self.assertEqual(snapshot["summary"]["running"], 0)
+
+    def test_blocked_backend_owned_task_is_not_waiting_on_you(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0002",
+                        "title": "Backend review",
+                        "state_envelope": {
+                            "state": "blocked",
+                            "state_summary": "Task needs backend review before dispatch.",
+                            "next_owner": "backend",
+                        },
+                        "attention": {"attention_level": "needs_attention"},
+                    }
+                ]
+            }
+        )
+
+        task = snapshot["tasks"][0]
+        self.assertEqual(task["state_label"], "Blocked")
+        self.assertEqual(task["summary_bucket"], "blocked")
+        self.assertEqual(snapshot["summary"]["needs_you"], 0)
+        self.assertEqual(snapshot["summary"]["blocked"], 1)
+
+    def test_no_active_run_hides_run_control_actions(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0002",
+                        "title": "No active run",
+                        "state_envelope": {"state": "blocked"},
+                        "actions": {
+                            "dispatch": {"allowed": False, "block_reasons": [{"summary": "Blocked."}]},
+                            "interrupt": {"allowed": False},
+                            "poke": {"allowed": False},
+                        },
+                    }
+                ]
+            }
+        )
+
+        labels = [action["label"] for action in snapshot["tasks"][0]["actions"]]
+        self.assertIn("Dispatch", labels)
+        self.assertNotIn("Pause", labels)
+        self.assertNotIn("Poke", labels)
+
     def test_promotion_provenance_maps_dream_source_and_refs(self) -> None:
         snapshot = map_backend_tasks_snapshot(
             {
@@ -142,7 +240,7 @@ class TasksBackendTests(unittest.TestCase):
         tasks = {task["task_id"]: task for task in snapshot["tasks"]}
         self.assertNotIn("review-candidate-1", tasks)
         self.assertIn("Task-0008", tasks)
-        self.assertIn("Task-0009", tasks)
+        self.assertNotIn("Task-0009", tasks)
 
         task8 = tasks["Task-0008"]
         task8_labels = [action["label"] for action in task8["actions"]]
@@ -154,7 +252,6 @@ class TasksBackendTests(unittest.TestCase):
         self.assertEqual(task8["provenance_label"], "Authored")
 
         provenance_labels = {task["task_id"]: task["provenance_label"] for task in snapshot["tasks"]}
-        self.assertEqual(provenance_labels["Task-0009"], "Promoted from Review")
         self.assertEqual(provenance_labels["Task-0012"], "Promoted from Dream")
         for label in provenance_labels.values():
             self.assertNotIn("Candidate", label)

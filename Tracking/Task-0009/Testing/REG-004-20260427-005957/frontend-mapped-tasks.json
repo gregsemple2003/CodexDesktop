@@ -1,0 +1,941 @@
+{
+  "status": "ok",
+  "generated_at": null,
+  "last_refreshed_at": null,
+  "summary": {
+    "needs_you": 2,
+    "sleeping": 0,
+    "running": 0,
+    "blocked": 1,
+    "ready": 0
+  },
+  "tasks": [
+    {
+      "task_id": "Task-0009",
+      "latest_run_id": "",
+      "title": "Design and build the dashboard `Tasks` tab as the primary human surface for committed task dispatch and monitoring.",
+      "meaning_summary": "CodexDashboard needs a high-level committed-work surface that tells a human, at a glance:",
+      "why": "CodexDashboard needs a high-level committed-work surface that tells a human, at a glance:",
+      "state": "blocked",
+      "state_label": "Blocked",
+      "summary_bucket": "blocked",
+      "stream_group": "Waiting or Blocked",
+      "reason": "Task is blocked on recorded constraints.",
+      "recent_change": "Task is blocked on recorded constraints.",
+      "next_expected_event": "Resolve blockers and reassess dispatch readiness.",
+      "freshness_label": "Apr 27, 12:56 AM",
+      "provenance_label": "Authored",
+      "provenance_detail": "Authored",
+      "artifacts": [
+        {
+          "label": "TASK.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "TASK-STATE.json",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK-STATE.json",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "PLAN.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "HANDOFF.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task folder",
+          "uri": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
+          "kind": "path"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Dispatch",
+          "backend_action": "dispatch",
+          "task_id": "Task-0009",
+          "run_id": "",
+          "allowed": false,
+          "reason": "Dispatch is blocked until the recorded task blockers are cleared.",
+          "destructive": false
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0009",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task folder",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0009",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task handoff",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\HANDOFF.md"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0009",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task plan",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\PLAN.md"
+            ]
+          }
+        }
+      ],
+      "launch_targets": [
+        {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\HANDOFF.md"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\PLAN.md"
+          ]
+        }
+      ],
+      "backend_payload": {
+        "task_id": "Task-0009",
+        "title": "Design and build the dashboard `Tasks` tab as the primary human surface for committed task dispatch and monitoring.",
+        "meaning_summary": "CodexDashboard needs a high-level committed-work surface that tells a human, at a glance:",
+        "state_envelope": {
+          "state": "blocked",
+          "reason_code": "task_blocked",
+          "state_summary": "Task is blocked on recorded constraints.",
+          "evidence_refs": [
+            {
+              "type": "task_artifact",
+              "label": "TASK.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "TASK-STATE.json",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK-STATE.json"
+            },
+            {
+              "type": "task_artifact",
+              "label": "PLAN.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "HANDOFF.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md"
+            }
+          ],
+          "next_owner": "human_or_supervisor",
+          "next_expected_event": "Resolve blockers and reassess dispatch readiness.",
+          "suspicious_after": "2026-04-28T05:00:18.5470417Z",
+          "action_block_reasons": {
+            "dispatch": [
+              {
+                "code": "task_blockers_present",
+                "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+              }
+            ],
+            "interrupt": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ],
+            "poke": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "dispatch_readiness": {
+          "ready": false,
+          "block_reasons": [
+            {
+              "code": "task_blockers_present",
+              "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+            }
+          ],
+          "first_suspicious_after": "0001-01-01T00:00:00Z"
+        },
+        "attention": {
+          "attention_level": "needs_attention",
+          "attention_reason": "Task is blocked and needs review.",
+          "attention_sort_key": "30-blocked"
+        },
+        "actions": {
+          "dispatch": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "task_blockers_present",
+                "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+              }
+            ]
+          },
+          "interrupt": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ]
+          },
+          "poke": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+        "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
+        "declared_task_revision": "fd3f191ee82cbd8c80a8ae53271437598dda4e0b3abf9c742d23c494ff5d8fa8",
+        "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+        "current_story": {
+          "status": "no_active_run",
+          "reason": "No task run currently owns the live story."
+        },
+        "current_gate": "regression",
+        "current_pass": "PASS-0006",
+        "phase": "regression",
+        "plan_approved": true,
+        "blockers": [
+          "BUG-0003: completed tasks display as Waiting on you",
+          "BUG-0004: cancelled tasks display as active work",
+          "BUG-0005: completed Task-0008 displays as running with Pause",
+          "BUG-0006: no-active-run tasks expose run-control actions"
+        ],
+        "updated_at": "2026-04-27T00:56:00-04:00",
+        "deep_context": {
+          "preferred_launch_target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+            ],
+            "preferred": true
+          },
+          "launch_targets": [
+            {
+              "kind": "task_artifact",
+              "label": "Task folder",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+              ],
+              "preferred": true
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task handoff",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\HANDOFF.md"
+              ]
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task plan",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\PLAN.md"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "Task-0010",
+      "latest_run_id": "",
+      "title": "Run Dream daily, email the results, and promote option tasks into real tasks that the dashboard can review and enqueue.",
+      "meaning_summary": "Dream should not stay trapped inside manual packet inspection.",
+      "why": "Dream should not stay trapped inside manual packet inspection.",
+      "state": "waiting_for_human",
+      "state_label": "Waiting on you",
+      "summary_bucket": "needs_you",
+      "stream_group": "Needs Attention",
+      "reason": "Task is waiting for plan approval.",
+      "recent_change": "Task is waiting for plan approval.",
+      "next_expected_event": "Approve PLAN.md.",
+      "freshness_label": "Apr 24, 12:07 AM",
+      "provenance_label": "Authored",
+      "provenance_detail": "Authored",
+      "artifacts": [
+        {
+          "label": "TASK.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "TASK-STATE.json",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK-STATE.json",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "PLAN.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "HANDOFF.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "PLAN approval target",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+          "kind": "task_artifact"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Dispatch",
+          "backend_action": "dispatch",
+          "task_id": "Task-0010",
+          "run_id": "",
+          "allowed": false,
+          "reason": "Dispatch requires an approved plan.",
+          "destructive": false
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0010",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task folder",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0010",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task handoff",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\HANDOFF.md"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0010",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task plan",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\PLAN.md"
+            ]
+          }
+        }
+      ],
+      "launch_targets": [
+        {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\HANDOFF.md"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\PLAN.md"
+          ]
+        }
+      ],
+      "backend_payload": {
+        "task_id": "Task-0010",
+        "title": "Run Dream daily, email the results, and promote option tasks into real tasks that the dashboard can review and enqueue.",
+        "meaning_summary": "Dream should not stay trapped inside manual packet inspection.",
+        "state_envelope": {
+          "state": "waiting_for_human",
+          "reason_code": "plan_approval_required",
+          "state_summary": "Task is waiting for plan approval.",
+          "evidence_refs": [
+            {
+              "type": "task_artifact",
+              "label": "TASK.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "TASK-STATE.json",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK-STATE.json"
+            },
+            {
+              "type": "task_artifact",
+              "label": "PLAN.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "HANDOFF.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "PLAN approval target",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md"
+            }
+          ],
+          "next_owner": "human",
+          "next_expected_event": "Approve PLAN.md.",
+          "suspicious_after": "2026-04-30T05:00:18.5709031Z",
+          "action_block_reasons": {
+            "dispatch": [
+              {
+                "code": "plan_not_approved",
+                "summary": "Dispatch requires an approved plan."
+              }
+            ],
+            "interrupt": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ],
+            "poke": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "dispatch_readiness": {
+          "ready": false,
+          "block_reasons": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ],
+          "first_suspicious_after": "0001-01-01T00:00:00Z"
+        },
+        "attention": {
+          "attention_level": "needs_attention",
+          "attention_reason": "Task needs an explicit human action.",
+          "attention_sort_key": "20-waiting_for_human"
+        },
+        "actions": {
+          "dispatch": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "plan_not_approved",
+                "summary": "Dispatch requires an approved plan."
+              }
+            ]
+          },
+          "interrupt": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ]
+          },
+          "poke": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+        "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010",
+        "declared_task_revision": "81c830313c19de1f009d0989ab60af33023140089616140597272c3bb711e7a2",
+        "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+        "current_story": {
+          "status": "no_active_run",
+          "reason": "No task run currently owns the live story."
+        },
+        "current_gate": "planning",
+        "phase": "planning",
+        "plan_approved": false,
+        "updated_at": "2026-04-24T00:07:22.4834607-04:00",
+        "deep_context": {
+          "preferred_launch_target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+            ],
+            "preferred": true
+          },
+          "launch_targets": [
+            {
+              "kind": "task_artifact",
+              "label": "Task folder",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+              ],
+              "preferred": true
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task handoff",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\HANDOFF.md"
+              ]
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task plan",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\PLAN.md"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "Task-0011",
+      "latest_run_id": "",
+      "title": "Design and build the dashboard `Review` tab as the canonical intake surface for incoming asks.",
+      "meaning_summary": "CodexDashboard now has two different human jobs to support:",
+      "why": "CodexDashboard now has two different human jobs to support:",
+      "state": "waiting_for_human",
+      "state_label": "Waiting on you",
+      "summary_bucket": "needs_you",
+      "stream_group": "Needs Attention",
+      "reason": "Task is waiting for plan approval.",
+      "recent_change": "Task is waiting for plan approval.",
+      "next_expected_event": "Approve PLAN.md.",
+      "freshness_label": "Apr 24, 12:02 AM",
+      "provenance_label": "Authored",
+      "provenance_detail": "Authored",
+      "artifacts": [
+        {
+          "label": "TASK.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "TASK-STATE.json",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK-STATE.json",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "PLAN.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "HANDOFF.md",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "PLAN approval target",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+          "kind": "task_artifact"
+        },
+        {
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+          "kind": "task_artifact"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Dispatch",
+          "backend_action": "dispatch",
+          "task_id": "Task-0011",
+          "run_id": "",
+          "allowed": false,
+          "reason": "Dispatch requires an approved plan.",
+          "destructive": false
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0011",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task folder",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0011",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task handoff",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\HANDOFF.md"
+            ]
+          }
+        },
+        {
+          "label": "Open Task",
+          "backend_action": "open",
+          "task_id": "Task-0011",
+          "run_id": "",
+          "allowed": true,
+          "reason": "Task plan",
+          "target": {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"
+            ]
+          }
+        }
+      ],
+      "launch_targets": [
+        {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task handoff",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\HANDOFF.md"
+          ]
+        },
+        {
+          "kind": "task_artifact",
+          "label": "Task plan",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"
+          ]
+        }
+      ],
+      "backend_payload": {
+        "task_id": "Task-0011",
+        "title": "Design and build the dashboard `Review` tab as the canonical intake surface for incoming asks.",
+        "meaning_summary": "CodexDashboard now has two different human jobs to support:",
+        "state_envelope": {
+          "state": "waiting_for_human",
+          "reason_code": "plan_approval_required",
+          "state_summary": "Task is waiting for plan approval.",
+          "evidence_refs": [
+            {
+              "type": "task_artifact",
+              "label": "TASK.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "TASK-STATE.json",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK-STATE.json"
+            },
+            {
+              "type": "task_artifact",
+              "label": "PLAN.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "HANDOFF.md",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md"
+            },
+            {
+              "type": "task_artifact",
+              "label": "PLAN approval target",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md"
+            }
+          ],
+          "next_owner": "human",
+          "next_expected_event": "Approve PLAN.md.",
+          "suspicious_after": "2026-04-30T05:00:18.5954876Z",
+          "action_block_reasons": {
+            "dispatch": [
+              {
+                "code": "plan_not_approved",
+                "summary": "Dispatch requires an approved plan."
+              }
+            ],
+            "interrupt": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ],
+            "poke": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "dispatch_readiness": {
+          "ready": false,
+          "block_reasons": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ],
+          "first_suspicious_after": "0001-01-01T00:00:00Z"
+        },
+        "attention": {
+          "attention_level": "needs_attention",
+          "attention_reason": "Task needs an explicit human action.",
+          "attention_sort_key": "20-waiting_for_human"
+        },
+        "actions": {
+          "dispatch": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "plan_not_approved",
+                "summary": "Dispatch requires an approved plan."
+              }
+            ]
+          },
+          "interrupt": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Interrupt is unavailable until a task run exists."
+              }
+            ]
+          },
+          "poke": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "code": "no_active_run",
+                "summary": "Poke is unavailable until a task run exists."
+              }
+            ]
+          }
+        },
+        "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+        "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011",
+        "declared_task_revision": "4710eb7139fc4b928c797c41bf0efbe62ca84809755aee35b57a7d544f0aa934",
+        "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+        "current_story": {
+          "status": "no_active_run",
+          "reason": "No task run currently owns the live story."
+        },
+        "current_gate": "planning",
+        "phase": "planning",
+        "plan_approved": false,
+        "updated_at": "2026-04-24T00:02:48.3295521-04:00",
+        "deep_context": {
+          "preferred_launch_target": {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+            ],
+            "preferred": true
+          },
+          "launch_targets": [
+            {
+              "kind": "task_artifact",
+              "label": "Task folder",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+              ],
+              "preferred": true
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task handoff",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\HANDOFF.md"
+              ]
+            },
+            {
+              "kind": "task_artifact",
+              "label": "Task plan",
+              "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+              "command": [
+                "code",
+                "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "message": "Tasks state loaded from orchestration backend."
+}

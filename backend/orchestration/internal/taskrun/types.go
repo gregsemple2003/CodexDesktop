@@ -20,6 +20,7 @@ const (
 	StateSleepingOrStalled = "sleeping_or_stalled"
 	StateInterrupted       = "interrupted"
 	StateCompleted         = "completed"
+	StateCancelled         = "cancelled"
 	StateFailed            = "failed"
 )
 

@@ -1,0 +1,4 @@
+task_id,durable_status,durable_phase,backend_state,next_owner,attention,dispatch_ready,visible_label,visible_bucket,actions
+Task-0009,in_progress,regression,blocked,human_or_supervisor,needs_attention,False,Blocked,blocked,Dispatch:False:Dispatch is blocked until the recorded task blockers are cleared.;Open Task:True:Task folder;Open Task:True:Task handoff;Open Task:True:Task plan
+Task-0010,pending,planning,waiting_for_human,human,needs_attention,False,Waiting on you,needs_you,Dispatch:False:Dispatch requires an approved plan.;Open Task:True:Task folder;Open Task:True:Task handoff;Open Task:True:Task plan
+Task-0011,pending,planning,waiting_for_human,human,needs_attention,False,Waiting on you,needs_you,Dispatch:False:Dispatch requires an approved plan.;Open Task:True:Task folder;Open Task:True:Task handoff;Open Task:True:Task plan

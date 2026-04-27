@@ -1,0 +1,13 @@
+active_tab=tasks
+Last ingest 00:59:59 | files 1/1 | events +0
+hotkey_triggered=True
+overlay_fallback=False
+tasks_backend=http://127.0.0.1:14318
+tasks_needs_you=02
+tasks_sleeping=00
+tasks_running=00
+tasks_blocked=01
+tasks_ready=00
+tasks_selected=Task-0009
+tasks_selected_actions=Dispatch,Open Task,Open Task,Open Task
+tasks_provenance_labels=Authored,Authored,Authored

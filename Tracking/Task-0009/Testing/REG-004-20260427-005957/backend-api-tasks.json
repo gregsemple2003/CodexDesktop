@@ -1,0 +1,1721 @@
+{
+  "tasks": [
+    {
+      "task_id": "Task-0001",
+      "title": "Codex token-velocity dashboard with a hotkey-first overlay.",
+      "meaning_summary": "Build a Windows-first background app that watches `C:\\Users\\gregs\\.codex` for new and modified session-history `.jsonl` files, extracts token-usage telemetry from the live append stream, and renders a compact bar-chart view of token velocity over multiple time buckets.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0001",
+      "declared_task_revision": "e2c18a13d568648a9841f1093ad54fadccb4c8f225e8f7c8793a0411533d452b",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "closure",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-02T21:30:00-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0001"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0001"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0001\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0001/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0001\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0002",
+      "title": "CodexDashboard Stitch-aligned overlay redesign.",
+      "meaning_summary": "This task reworks the existing desktop overlay in `app/` into a Stitch-inspired control-room UI without changing the product's core role as a hotkey-first private cockpit.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0002",
+      "declared_task_revision": "07707be8248ab106b6f4b9200843a2f5db6790444b6ede4d096b11e17d942280",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "none",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-02T22:12:47-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0002"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0002"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0002\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0002/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0002\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0003",
+      "title": "Add a Total/Norm metric toggle for CodexDashboard chart analysis.",
+      "meaning_summary": "This task adds a top-level metric-mode toggle so the overlay can switch between raw total tokens and a cost-weighted normalized proxy for chart analysis.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0003",
+      "declared_task_revision": "2e2ec469631e915297899e783687bc1e7b2a9be5915ee195047bbbbc407d3843",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "none",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-03T01:17:59-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0003"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0003"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0003\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0003/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0003\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0004",
+      "title": "Declarative Codex jobs registry, Windows reconciliation, and Jobs tab for CodexDashboard.",
+      "meaning_summary": "CodexDashboard currently succeeds at one thing: a hotkey-first token-usage cockpit. It does not yet own the related machine-state problem.",
+      "state_envelope": {
+        "state": "cancelled",
+        "reason_code": "task_cancelled",
+        "state_summary": "Task is cancelled.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is cancelled.",
+        "attention_sort_key": "91-cancelled"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0004",
+      "declared_task_revision": "28b3d1bd7a66506eb4a14c60a1cc593664af4d48003c84bcaa883e6f23a9750a",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "none",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-06T19:46:39.8425725-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0004"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0004"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0004\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0004/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0004\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0005",
+      "title": "Build a Git-backed Go + Temporal jobs control plane for CodexDashboard.",
+      "meaning_summary": "CodexDashboard currently has a local Python/Tk overlay and a partially explored dashboard-first jobs surface from `Task-0004`.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0005",
+      "declared_task_revision": "01511ac89a40f8291d6cb38ae4a3bc48c454b798328b36c0f8073371e0219f79",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "none",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-07T12:42:35.1406027-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0005"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0005"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0005\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0005/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0005\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0006",
+      "title": "Capture human-facing orchestration incidents as durable evidence.",
+      "meaning_summary": "The higher-level orchestration goal is to catch dropped balls, misunderstandings, and process bumps before they have to be escalated manually.",
+      "state_envelope": {
+        "state": "cancelled",
+        "reason_code": "task_cancelled",
+        "state_summary": "Task is cancelled.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            },
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "plan_not_approved",
+            "summary": "Dispatch requires an approved plan."
+          },
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is cancelled.",
+        "attention_sort_key": "91-cancelled"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            },
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0006",
+      "declared_task_revision": "cec9e16335b4bb96aae1a6c0fe0499818b09102e3ac63a08beb59da43b74a5a9",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "none",
+      "phase": "closure",
+      "plan_approved": false,
+      "updated_at": "2026-04-24T10:28:10.6599366-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0006"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0006"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0006\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0006/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0006\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0007",
+      "title": "Bootstrap a task-owned home for Jarvis intervention analysis and conversation capture.",
+      "meaning_summary": "This task exists to hold analysis and conversation artifacts for a proposed `Jarvis` layer that treats direct human input as evidence that the current system failed to infer something it should have inferred.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/HANDOFF.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007",
+      "declared_task_revision": "064be90dac27a6ccb76d4f9755ae5b154ce499edaa9968fc2825053540543fc7",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "closure",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-23T19:34:55.8566784-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0007/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0007\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0008",
+      "title": "Build the backend task dispatch layer and durable execution-state contract.",
+      "meaning_summary": "If the dashboard is going to dispatch and supervise work honestly later, it needs a real execution layer behind any UI.",
+      "state_envelope": {
+        "state": "completed",
+        "reason_code": "task_complete",
+        "state_summary": "Task is complete.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/HANDOFF.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "CONSTRAINTS.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/CONSTRAINTS.md"
+          }
+        ],
+        "next_owner": "none",
+        "next_expected_event": "No further action is required.",
+        "suspicious_after": "0001-01-01T00:00:00Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_terminal",
+            "summary": "Dispatch is unavailable because the task is already terminal."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "none",
+        "attention_reason": "Task is complete.",
+        "attention_sort_key": "90-complete"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_terminal",
+              "summary": "Dispatch is unavailable because the task is already terminal."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008",
+      "declared_task_revision": "7ea708fe4dee79edf99054063c938ccbaf420d6ee6c8cbd60778632e71b40c9e",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "closure",
+      "phase": "closure",
+      "plan_approved": true,
+      "updated_at": "2026-04-24T21:06:03.1891335-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0008/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0009",
+      "title": "Design and build the dashboard `Tasks` tab as the primary human surface for committed task dispatch and monitoring.",
+      "meaning_summary": "CodexDashboard needs a high-level committed-work surface that tells a human, at a glance:",
+      "state_envelope": {
+        "state": "blocked",
+        "reason_code": "task_blocked",
+        "state_summary": "Task is blocked on recorded constraints.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md"
+          }
+        ],
+        "next_owner": "human_or_supervisor",
+        "next_expected_event": "Resolve blockers and reassess dispatch readiness.",
+        "suspicious_after": "2026-04-28T05:00:18.5470417Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "task_blockers_present",
+              "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "task_blockers_present",
+            "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "needs_attention",
+        "attention_reason": "Task is blocked and needs review.",
+        "attention_sort_key": "30-blocked"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "task_blockers_present",
+              "summary": "Dispatch is blocked until the recorded task blockers are cleared."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
+      "declared_task_revision": "fd3f191ee82cbd8c80a8ae53271437598dda4e0b3abf9c742d23c494ff5d8fa8",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "regression",
+      "current_pass": "PASS-0006",
+      "phase": "regression",
+      "plan_approved": true,
+      "blockers": [
+        "BUG-0003: completed tasks display as Waiting on you",
+        "BUG-0004: cancelled tasks display as active work",
+        "BUG-0005: completed Task-0008 displays as running with Pause",
+        "BUG-0006: no-active-run tasks expose run-control actions"
+      ],
+      "updated_at": "2026-04-27T00:56:00-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0009/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0010",
+      "title": "Run Dream daily, email the results, and promote option tasks into real tasks that the dashboard can review and enqueue.",
+      "meaning_summary": "Dream should not stay trapped inside manual packet inspection.",
+      "state_envelope": {
+        "state": "waiting_for_human",
+        "reason_code": "plan_approval_required",
+        "state_summary": "Task is waiting for plan approval.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN approval target",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md"
+          }
+        ],
+        "next_owner": "human",
+        "next_expected_event": "Approve PLAN.md.",
+        "suspicious_after": "2026-04-30T05:00:18.5709031Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "plan_not_approved",
+            "summary": "Dispatch requires an approved plan."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "needs_attention",
+        "attention_reason": "Task needs an explicit human action.",
+        "attention_sort_key": "20-waiting_for_human"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010",
+      "declared_task_revision": "81c830313c19de1f009d0989ab60af33023140089616140597272c3bb711e7a2",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "planning",
+      "phase": "planning",
+      "plan_approved": false,
+      "updated_at": "2026-04-24T00:07:22.4834607-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0010/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0010\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0011",
+      "title": "Design and build the dashboard `Review` tab as the canonical intake surface for incoming asks.",
+      "meaning_summary": "CodexDashboard now has two different human jobs to support:",
+      "state_envelope": {
+        "state": "waiting_for_human",
+        "reason_code": "plan_approval_required",
+        "state_summary": "Task is waiting for plan approval.",
+        "evidence_refs": [
+          {
+            "type": "task_artifact",
+            "label": "TASK.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "TASK-STATE.json",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK-STATE.json"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "HANDOFF.md",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md"
+          },
+          {
+            "type": "task_artifact",
+            "label": "PLAN approval target",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md"
+          }
+        ],
+        "next_owner": "human",
+        "next_expected_event": "Approve PLAN.md.",
+        "suspicious_after": "2026-04-30T05:00:18.5954876Z",
+        "action_block_reasons": {
+          "dispatch": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ],
+          "interrupt": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ],
+          "poke": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "dispatch_readiness": {
+        "ready": false,
+        "block_reasons": [
+          {
+            "code": "plan_not_approved",
+            "summary": "Dispatch requires an approved plan."
+          }
+        ],
+        "first_suspicious_after": "0001-01-01T00:00:00Z"
+      },
+      "attention": {
+        "attention_level": "needs_attention",
+        "attention_reason": "Task needs an explicit human action.",
+        "attention_sort_key": "20-waiting_for_human"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "plan_not_approved",
+              "summary": "Dispatch requires an approved plan."
+            }
+          ]
+        },
+        "interrupt": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Interrupt is unavailable until a task run exists."
+            }
+          ]
+        },
+        "poke": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "no_active_run",
+              "summary": "Poke is unavailable until a task run exists."
+            }
+          ]
+        }
+      },
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011",
+      "declared_task_revision": "4710eb7139fc4b928c797c41bf0efbe62ca84809755aee35b57a7d544f0aa934",
+      "declared_git_revision": "95e9112dfbef0ff32c7042724e9c59a8011fcf48",
+      "current_story": {
+        "status": "no_active_run",
+        "reason": "No task run currently owns the live story."
+      },
+      "current_gate": "planning",
+      "phase": "planning",
+      "plan_approved": false,
+      "updated_at": "2026-04-24T00:02:48.3295521-04:00",
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "task_artifact",
+          "label": "Task folder",
+          "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+          "command": [
+            "code",
+            "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+          ],
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "task_artifact",
+            "label": "Task folder",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"
+            ],
+            "preferred": true
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task handoff",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/HANDOFF.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\HANDOFF.md"
+            ]
+          },
+          {
+            "kind": "task_artifact",
+            "label": "Task plan",
+            "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/PLAN.md",
+            "command": [
+              "code",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\PLAN.md"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

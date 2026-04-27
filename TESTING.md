@@ -172,3 +172,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Stop-ValidationLane.ps1
 Task-level regression for this repo is defined in repo-root `REGRESSION.md`.
 
 The regression lane must start the real desktop app surface and exercise the real overlay behavior. Parser-only proof does not satisfy regression closure by itself.
+
+For `REG-004 Semantic Dashboard State Reconciliation`, the required artifact is
+a visible-claim reconciliation matrix, not just a screenshot. Each checked UI
+claim must cite the durable source that makes it true or false. Divergences must
+open or update a task-owned `BUG-<NNNN>.md` before the run is considered
+complete.

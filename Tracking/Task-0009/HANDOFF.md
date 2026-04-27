@@ -8,7 +8,7 @@ Current lifecycle state:
 
 - phase: `closure`
 - current pass: `null`
-- last completed pass: `PASS-0005`
+- last completed pass: `PASS-0006`
 - current gate: `closure`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -33,6 +33,25 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 ## Current Objective
 
 No further implementation remains in Task-0009.
+
+Post-closure semantic dashboard reconciliation bugs [BUG-0003](./BUG-0003.md),
+[BUG-0004](./BUG-0004.md), [BUG-0005](./BUG-0005.md), and
+[BUG-0006](./BUG-0006.md) are closed.
+
+PASS-0006 fixed the backend/frontend state contract so the actual `Tasks` tab
+reconciles visible claims against durable task state and backend readback:
+
+- durable `status: complete` and `status: cancelled` are terminal backend
+  states
+- terminal durable task state wins over stale active runtime state
+- terminal tasks are omitted from active dashboard buckets
+- generic backend `needs_attention` no longer becomes visible `Waiting on you`
+- no-active-run rows no longer expose `Pause` or `Poke`
+
+Proof:
+
+- [Testing/PASS-0006-UNIT-VALIDATION.md](./Testing/PASS-0006-UNIT-VALIDATION.md)
+- [Testing/REG-004-20260427-005957.md](./Testing/REG-004-20260427-005957.md)
 
 Post-closure bugfix [BUG-0002](./BUG-0002.md) is closed. The human-facing
 dashboard frontend now has a pinned release flow comparable to the backend

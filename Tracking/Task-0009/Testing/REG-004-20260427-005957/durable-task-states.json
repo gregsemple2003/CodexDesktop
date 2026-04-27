@@ -1,0 +1,219 @@
+{
+  "Task-0001": {
+    "schema_version": 1,
+    "task_id": "Task-0001",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0002",
+    "current_gate": "closure",
+    "latest_audit_verdict": "ready",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "passing",
+      "regression": "passing"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-02T21:30:00-04:00"
+  },
+  "Task-0002": {
+    "schema_version": 1,
+    "task_id": "Task-0002",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0001",
+    "current_gate": "none",
+    "latest_audit_verdict": "ready_with_caveats",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "passing",
+      "regression": "passing"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-02T22:12:47-04:00"
+  },
+  "Task-0003": {
+    "schema_version": 1,
+    "task_id": "Task-0003",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0001",
+    "current_gate": "none",
+    "latest_audit_verdict": "ready_with_caveats",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "passing",
+      "regression": "passing"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-03T01:17:59-04:00"
+  },
+  "Task-0004": {
+    "schema_version": 1,
+    "task_id": "Task-0004",
+    "status": "cancelled",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0001",
+    "current_gate": "none",
+    "latest_audit_verdict": "ready_with_caveats",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "passing",
+      "regression": "blocked"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-06T19:46:39.8425725-04:00"
+  },
+  "Task-0005": {
+    "schema_version": 1,
+    "task_id": "Task-0005",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0004",
+    "current_gate": "none",
+    "latest_audit_verdict": "ready_with_caveats",
+    "validation": {
+      "build": "passing",
+      "unit_tests": "passing",
+      "regression": "passing"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-07T12:42:35.1406027-04:00"
+  },
+  "Task-0006": {
+    "schema_version": 1,
+    "task_id": "Task-0006",
+    "status": "cancelled",
+    "phase": "closure",
+    "plan_approved": false,
+    "current_pass": null,
+    "last_completed_pass": null,
+    "current_gate": "none",
+    "latest_audit_verdict": "unknown",
+    "validation": {
+      "build": "not_run",
+      "unit_tests": "not_run",
+      "regression": "not_run"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-24T10:28:10.6599366-04:00"
+  },
+  "Task-0007": {
+    "schema_version": 1,
+    "task_id": "Task-0007",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": null,
+    "current_gate": "closure",
+    "latest_audit_verdict": "ready",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "not_applicable",
+      "regression": "not_applicable"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-23T19:34:55.8566784-04:00"
+  },
+  "Task-0008": {
+    "schema_version": 1,
+    "task_id": "Task-0008",
+    "status": "complete",
+    "phase": "closure",
+    "plan_approved": true,
+    "current_pass": null,
+    "last_completed_pass": "PASS-0004",
+    "current_gate": "closure",
+    "latest_audit_verdict": "ready",
+    "validation": {
+      "build": "passing",
+      "unit_tests": "passing",
+      "regression": "not_applicable"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-24T21:06:03.1891335-04:00"
+  },
+  "Task-0009": {
+    "schema_version": 1,
+    "task_id": "Task-0009",
+    "status": "in_progress",
+    "phase": "regression",
+    "plan_approved": true,
+    "current_pass": "PASS-0006",
+    "last_completed_pass": "PASS-0005",
+    "current_gate": "regression",
+    "latest_audit_verdict": "ready",
+    "validation": {
+      "build": "passing",
+      "unit_tests": "passing",
+      "regression": "failing"
+    },
+    "blockers": [
+      "BUG-0003: completed tasks display as Waiting on you",
+      "BUG-0004: cancelled tasks display as active work",
+      "BUG-0005: completed Task-0008 displays as running with Pause",
+      "BUG-0006: no-active-run tasks expose run-control actions"
+    ],
+    "next_expected_artifacts": [
+      "Tracking/Task-0009/Testing/REG-004-SEMANTIC-DASHBOARD-REGRESSION.md",
+      "Tracking/Task-0009/Testing/unit-task-state-semantics proof"
+    ],
+    "updated_at": "2026-04-27T00:56:00-04:00"
+  },
+  "Task-0010": {
+    "schema_version": 1,
+    "task_id": "Task-0010",
+    "status": "pending",
+    "phase": "planning",
+    "plan_approved": false,
+    "current_pass": null,
+    "last_completed_pass": null,
+    "current_gate": "planning",
+    "latest_audit_verdict": "unknown",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "not_applicable",
+      "regression": "not_applicable"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-24T00:07:22.4834607-04:00"
+  },
+  "Task-0011": {
+    "schema_version": 1,
+    "task_id": "Task-0011",
+    "status": "pending",
+    "phase": "planning",
+    "plan_approved": false,
+    "current_pass": null,
+    "last_completed_pass": null,
+    "current_gate": "planning",
+    "latest_audit_verdict": "unknown",
+    "validation": {
+      "build": "not_applicable",
+      "unit_tests": "not_applicable",
+      "regression": "not_applicable"
+    },
+    "blockers": [],
+    "next_expected_artifacts": [],
+    "updated_at": "2026-04-24T00:02:48.3295521-04:00"
+  }
+}

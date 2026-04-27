@@ -556,7 +556,7 @@ func (s *Service) readTask(ctx context.Context, taskRoot string) (TaskView, erro
 	view.Actions = defaultActions(view.DispatchReadiness)
 	view.StateEnvelope.ActionBlockReasons = collectActionBlockReasons(view.Actions)
 
-	if s.runtime == nil {
+	if s.runtime == nil || isTerminalTaskState(metadata.state.Status) {
 		return view, nil
 	}
 
@@ -692,6 +692,18 @@ func (s *Service) deriveStateEnvelope(metadata parsedTask) StateEnvelope {
 	}
 
 	switch {
+	case isCompletedTaskStatus(metadata.state.Status):
+		envelope.State = StateCompleted
+		envelope.ReasonCode = "task_complete"
+		envelope.StateSummary = "Task is complete."
+		envelope.NextOwner = "none"
+		envelope.NextExpectedEvent = "No further action is required."
+	case isCancelledTaskStatus(metadata.state.Status):
+		envelope.State = StateCancelled
+		envelope.ReasonCode = "task_cancelled"
+		envelope.StateSummary = "Task is cancelled."
+		envelope.NextOwner = "none"
+		envelope.NextExpectedEvent = "No further action is required."
 	case len(metadata.state.Blockers) > 0:
 		envelope.State = StateBlocked
 		envelope.ReasonCode = "task_blocked"
@@ -706,12 +718,6 @@ func (s *Service) deriveStateEnvelope(metadata parsedTask) StateEnvelope {
 		envelope.NextOwner = "human"
 		envelope.NextExpectedEvent = "Approve PLAN.md."
 		envelope.SuspiciousAfter = now.Add(72 * time.Hour)
-	case metadata.state.Status == "done" || metadata.state.Status == "completed" || metadata.state.Status == "closed":
-		envelope.State = StateCompleted
-		envelope.ReasonCode = "task_complete"
-		envelope.StateSummary = "Task is complete."
-		envelope.NextOwner = "none"
-		envelope.NextExpectedEvent = "No further action is required."
 	case metadata.state.Phase == "implementation" && metadata.state.CurrentGate == "implementation":
 		envelope.State = StateReady
 		envelope.ReasonCode = "ready_for_dispatch"
@@ -762,6 +768,12 @@ func (s *Service) deriveDispatchReadiness(metadata parsedTask, activeRunExists b
 			Summary: "Dispatch is blocked until the recorded task blockers are cleared.",
 		})
 	}
+	if isTerminalTaskState(metadata.state.Status) {
+		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
+			Code:    "task_terminal",
+			Summary: "Dispatch is unavailable because the task is already terminal.",
+		})
+	}
 	if activeRunExists {
 		readiness.BlockReasons = append(readiness.BlockReasons, ActionBlockReason{
 			Code:    "active_run_exists",
@@ -806,8 +818,32 @@ func (s *Service) deriveAttention(state string, dispatchReady bool) AttentionPri
 		return AttentionPriority{Level: AttentionNeedsAttention, Reason: "Task is ready for dispatch.", SortKey: "40-ready"}
 	case state == StateCompleted:
 		return AttentionPriority{Level: AttentionNone, Reason: "Task is complete.", SortKey: "90-complete"}
+	case state == StateCancelled:
+		return AttentionPriority{Level: AttentionNone, Reason: "Task is cancelled.", SortKey: "91-cancelled"}
 	default:
 		return AttentionPriority{Level: AttentionWatch, Reason: "Task should remain visible for backend follow-up.", SortKey: "50-watch"}
+	}
+}
+
+func isTerminalTaskState(status string) bool {
+	return isCompletedTaskStatus(status) || isCancelledTaskStatus(status)
+}
+
+func isCompletedTaskStatus(status string) bool {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "complete", "completed", "done", "closed":
+		return true
+	default:
+		return false
+	}
+}
+
+func isCancelledTaskStatus(status string) bool {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "cancelled", "canceled":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -1099,7 +1135,7 @@ func actionsForRunState(state string) map[string]ActionAvailability {
 			ActionPoke:      {Allowed: false, BlockReasons: pokeUnavailable},
 			ActionInterrupt: interruptAllowed,
 		}
-	case StateCompleted, StateFailed, StateInterrupted:
+	case StateCompleted, StateCancelled, StateFailed, StateInterrupted:
 		return map[string]ActionAvailability{
 			ActionDispatch: {Allowed: false, BlockReasons: dispatchBlocked},
 			ActionPoke: {Allowed: false, BlockReasons: []ActionBlockReason{{
