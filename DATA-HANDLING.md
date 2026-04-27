@@ -69,6 +69,28 @@ Human-lane promotion sequence:
 6. Claim only what the proof shows: release id, git commit, dirty-source flag,
    scheduled-task launcher path, running process path, health, and any unknowns.
 
+The desktop dashboard frontend follows the same release discipline. The startup
+entry must invoke the runtime-root dashboard launcher, not `pythonw -m
+app.codex_dashboard` from `C:\Agent\CodexDashboard`.
+
+Publish the frontend release from repo root:
+
+```powershell
+cd C:\Agent\CodexDashboard
+powershell -ExecutionPolicy Bypass -File .\scripts\Publish-DashboardRelease.ps1
+```
+
+Use this read-only proof command before claiming the visible dashboard frontend
+is pinned or current:
+
+```powershell
+cd C:\Agent\CodexDashboard
+powershell -ExecutionPolicy Bypass -File .\scripts\Test-DashboardRelease.ps1
+```
+
+Frontend claims require frontend proof. Backend release isolation does not prove
+the dashboard process, startup entry, or visible tab surface.
+
 ## Backup Scripts
 
 Estimate the current human-lane backup set:
@@ -105,6 +127,7 @@ Current human-lane must-backup set:
 | service-lane runtime root | `%LOCALAPPDATA%\CodexDashboard\orchestration-service-lane` | must backup | Includes service-lane binary/log layout and local runtime metadata. |
 | service-lane pinned release manifest and releases | `%LOCALAPPDATA%\CodexDashboard\orchestration-service-lane\current-release.json` and `%LOCALAPPDATA%\CodexDashboard\orchestration-service-lane\releases\` | must backup | Defines the exact human-lane binary and compose file that restarts are allowed to launch. |
 | service-lane run artifacts | `%LOCALAPPDATA%\CodexDashboard\orchestration-runs\service-lane` | must backup | Small and useful for recovery/postmortem. |
+| dashboard frontend pinned releases | `%LOCALAPPDATA%\CodexDashboard\dashboard-current-release.json`, `%LOCALAPPDATA%\CodexDashboard\dashboard-releases\`, and `%LOCALAPPDATA%\CodexDashboard\dashboard-launcher\` | must backup | Defines the exact human-facing dashboard source tree and launcher that restarts are allowed to load. |
 | dashboard config | `%LOCALAPPDATA%\CodexDashboard\config.json` | must backup | Human app settings. |
 | dashboard SQLite DB | `%LOCALAPPDATA%\CodexDashboard\dashboard.db` | must backup | Kept in backup even if parts may be reconstructable from session telemetry. |
 | job specs | `C:\Users\gregs\.codex\Orchestration\Jobs\specs\` | must backup | Durable desired job declarations. |
@@ -179,6 +202,9 @@ A CodexDashboard human-lane restore should restore or verify:
 - Docker volume or DB dump for `codex-orchestration-service_temporal-postgres-data`
 - `%LOCALAPPDATA%\CodexDashboard\orchestration-service-lane`
 - `%LOCALAPPDATA%\CodexDashboard\orchestration-runs\service-lane`
+- `%LOCALAPPDATA%\CodexDashboard\dashboard-current-release.json`
+- `%LOCALAPPDATA%\CodexDashboard\dashboard-releases\`
+- `%LOCALAPPDATA%\CodexDashboard\dashboard-launcher\`
 - `%LOCALAPPDATA%\CodexDashboard\config.json`
 - `%LOCALAPPDATA%\CodexDashboard\dashboard.db`
 - `C:\Users\gregs\.codex\Orchestration\Jobs\specs\`

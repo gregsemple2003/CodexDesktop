@@ -243,6 +243,39 @@ Make the tab trustworthy under real human use instead of only technically comple
 
 - the first `Tasks` tab slice can be used as the product heart without apologizing for it
 
+## PASS-0005 Pin The Human-Facing Dashboard Frontend
+
+### Objective
+
+Fix [BUG-0002](./BUG-0002.md) by making the desktop dashboard frontend use an
+explicit pinned release path instead of launching from the mutable repo checkout.
+
+### Implementation Notes
+
+- publish dashboard source into `%LOCALAPPDATA%\CodexDashboard\dashboard-releases\`
+- write `%LOCALAPPDATA%\CodexDashboard\dashboard-current-release.json`
+- install a stable runtime launcher under `%LOCALAPPDATA%\CodexDashboard\dashboard-launcher\`
+- register startup to invoke the runtime launcher rather than `C:\Agent\CodexDashboard`
+- add proof scripts and tests that report release id, git commit, source dirty
+  status, hash validation, launcher path, startup path, and running process identity
+- keep backend service-lane worktree-root proof in scope when it blocks honest
+  `Tasks` tab verification
+
+### Verification
+
+- unit tests cover the dashboard release scripts and startup command
+- script parsing and release hash validation pass
+- backend service-lane release isolation still validates
+- the human-facing dashboard can be restarted from a pinned frontend release
+- proof shows the visible `Tasks` surface is backed by both a pinned frontend and
+  a backend that reads the repo-root `Tracking` directory
+
+### Exit Bar
+
+- no claim about the human-visible dashboard surface is made from backend-only
+  proof
+- the frontend has release evidence comparable to the backend service lane
+
 ## Task-Level Validation
 
 Expected validation before closure:

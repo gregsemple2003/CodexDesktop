@@ -193,3 +193,44 @@ Interpretation:
 
 - this is required operator proof for human-lane release claims
 - this is not a substitute for task-level desktop-app regression cases
+
+### SMOKE-003 Dashboard Frontend Release Isolation
+
+Goal:
+
+Confirm the human-facing desktop dashboard frontend is pinned to a promoted
+release and cannot be advanced by merely updating or editing the mutable repo
+checkout.
+
+Precondition:
+
+Only run against the human dashboard frontend after the human explicitly
+authorizes that lane to be inspected or restarted for this specific run.
+
+Steps:
+
+1. Run the unit tests for dashboard release scripts:
+   `python -m unittest tests.test_dashboard_release_scripts tests.test_desktop_support -v`
+2. Publish the intended dashboard release with `scripts/Publish-DashboardRelease.ps1`.
+3. Restart the dashboard through `scripts/Start-DashboardRelease.ps1` or the
+   installed runtime launcher.
+4. Run `scripts/Test-DashboardRelease.ps1`.
+5. Verify no live dashboard command line is `pythonw -m app.codex_dashboard`
+   from `C:\Agent\CodexDashboard` without a release id and release root.
+6. For visible-surface claims, run an app smoke artifact capture against the
+   pinned release and verify the expected tab is active in the generated
+   `overlay-summary.txt`.
+
+Expected result:
+
+- `dashboard-current-release.json` exists and validates copied source hashes
+- the startup file points at the runtime-root dashboard launcher
+- the running dashboard process includes the pinned release id and release root
+- any dirty-source promotion is explicitly visible in the release manifest
+- visible-surface claims cite a smoke artifact, not backend-only proof
+
+Interpretation:
+
+- this is required operator proof for human-facing dashboard frontend release
+  claims
+- this is not a substitute for task-level desktop-app regression cases

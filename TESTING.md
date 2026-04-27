@@ -112,6 +112,20 @@ Focused unit coverage for service-lane release isolation lives in
 - release binary and compose-file hashes are validated
 - tampered release artifacts are rejected
 
+Focused unit coverage for dashboard frontend release isolation lives in
+`tests/test_dashboard_release_scripts.py` and must include:
+
+- release planning uses `%LOCALAPPDATA%\CodexDashboard\dashboard-releases`
+  and the runtime launcher under
+  `%LOCALAPPDATA%\CodexDashboard\dashboard-launcher`
+- startup registration points at the runtime launcher, not the repo checkout
+- current release manifests validate all copied source hashes
+- tampered release files are reported as hash mismatches
+
+Startup-command unit coverage in `tests/test_desktop_support.py` must assert
+that the dashboard startup file invokes the pinned launcher and does not launch
+`C:\Agent\CodexDashboard` directly.
+
 When a desktop run should target that validation lane instead of any persistent service lane:
 
 ```powershell

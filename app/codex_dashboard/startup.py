@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
-from .paths import repo_root
+from .paths import app_data_root
 
 
 def startup_script_path() -> Path:
@@ -28,13 +29,25 @@ def startup_python_executable() -> Path:
             return pythonw
     return executable
 
+
+def dashboard_launcher_path() -> Path:
+    return app_data_root() / "dashboard-launcher" / "Start-CodexDashboard.ps1"
+
+
+def startup_powershell_executable() -> Path:
+    system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    stable_path = system_root / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    if stable_path.exists():
+        return stable_path
+    return Path("powershell.exe")
+
+
 def startup_command() -> str:
-    python_executable = startup_python_executable()
-    root = repo_root()
+    powershell_executable = startup_powershell_executable()
+    launcher_path = dashboard_launcher_path()
     return (
         "@echo off\r\n"
-        f'cd /d "{root}"\r\n'
-        f'"{python_executable}" -m app.codex_dashboard\r\n'
+        f'"{powershell_executable}" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{launcher_path}"\r\n'
     )
 
 

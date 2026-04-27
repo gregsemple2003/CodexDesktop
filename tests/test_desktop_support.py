@@ -43,17 +43,24 @@ class DesktopSupportTests(unittest.TestCase):
         self.assertEqual(modifiers, MOD_CONTROL | MOD_ALT)
         self.assertEqual(virtual_key, 0x20)
 
-    def test_startup_command_uses_python_module_entrypoint(self) -> None:
-        fake_repo = Path("C:/Agent/CodexDashboard")
-        fake_pythonw = Path("C:/Python313/pythonw.exe")
-        with mock.patch("app.codex_dashboard.startup.repo_root", return_value=fake_repo):
+    def test_startup_command_uses_pinned_dashboard_launcher(self) -> None:
+        fake_app_data = Path("C:/Users/gregs/AppData/Local/CodexDashboard")
+        fake_powershell = Path("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+        with mock.patch("app.codex_dashboard.startup.app_data_root", return_value=fake_app_data):
             with mock.patch(
-                "app.codex_dashboard.startup.startup_python_executable",
-                return_value=fake_pythonw,
+                "app.codex_dashboard.startup.startup_powershell_executable",
+                return_value=fake_powershell,
             ):
                 command = startup_command()
-        self.assertIn('cd /d "C:\\Agent\\CodexDashboard"', command)
-        self.assertIn('"C:\\Python313\\pythonw.exe" -m app.codex_dashboard', command)
+        self.assertNotIn("C:\\Agent\\CodexDashboard", command)
+        self.assertIn(
+            '"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File',
+            command,
+        )
+        self.assertIn(
+            "C:\\Users\\gregs\\AppData\\Local\\CodexDashboard\\dashboard-launcher\\Start-CodexDashboard.ps1",
+            command,
+        )
 
     def test_global_hotkey_poll_drains_pending_callbacks(self) -> None:
         callback = mock.Mock()

@@ -41,6 +41,9 @@ function Get-HumanLaneBackupInventory {
         paths = @(
             [ordered]@{ id = "service-runtime-root"; backup_class = "must"; path = $serviceConfig.RuntimeRoot; kind = "directory" },
             [ordered]@{ id = "service-runs-root"; backup_class = "must"; path = $serviceConfig.RunsRoot; kind = "directory" },
+            [ordered]@{ id = "dashboard-current-release"; backup_class = "must"; path = (Join-Path $dashboardRoot "dashboard-current-release.json"); kind = "file" },
+            [ordered]@{ id = "dashboard-releases"; backup_class = "must"; path = (Join-Path $dashboardRoot "dashboard-releases"); kind = "directory" },
+            [ordered]@{ id = "dashboard-launcher"; backup_class = "must"; path = (Join-Path $dashboardRoot "dashboard-launcher"); kind = "directory" },
             [ordered]@{ id = "dashboard-config"; backup_class = "must"; path = (Join-Path $dashboardRoot "config.json"); kind = "file" },
             [ordered]@{ id = "dashboard-db"; backup_class = "must"; path = (Join-Path $dashboardRoot "dashboard.db"); kind = "file" },
             [ordered]@{ id = "jobs-specs"; backup_class = "must"; path = $jobsSpecsRoot; kind = "directory" }

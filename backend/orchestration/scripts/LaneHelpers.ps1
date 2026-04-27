@@ -21,6 +21,21 @@ function Get-OrchestrationRepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 }
 
+function Get-OrchestrationWorktreeRoot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$OrchestrationRoot
+    )
+
+    $candidate = Split-Path -Parent (Split-Path -Parent $OrchestrationRoot)
+    if ((Test-Path -LiteralPath (Join-Path $candidate "Tracking")) -and
+        (Test-Path -LiteralPath (Join-Path $candidate "backend\\orchestration"))) {
+        return (Resolve-Path -LiteralPath $candidate).Path
+    }
+
+    throw "Could not resolve CodexDashboard worktree root from orchestration root $OrchestrationRoot."
+}
+
 function Get-OrchestrationLocalAppData {
     if ($env:LOCALAPPDATA) {
         return $env:LOCALAPPDATA
@@ -36,6 +51,7 @@ function Get-OrchestrationLaneConfig {
     )
 
     $repoRoot = Get-OrchestrationRepoRoot
+    $worktreeRoot = Get-OrchestrationWorktreeRoot -OrchestrationRoot $repoRoot
     $localAppData = Get-OrchestrationLocalAppData
     $dashboardRoot = Join-Path $localAppData "CodexDashboard"
     $sourceRunnerScriptPath = Join-Path $PSScriptRoot "Run-OrchestrationLane.ps1"
@@ -75,6 +91,8 @@ function Get-OrchestrationLaneConfig {
     return @{
         Lane = $Lane
         RepoRoot = $repoRoot
+        WorktreeRoot = $worktreeRoot
+        TrackingRoot = Join-Path $worktreeRoot "Tracking"
         ComposeFile = Join-Path $repoRoot "dev\\docker-compose.temporal-postgres.yml"
         SourceComposeFile = Join-Path $repoRoot "dev\\docker-compose.temporal-postgres.yml"
         ComposeProject = "codex-orchestration-$Lane"
@@ -609,8 +627,8 @@ function Set-OrchestrationLaneEnvironment {
     Set-Item -Path Env:CODEX_ORCHESTRATION_BIND_ADDRESS -Value $Config.BindAddress
     Set-Item -Path Env:CODEX_ORCHESTRATION_TEMPORAL_ADDRESS -Value $Config.TemporalAddress
     Set-Item -Path Env:CODEX_ORCHESTRATION_RUNS_ROOT -Value $Config.RunsRoot
-    Set-Item -Path Env:CODEX_ORCHESTRATION_WORKTREE_ROOT -Value $Config.RepoRoot
-    Set-Item -Path Env:CODEX_ORCHESTRATION_TRACKING_ROOT -Value (Join-Path $Config.RepoRoot "Tracking")
+    Set-Item -Path Env:CODEX_ORCHESTRATION_WORKTREE_ROOT -Value $Config.WorktreeRoot
+    Set-Item -Path Env:CODEX_ORCHESTRATION_TRACKING_ROOT -Value $Config.TrackingRoot
 }
 
 function Wait-OrchestrationLaneHealth {
