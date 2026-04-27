@@ -35,6 +35,26 @@ def fetch_tasks_snapshot(base_url: str = DEFAULT_TASKS_BACKEND_URL) -> dict[str,
     return map_backend_tasks_snapshot(payload)
 
 
+def dispatch_task(task_id: str, base_url: str = DEFAULT_TASKS_BACKEND_URL) -> dict[str, Any]:
+    encoded_task_id = parse.quote(task_id, safe="")
+    return _request_json("POST", _join_url(base_url, f"/api/v1/tasks/{encoded_task_id}/dispatch"))
+
+
+def poke_task_run(run_id: str, base_url: str = DEFAULT_TASKS_BACKEND_URL) -> dict[str, Any]:
+    encoded_run_id = parse.quote(run_id, safe="")
+    return _request_json("POST", _join_url(base_url, f"/api/v1/task-runs/{encoded_run_id}/poke"))
+
+
+def pause_task_run(run_id: str, base_url: str = DEFAULT_TASKS_BACKEND_URL) -> dict[str, Any]:
+    encoded_run_id = parse.quote(run_id, safe="")
+    return _request_json("POST", _join_url(base_url, f"/api/v1/task-runs/{encoded_run_id}/interrupt"))
+
+
+def retry_task_run_workload(run_id: str, base_url: str = DEFAULT_TASKS_BACKEND_URL) -> dict[str, Any]:
+    encoded_run_id = parse.quote(run_id, safe="")
+    return _request_json("POST", _join_url(base_url, f"/api/v1/task-runs/{encoded_run_id}/retry-workload"))
+
+
 def tasks_backend_error_snapshot(message: str) -> dict[str, object]:
     return {
         "status": "backend_unavailable",
@@ -116,6 +136,7 @@ def map_backend_task(task_payload: dict[str, Any]) -> dict[str, object] | None:
 
     return {
         "task_id": task_id,
+        "latest_run_id": _text(latest_run.get("run_id"), default=""),
         "title": title,
         "meaning_summary": meaning_summary,
         "why": _task_why(task_payload, meaning_summary),
@@ -213,10 +234,13 @@ def visible_actions(
     launch_targets: list[dict[str, object]],
 ) -> list[dict[str, object]]:
     actions: list[dict[str, object]] = []
+    task_id = _text(task_payload.get("task_id"), default="")
+    run_id = _text(latest_run.get("run_id"), default="")
     for backend_name, label in (
         ("dispatch", "Dispatch"),
         ("interrupt", "Pause"),
         ("poke", "Poke"),
+        ("retry-workload", "Continue"),
         ("resume", "Resume"),
         ("continue", "Continue"),
     ):
@@ -226,13 +250,24 @@ def visible_actions(
                 {
                     "label": label,
                     "backend_action": backend_name,
+                    "task_id": task_id,
+                    "run_id": run_id,
                     "allowed": bool(availability.get("allowed")),
                     "reason": _block_reason(availability),
                     "destructive": False,
                 }
             )
     if not actions and bool(_dict(task_payload.get("dispatch_readiness")).get("ready")):
-        actions.append({"label": "Dispatch", "backend_action": "dispatch", "allowed": True, "reason": ""})
+        actions.append(
+            {
+                "label": "Dispatch",
+                "backend_action": "dispatch",
+                "task_id": task_id,
+                "run_id": run_id,
+                "allowed": True,
+                "reason": "",
+            }
+        )
 
     seen_targets: set[str] = set()
     for target in launch_targets:
@@ -242,12 +277,32 @@ def visible_actions(
         if key in seen_targets:
             continue
         seen_targets.add(key)
-        actions.append({"label": label, "backend_action": "open", "allowed": bool(uri), "reason": _text(target.get("label"), default="")})
+        actions.append(
+            {
+                "label": label,
+                "backend_action": "open",
+                "task_id": task_id,
+                "run_id": run_id,
+                "allowed": bool(uri) or bool(target.get("command")),
+                "reason": _text(target.get("label"), default=""),
+                "target": target,
+            }
+        )
 
     if not any(action["label"] == "Open Task" for action in actions):
         task_root = _text(task_payload.get("declared_task_root")) or _text(_dict(latest_run.get("repo_lane")).get("run_artifact_root"))
         if task_root:
-            actions.append({"label": "Open Task", "backend_action": "open", "allowed": True, "reason": task_root})
+            actions.append(
+                {
+                    "label": "Open Task",
+                    "backend_action": "open",
+                    "task_id": task_id,
+                    "run_id": run_id,
+                    "allowed": True,
+                    "reason": task_root,
+                    "target": {"kind": "task_artifact", "label": "Open Task", "uri": task_root},
+                }
+            )
     return actions
 
 
@@ -387,7 +442,17 @@ def _launch_targets(deep_context: dict[str, Any]) -> list[dict[str, object]]:
         if key in seen:
             continue
         seen.add(key)
-        deduped.append({"kind": _text(target.get("kind"), default="context"), "label": label, "uri": uri})
+        command = target.get("command")
+        if not isinstance(command, list):
+            command = []
+        deduped.append(
+            {
+                "kind": _text(target.get("kind"), default="context"),
+                "label": label,
+                "uri": uri,
+                "command": [str(part) for part in command],
+            }
+        )
     return deduped
 
 

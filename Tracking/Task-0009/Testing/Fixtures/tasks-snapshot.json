@@ -11,6 +11,11 @@
       "why": "The dashboard needs a humane committed-work cockpit for monitoring task state and opening the right live context.",
       "promoted_from": "review",
       "updated_at": "2026-04-26T21:28:00-04:00",
+      "latest_run": {
+        "run_id": "taskrun--Task-0009--active",
+        "status": "running",
+        "last_progress_at": "2026-04-26T21:28:00-04:00"
+      },
       "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
       "declared_worktree_root": "C:\\Agent\\CodexDashboard",
       "state_envelope": {
@@ -56,7 +61,11 @@
           {
             "kind": "working_context",
             "label": "Open Working Context",
-            "uri": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+            "uri": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
+            "command": [
+              "codium",
+              "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+            ]
           }
         ]
       }

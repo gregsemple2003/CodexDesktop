@@ -4,8 +4,8 @@
   "status": "in_progress",
   "phase": "implementation",
   "plan_approved": true,
-  "current_pass": "PASS-0002",
-  "last_completed_pass": "PASS-0001",
+  "current_pass": "PASS-0003",
+  "last_completed_pass": "PASS-0002",
   "current_gate": "implementation",
   "latest_audit_verdict": "ready",
   "validation": {
@@ -15,11 +15,10 @@
   },
   "blockers": [],
   "next_expected_artifacts": [
-    "backend-backed Dispatch/Poke/Pause action wiring",
-    "deep-context Open Live Thread/Open Working Context launch wiring",
-    "Resume/Continue availability rendering",
+    "promoted-work provenance mapping",
+    "candidate/intake filtering verification",
     "HANDOFF.md",
-    "Testing/PASS-0002-AUDIT.md"
+    "Testing/PASS-0003-AUDIT.md"
   ],
-  "updated_at": "2026-04-26T21:45:00.0000000-04:00"
+  "updated_at": "2026-04-26T21:52:00.0000000-04:00"
 }

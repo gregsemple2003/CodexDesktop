@@ -359,6 +359,69 @@ class DesktopSupportTests(unittest.TestCase):
         app.status_label.configure.assert_called_once()
         app._render_jobs_snapshot.assert_called_once_with()
 
+    def test_execute_task_pause_calls_backend_interrupt_and_refreshes_snapshot(self) -> None:
+        refreshed_snapshot = {"summary": {"needs_you": 1}, "tasks": []}
+        app = SimpleNamespace(
+            tasks_backend_url="http://127.0.0.1:14318",
+            tasks_snapshot={},
+            tasks_status_message="",
+            status_label=mock.Mock(),
+            _render_tasks_snapshot=mock.Mock(),
+        )
+
+        with mock.patch("app.codex_dashboard.ui.pause_task_run") as pause_run, mock.patch(
+            "app.codex_dashboard.ui.fetch_tasks_snapshot",
+            return_value=refreshed_snapshot,
+        ):
+            DashboardApp.execute_task_action(
+                app,
+                {
+                    "label": "Pause",
+                    "backend_action": "interrupt",
+                    "run_id": "taskrun--Task-0009--active",
+                    "allowed": True,
+                },
+            )
+
+        pause_run.assert_called_once_with("taskrun--Task-0009--active", "http://127.0.0.1:14318")
+        self.assertEqual(app.tasks_snapshot, refreshed_snapshot)
+        self.assertEqual(app.tasks_status_message, "Pause requested for taskrun--Task-0009--active.")
+        app.status_label.configure.assert_called_once_with(text=app.tasks_status_message)
+        app._render_tasks_snapshot.assert_called_once_with()
+
+    def test_execute_task_open_uses_backend_launch_target(self) -> None:
+        app = SimpleNamespace(
+            tasks_backend_url="http://127.0.0.1:14318",
+            tasks_snapshot={},
+            tasks_status_message="",
+            status_label=mock.Mock(),
+            _render_tasks_snapshot=mock.Mock(),
+            _open_task_launch_target=mock.Mock(),
+        )
+        target = {"kind": "working_context", "uri": "C:/Agent/CodexDashboard"}
+
+        DashboardApp.execute_task_action(
+            app,
+            {
+                "label": "Open Working Context",
+                "backend_action": "open",
+                "target": target,
+                "allowed": True,
+            },
+        )
+
+        app._open_task_launch_target.assert_called_once_with(target)
+        self.assertEqual(app.tasks_status_message, "Open Working Context opened.")
+        app.status_label.configure.assert_called_once_with(text=app.tasks_status_message)
+        app._render_tasks_snapshot.assert_called_once_with()
+
+    def test_launch_target_allows_vscodium_commands_only(self) -> None:
+        app = SimpleNamespace()
+
+        self.assertTrue(DashboardApp._is_allowed_launch_command(app, "codium.cmd"))
+        self.assertTrue(DashboardApp._is_allowed_launch_command(app, "C:/Program Files/VSCodium/VSCodium.exe"))
+        self.assertFalse(DashboardApp._is_allowed_launch_command(app, "powershell.exe"))
+
     def test_write_overlay_capture_uses_window_bounds(self) -> None:
         overlay = SimpleNamespace(
             winfo_rootx=lambda: 40,

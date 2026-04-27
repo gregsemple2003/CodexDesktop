@@ -7,8 +7,8 @@
 Current lifecycle state:
 
 - phase: `implementation`
-- current pass: `PASS-0002`
-- last completed pass: `PASS-0001`
+- current pass: `PASS-0003`
+- last completed pass: `PASS-0002`
 - current gate: `implementation`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -32,7 +32,7 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 
 ## Current Objective
 
-Execute `PASS-0002`, wiring bounded dispatch and recovery actions on top of the read-only surface delivered in `PASS-0001`.
+Execute `PASS-0003`, integrating reviewed and promoted work provenance without turning `Tasks` into the intake queue.
 
 The design work for that lives in:
 
@@ -114,6 +114,31 @@ Result:
 - no AI-run progress bars are used
 - the desktop smoke used isolated Task-0009 config, SQLite, fixture data, and validation-lane backend URLs
 
+### PASS-0002 Add Dispatch And Recovery Actions
+
+Completed in this checkpoint.
+
+Primary outputs:
+
+- backend action clients in [app/codex_dashboard/tasks_backend.py](../../app/codex_dashboard/tasks_backend.py)
+- action and launch handling in [app/codex_dashboard/ui.py](../../app/codex_dashboard/ui.py)
+- action-aware fixture data in [Testing/Fixtures/tasks-snapshot.json](./Testing/Fixtures/tasks-snapshot.json)
+
+Audit and proof:
+
+- [Testing/PASS-0002-AUDIT.md](./Testing/PASS-0002-AUDIT.md)
+- [Testing/PASS-0002-SMOKE-0001/overlay.png](./Testing/PASS-0002-SMOKE-0001/overlay.png)
+- [Testing/PASS-0002-SMOKE-0001/overlay-summary.txt](./Testing/PASS-0002-SMOKE-0001/overlay-summary.txt)
+
+Result:
+
+- `Dispatch`, `Poke`, visible `Pause`, and workload `Continue` paths call bounded backend endpoints when backend readback exposes those actions
+- visible `Pause` calls backend `interrupt`; the UI does not kill arbitrary processes
+- deep-context launch buttons use backend-provided targets such as `Open Live Thread`, `Open Working Context`, and `Open Task`
+- command launches are bounded to editor-style commands such as `code` and `codium`
+- the smoke summary records selected actions for the fixture-backed selected task
+- the desktop smoke again used isolated Task-0009 config, SQLite, fixture data, and validation-lane backend URLs
+
 ## Current Baseline
 
 The repo currently has:
@@ -122,22 +147,18 @@ The repo currently has:
 - the backend-backed `Jobs` tab
 - task-owned markdown artifacts under `Tracking/`
 
-The first read-only humane surface now exists. It does not yet complete:
+The first action-wired humane surface now exists. It does not yet complete:
 
-- dispatch state
-- state-changing run controls
-- deep-context launching
-- backend-backed Pause/Poke/Resume/Continue calls
+- Task-0010 promotion provenance integration
+- final polish/audit/regression closure
 
 ## Next Recommended Step
 
-Start `PASS-0002` by wiring bounded backend-backed actions:
+Start `PASS-0003` by tightening promoted-work provenance integration:
 
-- `Dispatch`
-- `Poke`
-- visible `Pause` backed by the backend `interrupt` contract
-- `Open Live Thread` / `Open Thread` / `Open Working Context`
-- `Resume` or `Continue` only when backend readback says the existing run can continue
+- keep unpromoted candidates off `Tasks`
+- show committed promoted work with durable provenance
+- preserve the owner split with Task-0010 and Task-0011
 
 ## Watchouts
 

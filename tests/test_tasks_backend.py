@@ -36,6 +36,7 @@ class TasksBackendTests(unittest.TestCase):
                         "title": "Build Tasks tab",
                         "meaning_summary": "Make committed work visible.",
                         "promoted_from": "review",
+                        "latest_run": {"run_id": "taskrun--Task-0009--active"},
                         "state_envelope": {
                             "state": "waiting_for_human",
                             "state_summary": "Plan approval is needed.",
@@ -57,10 +58,14 @@ class TasksBackendTests(unittest.TestCase):
         self.assertEqual(task["task_id"], "Task-0009")
         self.assertEqual(task["provenance_label"], "Promoted from Review")
         self.assertEqual(task["summary_bucket"], "needs_you")
+        self.assertEqual(task["latest_run_id"], "taskrun--Task-0009--active")
         self.assertEqual(snapshot["summary"]["needs_you"], 1)
         labels = [action["label"] for action in task["actions"]]
         self.assertIn("Pause", labels)
         self.assertNotIn("Interrupt", labels)
+        pause_action = next(action for action in task["actions"] if action["label"] == "Pause")
+        self.assertEqual(pause_action["backend_action"], "interrupt")
+        self.assertEqual(pause_action["run_id"], "taskrun--Task-0009--active")
         self.assertNotIn("progress", json.dumps(task).lower())
 
     def test_promoted_candidate_source_does_not_display_candidate_label(self) -> None:

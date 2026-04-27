@@ -38,7 +38,15 @@ from .jobs_backend import (
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
 from .storage import connect, initialize_db, load_events_since, load_session_context_markers
-from .tasks_backend import configured_tasks_backend_url, fetch_tasks_snapshot, tasks_backend_error_snapshot
+from .tasks_backend import (
+    configured_tasks_backend_url,
+    dispatch_task,
+    fetch_tasks_snapshot,
+    pause_task_run,
+    poke_task_run,
+    retry_task_run_workload,
+    tasks_backend_error_snapshot,
+)
 from .tasks_tab import TASK_SUMMARY_CARDS, first_task_id, group_tasks_for_stream, task_detail_sections, task_state_color
 
 
@@ -82,6 +90,16 @@ TAB_ACTIVE_FOREGROUND = "#c3f5ff"
 TAB_INACTIVE_FOREGROUND = "#9fbdcc"
 TAB_ACTIVE_UNDERLINE = "#00e5ff"
 HEADER_BACKGROUND = "#181c22"
+ALLOWED_LAUNCH_COMMANDS = {
+    "code",
+    "code.cmd",
+    "codium",
+    "codium.cmd",
+    "vscodium",
+    "vscodium.cmd",
+    "vscodium.exe",
+    "code.exe",
+}
 
 
 def load_private_font_assets() -> list[Path]:
@@ -1232,17 +1250,72 @@ class DashboardApp:
                 action_section,
                 text=str(action.get("label", "Action")),
                 style="Quiet.TButton",
-                command=lambda payload=action: self.describe_task_action(payload),
+                command=lambda payload=action: self.execute_task_action(payload),
             )
             if not bool(action.get("allowed")):
                 button.state(["disabled"])
             button.pack(side="left", padx=(0, 6), pady=(0, 6))
 
-    def describe_task_action(self, action: dict[str, object]) -> None:
+    def execute_task_action(self, action: dict[str, object]) -> None:
         label = str(action.get("label") or "Action")
-        reason = str(action.get("reason") or "Action wiring lands in the control pass.")
-        self.tasks_status_message = f"{label}: {reason}"
+        backend_action = str(action.get("backend_action") or "")
+        try:
+            if backend_action == "dispatch":
+                task_id = str(action.get("task_id") or "")
+                if not task_id:
+                    raise ValueError("Dispatch requires a task id.")
+                dispatch_task(task_id, self.tasks_backend_url)
+                self.tasks_snapshot = fetch_tasks_snapshot(self.tasks_backend_url)
+                self.tasks_status_message = f"Dispatch requested for {task_id}."
+            elif backend_action in {"poke", "interrupt", "retry-workload"}:
+                run_id = str(action.get("run_id") or "")
+                if not run_id:
+                    raise ValueError(f"{label} requires an active task-run id.")
+                if backend_action == "poke":
+                    poke_task_run(run_id, self.tasks_backend_url)
+                elif backend_action == "interrupt":
+                    pause_task_run(run_id, self.tasks_backend_url)
+                else:
+                    retry_task_run_workload(run_id, self.tasks_backend_url)
+                self.tasks_snapshot = fetch_tasks_snapshot(self.tasks_backend_url)
+                self.tasks_status_message = f"{label} requested for {run_id}."
+            elif backend_action == "open":
+                self._open_task_launch_target(dict(action.get("target", {})))
+                self.tasks_status_message = f"{label} opened."
+            else:
+                reason = str(action.get("reason") or "Backend did not expose a concrete action contract.")
+                self.tasks_status_message = f"{label}: {reason}"
+        except Exception as exc:
+            self.tasks_status_message = f"{label} failed: {exc}"
+            try:
+                self.tasks_snapshot = fetch_tasks_snapshot(self.tasks_backend_url)
+            except Exception:
+                pass
         self.status_label.configure(text=self.tasks_status_message)
+        self._render_tasks_snapshot()
+
+    def _open_task_launch_target(self, target: dict[str, object]) -> None:
+        command = target.get("command")
+        uri = str(target.get("uri") or "").strip()
+        if isinstance(command, list) and command:
+            argv = [str(part) for part in command if str(part).strip()]
+            if argv and self._is_allowed_launch_command(argv[0]):
+                kwargs: dict[str, object] = {}
+                if hasattr(subprocess, "CREATE_NO_WINDOW"):
+                    kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+                subprocess.Popen(argv, **kwargs)
+                return
+        if uri:
+            if hasattr(os, "startfile"):
+                os.startfile(uri)  # type: ignore[attr-defined]
+                return
+            subprocess.Popen(["xdg-open", uri])
+            return
+        raise ValueError("No launch target URI or allowed command was provided.")
+
+    def _is_allowed_launch_command(self, executable: str) -> bool:
+        name = Path(executable).name.lower()
+        return name in ALLOWED_LAUNCH_COMMANDS
 
     def _refresh_tasks_scroll_region(self, _event=None) -> None:
         self.tasks_scroll_canvas.configure(scrollregion=self.tasks_scroll_canvas.bbox("all"))
@@ -2176,6 +2249,19 @@ class DashboardApp:
                 ]
             )
         else:
+            selected_task = next(
+                (
+                    task
+                    for task in list(self.tasks_snapshot.get("tasks", []))
+                    if isinstance(task, dict) and str(task.get("task_id")) == str(self.tasks_detail_task_id)
+                ),
+                {},
+            )
+            action_labels = [
+                str(action.get("label"))
+                for action in list(selected_task.get("actions", []))
+                if isinstance(action, dict)
+            ]
             summary_lines.extend(
                 [
                     f"tasks_backend={self.tasks_backend_url}",
@@ -2185,6 +2271,7 @@ class DashboardApp:
                     f"tasks_blocked={self.tasks_summary_values['blocked'].cget('text')}",
                     f"tasks_ready={self.tasks_summary_values['ready'].cget('text')}",
                     f"tasks_selected={self.tasks_detail_task_id}",
+                    f"tasks_selected_actions={','.join(action_labels)}",
                 ]
             )
         summary = "\n".join(summary_lines)
