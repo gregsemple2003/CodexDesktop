@@ -321,7 +321,7 @@ function Get-OrchestrationGitStatusShort {
     )
 
     $gitPath = Get-GitExecutablePath
-    $status = @(& $gitPath -C $RepoRoot status --short)
+    $status = @(& $gitPath -C $RepoRoot status --short --untracked-files=all -- .)
     if ($LASTEXITCODE -ne 0) {
         throw "Could not resolve git status for $RepoRoot."
     }

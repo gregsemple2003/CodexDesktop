@@ -30,6 +30,8 @@ Coverage:
 - dashboard release hash validation catches tampered files
 - startup command no longer launches the mutable repo checkout directly
 - existing service-lane release isolation coverage still passes
+- service-lane dirty detection is scoped to the backend source tree, so
+  unrelated app/root untracked files do not falsely mark backend releases dirty
 
 ## Script Parse Validation
 

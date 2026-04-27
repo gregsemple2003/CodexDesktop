@@ -115,6 +115,30 @@ class ServiceLaneScriptsTests(unittest.TestCase):
         self.assertTrue(data["manifest"].endswith("current-release.json"))
         self.assertTrue(data["releases"].endswith("releases"))
 
+    def test_service_lane_dirty_status_is_scoped_to_backend_tree(self) -> None:
+        git = shutil.which("git") or shutil.which("git.exe")
+        if git is None:
+            self.skipTest("git is not available")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backend_root = root / "backend" / "orchestration"
+            app_root = root / "app"
+            backend_root.mkdir(parents=True)
+            app_root.mkdir()
+            (backend_root / "backend-note.txt").write_text("backend\n", encoding="utf-8")
+            (app_root / "app-note.txt").write_text("app\n", encoding="utf-8")
+            subprocess.run([git, "-C", str(root), "init"], check=True, capture_output=True, text=True)
+
+            command = (
+                f". '{LANE_HELPERS}'; "
+                f"Get-OrchestrationGitStatusShort -RepoRoot '{backend_root}'"
+            )
+            completed = self.run_powershell(command)
+
+        self.assertIn("backend-note.txt", completed.stdout)
+        self.assertNotIn("app-note.txt", completed.stdout)
+
     def test_service_lane_requires_pinned_release_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             env = os.environ.copy()
