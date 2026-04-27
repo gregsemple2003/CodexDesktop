@@ -186,9 +186,9 @@ class TasksBackendTests(unittest.TestCase):
                         "deep_context": {
                             "preferred_launch_target": {
                                 "kind": "task_artifact",
-                                "label": "Task folder",
-                                "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011",
-                                "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011"],
+                                "label": "Task",
+                                "uri": "file:///C:/Agent/CodexDashboard/Tracking/Task-0011/TASK.md",
+                                "command": ["code", "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\TASK.md"],
                             },
                             "launch_targets": [
                                 {
@@ -214,6 +214,25 @@ class TasksBackendTests(unittest.TestCase):
         self.assertEqual(labels.count("Open Task"), 1)
         self.assertIn("Open Handoff", labels)
         self.assertIn("Open Plan", labels)
+        open_task = next(action for action in snapshot["tasks"][0]["actions"] if action["label"] == "Open Task")
+        self.assertEqual(open_task["target"]["command"][-1], "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\TASK.md")
+
+    def test_open_task_fallback_targets_task_markdown_not_folder(self) -> None:
+        snapshot = map_backend_tasks_snapshot(
+            {
+                "tasks": [
+                    {
+                        "task_id": "Task-0011",
+                        "title": "Planning task",
+                        "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011",
+                        "state_envelope": {"state": "waiting_for_human"},
+                    }
+                ]
+            }
+        )
+
+        open_task = next(action for action in snapshot["tasks"][0]["actions"] if action["label"] == "Open Task")
+        self.assertEqual(open_task["target"]["uri"], "C:\\Agent\\CodexDashboard\\Tracking\\Task-0011\\TASK.md")
 
     def test_promotion_provenance_maps_dream_source_and_refs(self) -> None:
         snapshot = map_backend_tasks_snapshot(

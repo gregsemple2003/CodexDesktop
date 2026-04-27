@@ -335,6 +335,7 @@ def visible_actions(
     if not any(action["label"] == "Open Task" for action in actions):
         task_root = _text(task_payload.get("declared_task_root")) or _text(_dict(latest_run.get("repo_lane")).get("run_artifact_root"))
         if task_root:
+            target_uri = _task_doc_uri(task_root)
             actions.append(
                 {
                     "label": "Open Task",
@@ -342,8 +343,8 @@ def visible_actions(
                     "task_id": task_id,
                     "run_id": run_id,
                     "allowed": True,
-                    "reason": task_root,
-                    "target": {"kind": "task_artifact", "label": "Open Task", "uri": task_root},
+                    "reason": target_uri,
+                    "target": {"kind": "task_artifact", "label": "Task", "uri": target_uri},
                 }
             )
     return actions
@@ -557,11 +558,20 @@ def _launch_action_label(target: dict[str, object]) -> str:
         return "Open Thread"
     if "transcript" in combined:
         return "Open Transcript"
-    if "work" in combined or "repo" in combined or "context" in combined:
+    if "work" in combined or "repo" in combined or "context" in combined or "checkout" in combined:
         return "Open Working Context"
     if "task folder" in combined or "task.md" in combined or "task artifact" in combined:
         return "Open Task"
     return "Open Task"
+
+
+def _task_doc_uri(task_root: str) -> str:
+    stripped = task_root.rstrip("\\/")
+    normalized = stripped.replace("\\", "/").lower()
+    if normalized.endswith("/task.md"):
+        return task_root
+    separator = "\\" if "\\" in stripped and not stripped.lower().startswith("file:") else "/"
+    return f"{stripped}{separator}TASK.md"
 
 
 def _block_reason(availability: dict[str, Any]) -> str:

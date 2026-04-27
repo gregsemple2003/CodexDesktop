@@ -296,6 +296,16 @@ Create the durable backend task-run contract so later clients do not guess state
 	if task.DeepContext.PreferredLaunchTarget.Kind != "task_artifact" {
 		t.Fatalf("preferred launch target kind = %q", task.DeepContext.PreferredLaunchTarget.Kind)
 	}
+	if task.DeepContext.PreferredLaunchTarget.Label != "Task" {
+		t.Fatalf("preferred launch target label = %q, want Task", task.DeepContext.PreferredLaunchTarget.Label)
+	}
+	if !strings.HasSuffix(filepath.ToSlash(task.DeepContext.PreferredLaunchTarget.URI), "/TASK.md") {
+		t.Fatalf("preferred launch target uri = %q, want TASK.md", task.DeepContext.PreferredLaunchTarget.URI)
+	}
+	if len(task.DeepContext.PreferredLaunchTarget.Command) < 2 ||
+		!strings.HasSuffix(filepath.ToSlash(task.DeepContext.PreferredLaunchTarget.Command[1]), "/TASK.md") {
+		t.Fatalf("preferred launch target command = %#v, want TASK.md", task.DeepContext.PreferredLaunchTarget.Command)
+	}
 }
 
 func TestCanonicalTaskFixtureRepoStartsAndDispatchesTask8And9(t *testing.T) {
@@ -680,6 +690,9 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if run.DeepContext == nil || len(run.DeepContext.LaunchTargets) == 0 {
 		t.Fatalf("run deep context = %#v", run.DeepContext)
+	}
+	if !hasLaunchTargetEnding(run.DeepContext.LaunchTargets, "Task", "TASK.md") {
+		t.Fatalf("run launch targets = %#v, want Task target ending in TASK.md", run.DeepContext.LaunchTargets)
 	}
 }
 
@@ -2017,6 +2030,15 @@ Create the durable backend task-run contract so later clients do not guess state
 func hasBlockReason(reasons []ActionBlockReason, code string) bool {
 	for _, reason := range reasons {
 		if reason.Code == code {
+			return true
+		}
+	}
+	return false
+}
+
+func hasLaunchTargetEnding(targets []LaunchTarget, label string, suffix string) bool {
+	for _, target := range targets {
+		if target.Label == label && strings.HasSuffix(filepath.ToSlash(target.URI), "/"+suffix) {
 			return true
 		}
 	}

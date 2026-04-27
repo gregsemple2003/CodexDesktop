@@ -1504,11 +1504,12 @@ func firstNonEmptyEnv(keys ...string) string {
 }
 
 func taskDeepContext(metadata parsedTask) *DeepContext {
+	taskPath := filepath.Join(metadata.taskRoot, "TASK.md")
 	targets := []LaunchTarget{{
 		Kind:      "task_artifact",
-		Label:     "Task folder",
-		URI:       fileURI(metadata.taskRoot),
-		Command:   []string{"code", metadata.taskRoot},
+		Label:     "Task",
+		URI:       fileURI(taskPath),
+		Command:   []string{"code", taskPath},
 		Preferred: true,
 	}}
 	if hasSnapshotFile(metadata.snapshot, "HANDOFF.md") {
@@ -1553,13 +1554,24 @@ func runDeepContext(run TaskRunView) *DeepContext {
 		})
 	}
 	if run.CapturedTaskSnapshot.DeclaredTaskRoot != "" {
-		targets = append(targets, LaunchTarget{
-			Kind:      "task_artifact",
-			Label:     "Task folder",
-			URI:       fileURI(run.CapturedTaskSnapshot.DeclaredTaskRoot),
-			Command:   []string{"code", run.CapturedTaskSnapshot.DeclaredTaskRoot},
-			Preferred: len(targets) == 0,
-		})
+		taskPath := filepath.Join(run.CapturedTaskSnapshot.DeclaredTaskRoot, "TASK.md")
+		if hasSnapshotFile(run.CapturedTaskSnapshot, "TASK.md") {
+			targets = append(targets, LaunchTarget{
+				Kind:      "task_artifact",
+				Label:     "Task",
+				URI:       fileURI(taskPath),
+				Command:   []string{"code", taskPath},
+				Preferred: len(targets) == 0,
+			})
+		} else {
+			targets = append(targets, LaunchTarget{
+				Kind:      "task_artifact",
+				Label:     "Task folder",
+				URI:       fileURI(run.CapturedTaskSnapshot.DeclaredTaskRoot),
+				Command:   []string{"code", run.CapturedTaskSnapshot.DeclaredTaskRoot},
+				Preferred: len(targets) == 0,
+			})
+		}
 		if hasSnapshotFile(run.CapturedTaskSnapshot, "HANDOFF.md") {
 			handoffPath := filepath.Join(run.CapturedTaskSnapshot.DeclaredTaskRoot, "HANDOFF.md")
 			targets = append(targets, LaunchTarget{
@@ -1569,13 +1581,23 @@ func runDeepContext(run TaskRunView) *DeepContext {
 				Command: []string{"code", handoffPath},
 			})
 		}
+		if hasSnapshotFile(run.CapturedTaskSnapshot, "PLAN.md") {
+			planPath := filepath.Join(run.CapturedTaskSnapshot.DeclaredTaskRoot, "PLAN.md")
+			targets = append(targets, LaunchTarget{
+				Kind:    "task_artifact",
+				Label:   "Task plan",
+				URI:     fileURI(planPath),
+				Command: []string{"code", planPath},
+			})
+		}
 	}
 	if run.RepoLane.OwnedRepoRoot != "" {
 		targets = append(targets, LaunchTarget{
-			Kind:    "owned_checkout",
-			Label:   "Owned checkout",
-			URI:     fileURI(run.RepoLane.OwnedRepoRoot),
-			Command: []string{"code", run.RepoLane.OwnedRepoRoot},
+			Kind:      "owned_checkout",
+			Label:     "Owned checkout",
+			URI:       fileURI(run.RepoLane.OwnedRepoRoot),
+			Command:   []string{"code", run.RepoLane.OwnedRepoRoot},
+			Preferred: len(targets) == 0,
 		})
 	}
 	if run.RepoLane.RunArtifactRoot != "" {
