@@ -16,6 +16,7 @@ import (
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/controlplane"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/jobs"
 	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/taskrun"
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/testfixtures/taskrepo"
 )
 
 type fakeBackend struct {
@@ -483,6 +484,73 @@ func TestMuxExposesHealthJobsAndSync(t *testing.T) {
 	mux.ServeHTTP(webhookResponse, webhookRequest)
 	if webhookResponse.Code != http.StatusAccepted {
 		t.Fatalf("POST /api/v1/webhooks/{path} status = %d, want 202", webhookResponse.Code)
+	}
+}
+
+func TestTasksAPIUsesCanonicalFixtureRepoForTaskSurfaceSmoke(t *testing.T) {
+	repo := taskrepo.WriteCanonicalGitRepo(t)
+	taskRuntime := newFakeTaskRuntime()
+	taskService := taskrun.NewService(repo.Root, filepath.Join(repo.Root, ".runs"), taskRuntime)
+	mux := NewMux(config.Config{
+		BindAddress:     "127.0.0.1:4318",
+		JobsRoot:        t.TempDir(),
+		WorktreeRoot:    repo.Root,
+		TrackingRoot:    repo.TrackingRoot,
+		Namespace:       "default",
+		TaskQueue:       "codex-orchestration",
+		TemporalAddress: "127.0.0.1:7233",
+	}, controlplane.NewService(t.TempDir(), newFakeBackend()), taskService)
+
+	listResponse := httptest.NewRecorder()
+	mux.ServeHTTP(listResponse, httptest.NewRequest(http.MethodGet, "/api/v1/tasks", nil))
+	if listResponse.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/tasks status = %d, want 200", listResponse.Code)
+	}
+	var listPayload struct {
+		Tasks []taskrun.TaskView `json:"tasks"`
+	}
+	if err := json.Unmarshal(listResponse.Body.Bytes(), &listPayload); err != nil {
+		t.Fatalf("decode task list: %v", err)
+	}
+	byID := map[string]taskrun.TaskView{}
+	for _, task := range listPayload.Tasks {
+		byID[task.TaskID] = task
+	}
+	if byID["Task-0008"].DeclaredGitRevision != repo.InitialCommit {
+		t.Fatalf("Task-0008 git revision = %q, want %q", byID["Task-0008"].DeclaredGitRevision, repo.InitialCommit)
+	}
+	if byID["Task-0009"].StateEnvelope.State != taskrun.StateCompleted {
+		t.Fatalf("Task-0009 state = %q, want completed", byID["Task-0009"].StateEnvelope.State)
+	}
+
+	dispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(dispatchResponse, httptest.NewRequest(http.MethodPost, "/api/v1/tasks/Task-0008/dispatch", nil))
+	if dispatchResponse.Code != http.StatusAccepted {
+		t.Fatalf("dispatch status = %d, want 202", dispatchResponse.Code)
+	}
+
+	postDispatchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(postDispatchResponse, httptest.NewRequest(http.MethodGet, "/api/v1/tasks", nil))
+	if postDispatchResponse.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/tasks after dispatch status = %d, want 200", postDispatchResponse.Code)
+	}
+	listPayload.Tasks = nil
+	if err := json.Unmarshal(postDispatchResponse.Body.Bytes(), &listPayload); err != nil {
+		t.Fatalf("decode post-dispatch task list: %v", err)
+	}
+	byID = map[string]taskrun.TaskView{}
+	for _, task := range listPayload.Tasks {
+		byID[task.TaskID] = task
+	}
+	task8 := byID["Task-0008"]
+	if task8.LatestRun == nil {
+		t.Fatal("Task-0008 should expose latest run after dispatch")
+	}
+	if !task8.LatestRun.Actions[taskrun.ActionInterrupt].Allowed {
+		t.Fatal("Task-0008 latest run should expose interrupt availability for visible Pause")
+	}
+	if task8.Actions[taskrun.ActionDispatch].Allowed {
+		t.Fatal("Task-0008 should block dispatch while active run exists")
 	}
 }
 

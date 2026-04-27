@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-04-26T21:30:00Z",
+  "tasks": [
+    {
+      "task_id": "review-candidate-1",
+      "title": "Draft suggestion",
+      "kind": "candidate",
+      "status": "candidate"
+    },
+    {
+      "task_id": "Task-0008",
+      "title": "Build the backend task dispatch layer",
+      "meaning_summary": "Create the durable backend task-run contract so later clients do not guess state.",
+      "source_provenance": "authored",
+      "declared_task_root": "C:/fixture/Tracking/Task-0008",
+      "latest_run": {
+        "run_id": "taskrun--Task-0008--active",
+        "meaning_summary": "Create the durable backend task-run contract so later clients do not guess state.",
+        "state_envelope": {
+          "state": "running",
+          "state_summary": "Run is executing in an owned lane.",
+          "next_expected_event": "Execution worker records the next backend checkpoint."
+        },
+        "attention": {
+          "attention_level": "watch"
+        },
+        "actions": {
+          "dispatch": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "summary": "Dispatch is blocked while this run owns the current live story."
+              }
+            ]
+          },
+          "interrupt": {
+            "allowed": true
+          },
+          "poke": {
+            "allowed": false,
+            "block_reasons": [
+              {
+                "summary": "Poke stays blocked until the run misses its next expected checkpoint."
+              }
+            ]
+          }
+        },
+        "deep_context": {
+          "preferred_launch_target": {
+            "kind": "live_thread",
+            "label": "Live thread",
+            "uri": "codex://thread/task-0008"
+          },
+          "launch_targets": [
+            {
+              "kind": "working_context",
+              "label": "Working context",
+              "uri": "C:/fixture/Tracking/Task-0008"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "Task-0009",
+      "title": "Build the committed-work Tasks tab",
+      "meaning_summary": "Show authored and promoted committed tasks without surfacing unpromoted candidates.",
+      "declared_task_root": "C:/fixture/Tracking/Task-0009",
+      "state_envelope": {
+        "state": "completed",
+        "state_summary": "Task is complete.",
+        "next_expected_event": "No further action is required."
+      },
+      "promotion_provenance": {
+        "source": "review",
+        "source_packet": "Task-0009 design review",
+        "promoted_by": "human"
+      }
+    },
+    {
+      "task_id": "Task-0012",
+      "title": "Promoted Dream task",
+      "meaning_summary": "A promoted committed task from a Dream packet.",
+      "declared_task_root": "C:/fixture/Tracking/Task-0012",
+      "dispatch_readiness": {
+        "ready": true
+      },
+      "promotion_provenance": {
+        "source": "dream",
+        "source_packet": "2026-04-26 Dream packet"
+      }
+    }
+  ]
+}

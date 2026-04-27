@@ -7,6 +7,7 @@ CodexDashboard follows the shared lifecycle and glossary from:
 - `C:\Users\gregs\.codex\Orchestration\Processes\TESTING.md`
 
 This repo-local file only defines CodexDashboard-specific commands and evidence expectations.
+Persistent data classes, human-lane backup scope, and backup-impact task obligations are defined in [DATA-HANDLING.md](./DATA-HANDLING.md).
 
 ## Unit Test Commands
 
@@ -33,6 +34,41 @@ python -m app.codex_dashboard --scan-once --print-summary
 ```
 
 Use this to prove the ingest core can read real-shaped `.jsonl` telemetry and persist token events into SQLite.
+
+## Canonical Task Fixture Repos
+
+Backend task-run unit and smoke tests should exercise real git behavior through
+small generated fixture repos, not by preserving old task worktrees.
+
+Unit tests may dispatch `Task-0008` against a fake runtime. That validates the
+repo readback, dispatch-readiness, owned-worktree bootstrap, snapshot capture,
+and action-exposure contracts without contacting Temporal, launching Codex, or
+touching the human's lane. Live Temporal dispatch belongs in an isolated
+validation or task-specific regression lane.
+
+The source-controlled fixture builder is:
+
+```powershell
+cd C:\Agent\CodexDashboard\backend\orchestration
+powershell -ExecutionPolicy Bypass -File .\scripts\New-TaskFixtureRepo.ps1
+```
+
+The script creates a disposable git repo with representative `Task-0008` and
+`Task-0009` durable task artifacts plus a short commit history for state-change
+and rollback tests. It prints the repo root, commit ids, and a cleanup command.
+
+Generated task fixture repos are not durable product state. Delete them after a
+smoke run, for example:
+
+```powershell
+Remove-Item -Recurse -Force -LiteralPath <fixture-repo-root>
+```
+
+Do not back up generated fixture repos, clean owned task worktrees, validation
+lane clones, or other rebuildable git checkouts as part of the canonical backup
+set. Back up the source-controlled fixture builder, real committed task
+artifacts, backend persistence that cannot be regenerated, and any active dirty
+worktree that contains unique uncommitted work.
 
 ## Backend Lane Discipline
 
@@ -63,6 +99,18 @@ Use the validation lane under `backend/orchestration/scripts/` for backend smoke
 cd C:\Agent\CodexDashboard\backend\orchestration
 powershell -ExecutionPolicy Bypass -File .\scripts\Start-ValidationLane.ps1
 ```
+
+Validation-lane startup may build from the local checkout because the lane is
+disposable. The service lane must not use that path. Human-lane startup is
+release-pinned and is covered by [DATA-HANDLING.md](./DATA-HANDLING.md).
+
+Focused unit coverage for service-lane release isolation lives in
+`tests/test_service_lane_scripts.py` and must include:
+
+- service runner path resolves under the lane runtime root, not the repo
+- missing pinned release manifests fail closed
+- release binary and compose-file hashes are validated
+- tampered release artifacts are rejected
 
 When a desktop run should target that validation lane instead of any persistent service lane:
 

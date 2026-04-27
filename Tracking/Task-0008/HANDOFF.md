@@ -29,6 +29,85 @@ The shipped backend contract now includes:
 
 Final closeout evidence is in [Testing/PASS-0004-BACKEND-SMOKE-0001.md](./Testing/PASS-0004-BACKEND-SMOKE-0001.md).
 
+Post-closeout regression record:
+
+- [BUG-0001](./BUG-0001.md): the service-lane Scheduled Task captured a versioned Store PowerShell path, so a normal PowerShell upgrade broke backend-controlled digest scheduling. Fixed locally on 2026-04-26 by hardening the service-lane PowerShell resolver and reinstalling the lane against a stable executable path.
+
+## Session Recovery Tail
+
+The original Codex thread was `Implement task 8`.
+
+- Thread id: `019dc047-d8dd-70d3-9566-d5231f0159b1`
+- Raw transcript: `C:\Users\gregs\.codex\sessions\2026\04\24\rollout-2026-04-24T12-17-07-019dc047-d8dd-70d3-9566-d5231f0159b1.jsonl`
+- Raw transcript health checked on 2026-04-26: `4,425` JSONL records, `0` parse errors, `38` visible user messages, `423` visible agent messages
+- The VSCodium history UI may list this thread but render no text; the transcript is present and valid on disk, but it is large, heavily compacted, and has several single compaction records around 140 KB.
+- The last ten visible user/agent messages in the raw transcript are all `Agent:` messages. No `User:` message appears in that final ten-message tail.
+
+Last visible human instruction before the final agent-only tail:
+
+```text
+User:
+Okay, plan approved.  Please start implementation, and don't stop until you hit a blocker or its done.  Write a markdown file CONSTRAINTS.md and put that in there, along with any other constraint i give you.
+```
+
+Last ten visible user/agent turns from the raw transcript, with tool calls and tool outputs omitted:
+
+```text
+Agent:
+Supervisor check is clean: `d6baccd` is on `upstream/master`, the worktree is clean, and the latest handoff now says the remaining question is no longer proof honesty but whether to keep the bounded failure-exercise hook or move to the next broader runtime gap. I’m resuming Franklin with an explicit re-evaluation ask against [TASK.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/TASK.md) and [PLAN.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/PLAN.md) so we either close honestly or keep moving for a concrete reason.
+```
+
+```text
+Agent:
+I’m still supervising actively. At this point I want an explicit answer from Franklin on whether Task-0008 is actually done against the approved scope, or whether there is still a concrete backend gap worth another slice.
+```
+
+```text
+Agent:
+The re-evaluation was useful: Task-0008 is not done yet, and Franklin correctly advanced it into `PASS-0003` for the remaining approved-scope gap around deep-context and divergence proof. I’m checking repo state and the task-state transition now, then he’ll continue into the bounded declared-doc drift or rollback proof.
+```
+
+```text
+Agent:
+Supervisor check is clean: `f265c2f` is on `upstream/master`, the worktree is clean, and `TASK-STATE.json` now honestly reflects the pass transition to `PASS-0003`. I’m resuming Franklin and pushing into the bounded declared-doc drift or rollback proof for `doc_runtime_divergence_status`.
+```
+
+```text
+Agent:
+I’m still supervising actively. The remaining approved-scope question is now very specific: whether the backend can prove declared-doc drift while keeping runtime truth intact and reporting the mismatch plainly.
+```
+
+```text
+Agent:
+Franklin hasn’t reported a milestone yet. I’m checking the child log before I interrupt, because divergence proof may just be taking longer to wire end to end.
+```
+
+```text
+Agent:
+The leader is in real closeout now. He’s adding the final `PASS-0004` closeout proof, updating the handoff to stop claiming unfinished work, and transitioning task state into closure before rerunning the full backend suite, committing, and pushing.
+```
+
+```text
+Agent:
+Franklin reports Task-0008 closed. I’m doing the final supervisor verification on repo state and task state now, then I’ll shut the leader down and report the outcome.
+```
+
+```text
+Agent:
+Final supervisor check is clean: `c8e62f5` is on `upstream/master`, the worktree is clean, and [TASK-STATE.json](/c:/Agent/CodexDashboard/Tracking/Task-0008/TASK-STATE.json) is closed with `status = complete`, `phase = closure`, `last_completed_pass = PASS-0004`, and `regression = not_applicable`. I’m shutting Franklin down now.
+```
+
+```text
+Agent:
+**Result**
+
+Task-0008 is complete and closed.
+
+The backend now has the durable task-run contract and proofs the plan required: dispatch and live task/run readback, supervision actions (`Poke`, `Interrupt`, cleanup retry, workload retry), exclusive owned-lane execution with restore semantics, deep-context/operator readback, declared-doc drift reconcile with explicit divergence reporting, and a bounded backend-owned workload-failure exercise path. Constraints were kept in [CONSTRAINTS.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/CONSTRAINTS.md), and the final closeout artifacts are in [HANDOFF.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/HANDOFF.md), [PASS-0003-BACKEND-SMOKE-0002.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/Testing/PASS-0003-BACKEND-SMOKE-0002.md), and [PASS-0004-BACKEND-SMOKE-0001.md](/c:/Agent/CodexDashboard/Tracking/Task-0008/Testing/PASS-0004-BACKEND-SMOKE-0001.md).
+
+Final task state is closed in [TASK-STATE.json](/c:/Agent/CodexDashboard/Tracking/Task-0008/TASK-STATE.json): `status = complete`, `phase = closure`, `last_completed_pass = PASS-0004`, `regression = not_applicable`. Final checkpoint is `c8e62f5` on `upstream/master`, and the repo is clean and synced. Validation finished with `go test ./...` passing under `backend/orchestration`; repo-root regression is honestly `not_applicable` because this task shipped backend orchestration only, not app-surface behavior.
+```
+
 ## Current Objective
 
 No further implementation remains in Task-0008.
@@ -399,12 +478,14 @@ The next honest work is downstream consumption of this contract, primarily in [T
 - the natural workload-failure proof path is intentionally bounded to `Task-0008` and uses a one-shot backend-owned execution directive rather than a generalized fault-injection surface
 - declared-doc drift proof on an active run is signal-based; live verification should poll the active run until reconcile becomes visible rather than assuming the immediate task-read response already reflects it
 - do not let Task-0008-owned mutation recipes drift behind the real repo baseline or the owned-lane validation step will correctly fail before later proof can run
+- do not let service-lane bootstrap paths capture versioned WindowsApps package executables; see [BUG-0001](./BUG-0001.md)
 - do not broaden this task into dashboard implementation work
 
 ## References
 
 - [TASK.md](./TASK.md)
 - [PLAN.md](./PLAN.md)
+- [BUG-0001](./BUG-0001.md)
 - [Task-0005](../Task-0005/TASK.md)
 - [Task-0009](../Task-0009/TASK.md)
 - [Task-0010](../Task-0010/TASK.md)

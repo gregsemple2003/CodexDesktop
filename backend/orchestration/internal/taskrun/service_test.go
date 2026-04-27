@@ -9,12 +9,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gregsemple2003/CodexDesktop/backend/orchestration/internal/testfixtures/taskrepo"
 )
 
 type fakeRuntime struct {
 	activeByTask map[string]TaskRunView
 	byRunID      map[string]TaskRunView
 	started      []StartTaskRunRequest
+	reconciled   []TaskDefinitionSnapshot
 }
 
 func newFakeRuntime() *fakeRuntime {
@@ -110,6 +113,7 @@ func (f *fakeRuntime) ReconcileTaskSnapshot(_ context.Context, runID string, sna
 	if !ok {
 		return TaskRunView{}, ErrRunNotFound
 	}
+	f.reconciled = append(f.reconciled, snapshot)
 	previousRevision := run.CapturedTaskSnapshot.DeclaredTaskRevision
 	run.CapturedTaskSnapshot = snapshot
 	run.DocRuntimeDivergenceStatus = "reconciled"
@@ -291,6 +295,67 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if task.DeepContext.PreferredLaunchTarget.Kind != "task_artifact" {
 		t.Fatalf("preferred launch target kind = %q", task.DeepContext.PreferredLaunchTarget.Kind)
+	}
+}
+
+func TestCanonicalTaskFixtureRepoStartsAndDispatchesTask8And9(t *testing.T) {
+	repo := taskrepo.WriteCanonicalGitRepo(t)
+	runtime := newFakeRuntime()
+	service := NewService(repo.Root, filepath.Join(repo.Root, ".runs"), runtime)
+
+	tasks, err := service.ListTasks(context.Background())
+	if err != nil {
+		t.Fatalf("list canonical fixture tasks: %v", err)
+	}
+
+	byID := map[string]TaskView{}
+	for _, task := range tasks {
+		byID[task.TaskID] = task
+	}
+	task8 := byID["Task-0008"]
+	task9 := byID["Task-0009"]
+	if task8.TaskID == "" || task9.TaskID == "" {
+		t.Fatalf("canonical fixture tasks = %#v, want Task-0008 and Task-0009", byID)
+	}
+	if task8.DeclaredGitRevision != repo.InitialCommit {
+		t.Fatalf("Task-0008 git revision = %q, want %q", task8.DeclaredGitRevision, repo.InitialCommit)
+	}
+	if task9.StateEnvelope.State != StateCompleted {
+		t.Fatalf("Task-0009 state = %q, want %q", task9.StateEnvelope.State, StateCompleted)
+	}
+	if !task8.DispatchReadiness.Ready {
+		t.Fatalf("Task-0008 should be dispatch-ready, blockers = %#v", task8.DispatchReadiness.BlockReasons)
+	}
+
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch Task-0008: %v", err)
+	}
+	if len(runtime.started) != 1 {
+		t.Fatalf("runtime started count = %d, want 1", len(runtime.started))
+	}
+	if runtime.started[0].CapturedTaskSnapshot.DeclaredGitRevision != repo.InitialCommit {
+		t.Fatalf("captured git revision = %q, want %q", runtime.started[0].CapturedTaskSnapshot.DeclaredGitRevision, repo.InitialCommit)
+	}
+	if run.RepoLane.OwnedRepoRoot == "" {
+		t.Fatal("dispatch should provision an owned repo lane")
+	}
+
+	taskAfterDispatch, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail after dispatch: %v", err)
+	}
+	if taskAfterDispatch.LatestRun == nil {
+		t.Fatal("Task-0008 should expose latest run after dispatch")
+	}
+	if !taskAfterDispatch.LatestRun.Actions[ActionInterrupt].Allowed {
+		t.Fatal("Task-0008 active run should expose interrupt availability for the Tasks tab to render as Pause")
+	}
+	if taskAfterDispatch.Actions[ActionDispatch].Allowed {
+		t.Fatal("Task-0008 dispatch should be blocked while the active story is owned by the run")
+	}
+	if taskAfterDispatch.CurrentStory.Status != "active_run" {
+		t.Fatalf("current story = %q, want active_run", taskAfterDispatch.CurrentStory.Status)
 	}
 }
 
@@ -673,6 +738,118 @@ Create the durable backend task-run contract so later clients do not guess state
 	}
 	if task.DeclaredTaskRevision != task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision {
 		t.Fatalf("task declared revision = %q, run captured revision = %q", task.DeclaredTaskRevision, task.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision)
+	}
+}
+
+func TestTaskReadReconcilesGitRollbackIntoActiveRun(t *testing.T) {
+	worktreeRoot := writeGitTaskTrackingRoot(t, map[string]taskFixture{
+		"Task-0008": {
+			taskMD: `# Task 0008
+
+## Title
+
+Build the backend task dispatch layer.
+
+## Summary
+
+Create the durable backend task-run contract so later clients do not guess state.
+`,
+			taskState: `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0001",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T22:00:00-04:00"
+}`,
+			planMD:    "# approved plan\n",
+			handoffMD: "# handoff\n\n## Current Status\n\ninitial handoff\n",
+		},
+	})
+	initialCommit := runOutput(t, worktreeRoot, "git", "rev-parse", "HEAD")
+
+	runtime := newFakeRuntime()
+	service := NewService(worktreeRoot, filepath.Join(worktreeRoot, ".runs"), runtime)
+	run, err := service.Dispatch(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	initialRevision := run.CapturedTaskSnapshot.DeclaredTaskRevision
+	if run.CapturedTaskSnapshot.DeclaredGitRevision != initialCommit {
+		t.Fatalf("initial git revision = %q, want %q", run.CapturedTaskSnapshot.DeclaredGitRevision, initialCommit)
+	}
+
+	writeFile(t, filepath.Join(worktreeRoot, "Tracking", "Task-0008", "TASK-STATE.json"), `{
+  "task_id": "Task-0008",
+  "status": "in_progress",
+  "phase": "implementation",
+  "plan_approved": true,
+  "current_pass": "PASS-0002",
+  "current_gate": "implementation",
+  "blockers": [],
+  "updated_at": "2026-04-24T23:00:00-04:00"
+}`)
+	runCommand(t, worktreeRoot, "git", "add", "Tracking/Task-0008/TASK-STATE.json")
+	runCommand(t, worktreeRoot, "git", "commit", "-m", "advance task state")
+	advancedCommit := runOutput(t, worktreeRoot, "git", "rev-parse", "HEAD")
+
+	advancedTask, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail after advance: %v", err)
+	}
+	if advancedTask.CurrentPass != "PASS-0002" || advancedTask.CurrentGate != "implementation" {
+		t.Fatalf("advanced task state = pass %q gate %q", advancedTask.CurrentPass, advancedTask.CurrentGate)
+	}
+	if advancedTask.LatestRun == nil {
+		t.Fatal("expected latest run after advance")
+	}
+	if advancedTask.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision == initialRevision {
+		t.Fatalf("advanced run snapshot revision did not change from %q", initialRevision)
+	}
+	if advancedTask.LatestRun.CapturedTaskSnapshot.DeclaredGitRevision != advancedCommit {
+		t.Fatalf("advanced git revision = %q, want %q", advancedTask.LatestRun.CapturedTaskSnapshot.DeclaredGitRevision, advancedCommit)
+	}
+	if len(runtime.reconciled) != 1 {
+		t.Fatalf("reconcile count after advance = %d, want 1", len(runtime.reconciled))
+	}
+	if runtime.reconciled[0].DeclaredGitRevision != advancedCommit {
+		t.Fatalf("first reconciled git revision = %q, want %q", runtime.reconciled[0].DeclaredGitRevision, advancedCommit)
+	}
+
+	runCommand(t, worktreeRoot, "git", "reset", "--hard", initialCommit)
+
+	rolledBackTask, err := service.Task(context.Background(), "Task-0008")
+	if err != nil {
+		t.Fatalf("task detail after rollback: %v", err)
+	}
+	if rolledBackTask.CurrentPass != "PASS-0001" || rolledBackTask.CurrentGate != "implementation" {
+		t.Fatalf("rolled-back task state = pass %q gate %q", rolledBackTask.CurrentPass, rolledBackTask.CurrentGate)
+	}
+	if rolledBackTask.LatestRun == nil {
+		t.Fatal("expected latest run after rollback")
+	}
+	if rolledBackTask.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision != initialRevision {
+		t.Fatalf("rolled-back run snapshot revision = %q, want initial %q", rolledBackTask.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision, initialRevision)
+	}
+	if rolledBackTask.LatestRun.CapturedTaskSnapshot.DeclaredGitRevision != initialCommit {
+		t.Fatalf("rolled-back git revision = %q, want %q", rolledBackTask.LatestRun.CapturedTaskSnapshot.DeclaredGitRevision, initialCommit)
+	}
+	if len(runtime.reconciled) != 2 {
+		t.Fatalf("reconcile count after rollback = %d, want 2", len(runtime.reconciled))
+	}
+	if runtime.reconciled[1].DeclaredTaskRevision != initialRevision {
+		t.Fatalf("second reconciled revision = %q, want %q", runtime.reconciled[1].DeclaredTaskRevision, initialRevision)
+	}
+	if rolledBackTask.LatestRun.DocRuntimeDivergenceStatus != "reconciled" {
+		t.Fatalf("rollback divergence status = %q, want reconciled", rolledBackTask.LatestRun.DocRuntimeDivergenceStatus)
+	}
+	if !strings.Contains(rolledBackTask.LatestRun.DocRuntimeDivergenceSummary, advancedTask.LatestRun.CapturedTaskSnapshot.DeclaredTaskRevision) {
+		t.Fatalf("rollback divergence summary = %q, want advanced revision", rolledBackTask.LatestRun.DocRuntimeDivergenceSummary)
+	}
+	if !strings.Contains(rolledBackTask.LatestRun.DocRuntimeDivergenceSummary, initialRevision) {
+		t.Fatalf("rollback divergence summary = %q, want initial revision", rolledBackTask.LatestRun.DocRuntimeDivergenceSummary)
 	}
 }
 
@@ -1711,4 +1888,15 @@ func runCommand(t *testing.T, dir string, exe string, args ...string) {
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
 	}
+}
+
+func runOutput(t *testing.T, dir string, exe string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%s %v failed: %v\n%s", exe, args, err, string(output))
+	}
+	return strings.TrimSpace(string(output))
 }

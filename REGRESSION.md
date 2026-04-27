@@ -155,3 +155,41 @@ Interpretation:
 
 - this is supporting proof only
 - it does not replace `REG-001`
+
+### SMOKE-002 Service Lane Release Isolation
+
+Goal:
+
+Confirm the human service lane is pinned to a promoted release and cannot be
+advanced by merely updating or editing the mutable repo checkout.
+
+Precondition:
+
+Only run against the human service lane after the human explicitly authorizes
+that lane to be inspected or restarted for this specific run.
+
+Steps:
+
+1. Run the unit tests for service-lane scripts:
+   `python -m unittest tests.test_service_lane_scripts -v`
+2. Publish the intended service-lane release with
+   `backend/orchestration/scripts/Publish-ServiceLaneRelease.ps1`.
+3. Restart or install the service lane through the repo scripts only after the
+   release has been pinned.
+4. Run `backend/orchestration/scripts/Test-ServiceLaneIsolation.ps1`.
+5. Run `backend/orchestration/scripts/Get-ServiceLaneStatus.ps1`.
+6. Verify no live service-lane runner command line points at the repo-local
+   `Run-OrchestrationLane.ps1`.
+
+Expected result:
+
+- the scheduled task uses the runtime-root launcher
+- `current-release.json` exists and validates binary and compose-file hashes
+- the running process path matches the pinned release binary path
+- backend health is reachable
+- any dirty-source promotion is explicitly visible in the release manifest
+
+Interpretation:
+
+- this is required operator proof for human-lane release claims
+- this is not a substitute for task-level desktop-app regression cases

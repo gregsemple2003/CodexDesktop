@@ -25,6 +25,7 @@ Use repo-root docs here only for CodexDashboard-specific truth such as:
 - implementation layout
 - run commands
 - regression lane definition
+- persistent data, backup, restore, and lane data handling in `DATA-HANDLING.md`
 - the canonical intervention packet output home under `C:\Users\gregs\.codex\Orchestration\Reports\Interventions\`
 - the shared intervention packet process and prompt homes under `C:\Users\gregs\.codex\Orchestration\Processes\INTERVENTION-REPORTS.md` and `C:\Users\gregs\.codex\Orchestration\Prompts\Interventions\`
 
@@ -66,6 +67,7 @@ python -m app.codex_dashboard --scan-once --print-summary
 - parse real `token_count` events from `C:\Users\gregs\.codex\sessions\`
 - keep the first version Windows-only and hotkey-first
 - treat repo-root `REGRESSION.md` as canonical for task-level regression in this repo
+- treat repo-root `DATA-HANDLING.md` as canonical for persistent data classes, backup inventory, restore expectations, and backup-impact task obligations in this repo
 - for agent-run validation and regression, treat the human's personal dashboard lane, config, database, and live Codex data as off-limits unless the human explicitly authorizes that run; task-closure regression must use the isolated lane/data flow in `TESTING.md`
 
 ## Jobs And Scheduling

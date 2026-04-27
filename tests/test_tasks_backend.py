@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from app.codex_dashboard.tasks_backend import (
@@ -132,6 +133,33 @@ class TasksBackendTests(unittest.TestCase):
                 snapshot = fetch_tasks_snapshot("http://127.0.0.1:1")
 
         self.assertEqual(snapshot["tasks"][0]["task_id"], "Task-0001")
+
+    def test_tasks_product_surface_fixture_covers_task_8_and_9_rules(self) -> None:
+        fixture_path = Path(__file__).parent / "fixtures" / "tasks_product_surface.json"
+        with mock.patch.dict(os.environ, {TASKS_SNAPSHOT_PATH_ENV: str(fixture_path)}):
+            snapshot = fetch_tasks_snapshot("http://127.0.0.1:1")
+
+        tasks = {task["task_id"]: task for task in snapshot["tasks"]}
+        self.assertNotIn("review-candidate-1", tasks)
+        self.assertIn("Task-0008", tasks)
+        self.assertIn("Task-0009", tasks)
+
+        task8 = tasks["Task-0008"]
+        task8_labels = [action["label"] for action in task8["actions"]]
+        self.assertIn("Pause", task8_labels)
+        self.assertIn("Open Live Thread", task8_labels)
+        self.assertIn("Open Working Context", task8_labels)
+        self.assertNotIn("Interrupt", task8_labels)
+        self.assertEqual(task8["summary_bucket"], "running")
+        self.assertEqual(task8["provenance_label"], "Authored")
+
+        provenance_labels = {task["task_id"]: task["provenance_label"] for task in snapshot["tasks"]}
+        self.assertEqual(provenance_labels["Task-0009"], "Promoted from Review")
+        self.assertEqual(provenance_labels["Task-0012"], "Promoted from Dream")
+        for label in provenance_labels.values():
+            self.assertNotIn("Candidate", label)
+        self.assertNotIn("Prov: Candidate", json.dumps(snapshot))
+        self.assertNotIn("progress_bar", json.dumps(snapshot).lower())
 
 
 if __name__ == "__main__":
