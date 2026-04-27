@@ -90,6 +90,7 @@ class DashboardReleaseScriptsTests(unittest.TestCase):
         )
         self.assertTrue(data["would_pin_current"])
         self.assertTrue(data["would_install_startup"])
+        self.assertEqual(data["source_mode"], "git_commit")
 
     def test_publish_pins_dashboard_release_and_startup_launcher(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -101,9 +102,12 @@ class DashboardReleaseScriptsTests(unittest.TestCase):
             data = json.loads(status.stdout)
 
         self.assertEqual(release["component"], "dashboard_frontend")
+        self.assertEqual(release["source_mode"], "git_commit")
+        self.assertFalse(release["source_dirty"])
         self.assertGreater(len(release["files"]), 0)
         self.assertIsNone(data["current_release_error"])
         self.assertEqual(data["current_release"]["release_id"], release["release_id"])
+        self.assertEqual(data["current_release"]["source_mode"], "git_commit")
         self.assertTrue(data["launcher_exists"])
         self.assertTrue(data["startup_uses_pinned_launcher"])
         self.assertGreater(data["current_release"]["file_count"], 0)

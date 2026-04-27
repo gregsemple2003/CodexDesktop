@@ -23,6 +23,9 @@ Coverage:
 
 - dashboard release planning uses `%LOCALAPPDATA%`
 - dashboard release publish writes a pinned manifest
+- dashboard release publish uses `source_mode = git_commit` by default, so
+  unrelated untracked working-tree files are not promoted into the frontend
+  release
 - startup registration points at the runtime-root dashboard launcher
 - dashboard release hash validation catches tampered files
 - startup command no longer launches the mutable repo checkout directly

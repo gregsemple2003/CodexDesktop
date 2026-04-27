@@ -118,6 +118,7 @@ Focused unit coverage for dashboard frontend release isolation lives in
 - release planning uses `%LOCALAPPDATA%\CodexDashboard\dashboard-releases`
   and the runtime launcher under
   `%LOCALAPPDATA%\CodexDashboard\dashboard-launcher`
+- default release publish uses the committed Git tree, not untracked working-tree files
 - startup registration points at the runtime launcher, not the repo checkout
 - current release manifests validate all copied source hashes
 - tampered release files are reported as hash mismatches

@@ -182,6 +182,32 @@ function Copy-DashboardReleaseTree {
     }
 }
 
+function Copy-DashboardGitTree {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$Commit,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationRoot
+    )
+
+    $gitPath = Get-DashboardGitExecutablePath
+    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("codex-dashboard-release-" + [guid]::NewGuid().ToString("n"))
+    $archivePath = Join-Path $tempRoot "app.zip"
+    New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+    try {
+        & $gitPath -C $RepoRoot archive --format=zip -o $archivePath $Commit app
+        if ($LASTEXITCODE -ne 0) {
+            throw "git archive failed with exit code $LASTEXITCODE."
+        }
+        Expand-Archive -LiteralPath $archivePath -DestinationPath $DestinationRoot -Force
+    }
+    finally {
+        Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Get-DashboardReleaseFileManifest {
     param(
         [Parameter(Mandatory = $true)]
@@ -273,7 +299,8 @@ function New-DashboardRelease {
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
         [switch]$AllowDirty,
-        [switch]$PinCurrent
+        [switch]$PinCurrent,
+        [switch]$FromWorkingTree
     )
 
     if (-not (Test-Path -LiteralPath $Config.SourceAppRoot)) {
@@ -281,7 +308,7 @@ function New-DashboardRelease {
     }
     $commit = Get-DashboardGitCommit -RepoRoot $Config.RepoRoot
     $statusLines = @(Get-DashboardGitStatusShort -RepoRoot $Config.RepoRoot)
-    if ($statusLines.Count -gt 0 -and -not $AllowDirty) {
+    if ($FromWorkingTree -and $statusLines.Count -gt 0 -and -not $AllowDirty) {
         throw "Refusing to publish a dashboard release from a dirty repo. Commit/stash changes or pass -AllowDirty to record the dirty status in the manifest."
     }
     $createdAt = (Get-Date).ToUniversalTime()
@@ -292,7 +319,12 @@ function New-DashboardRelease {
     $manifestPath = Join-Path $releaseRoot "dashboard-release-manifest.json"
 
     New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
-    Copy-DashboardReleaseTree -SourceRoot $Config.SourceAppRoot -DestinationRoot $releaseAppRoot
+    if ($FromWorkingTree) {
+        Copy-DashboardReleaseTree -SourceRoot $Config.SourceAppRoot -DestinationRoot $releaseAppRoot
+    }
+    else {
+        Copy-DashboardGitTree -RepoRoot $Config.RepoRoot -Commit $commit -DestinationRoot $releaseRoot
+    }
     $pythonwPath = Get-DashboardPythonwPath
 
     $manifest = [ordered]@{
@@ -303,7 +335,9 @@ function New-DashboardRelease {
         created_at = $createdAt.ToString("o")
         source_repo_root = $Config.RepoRoot
         git_commit = $commit
-        source_dirty = ($statusLines.Count -gt 0)
+        source_mode = if ($FromWorkingTree) { "working_tree" } else { "git_commit" }
+        source_dirty = ($FromWorkingTree -and $statusLines.Count -gt 0)
+        repository_dirty = ($statusLines.Count -gt 0)
         source_status = $statusLines
         pythonw_path = $pythonwPath
         launcher_script_path = $Config.LauncherScriptPath

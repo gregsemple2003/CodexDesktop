@@ -43,7 +43,9 @@ if ($null -ne $manifest) {
     $releaseSummary = [ordered]@{
         release_id = [string]$manifest.release_id
         git_commit = [string]$manifest.git_commit
+        source_mode = [string]$manifest.source_mode
         source_dirty = [bool]$manifest.source_dirty
+        repository_dirty = [bool]$manifest.repository_dirty
         release_root = [string]$manifest.release_root
         pythonw_path = [string]$manifest.pythonw_path
         file_count = @($manifest.files).Count

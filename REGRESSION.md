@@ -224,6 +224,8 @@ Steps:
 Expected result:
 
 - `dashboard-current-release.json` exists and validates copied source hashes
+- frontend `source_mode` is `git_commit` unless the human explicitly requested
+  a dirty working-tree promotion
 - the startup file points at the runtime-root dashboard launcher
 - the running dashboard process includes the pinned release id and release root
 - any dirty-source promotion is explicitly visible in the release manifest

@@ -73,6 +73,12 @@ The desktop dashboard frontend follows the same release discipline. The startup
 entry must invoke the runtime-root dashboard launcher, not `pythonw -m
 app.codex_dashboard` from `C:\Agent\CodexDashboard`.
 
+By default, dashboard frontend releases copy the committed Git tree at `HEAD`,
+not uncommitted working-tree files. The manifest records both `source_mode` and
+whether the surrounding repository was dirty at publish time. Use
+`-FromWorkingTree -AllowDirty` only when the human explicitly asks to promote an
+uncommitted frontend state.
+
 Publish the frontend release from repo root:
 
 ```powershell
