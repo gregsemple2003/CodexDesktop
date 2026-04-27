@@ -239,7 +239,7 @@ Mechanism:
 - Let the human click into a task and open the deeper working context when needed.
 - Keep the first version legible on desktop without turning the app into a sprawling multi-pane IDE clone.
 - Ground the surface in [GENERAL-DESIGNER.md](../../../../Users/gregs/.codex/Orchestration/Prompts/GENERAL-DESIGNER.md) and [INTERFACE-DESIGNER.md](../../../../Users/gregs/.codex/Orchestration/Prompts/INTERFACE-DESIGNER.md), not only in backend convenience.
-- Produce a durable task-local design brief and a reusable `Stitch` prompt so the UI direction can be iterated visually before or during implementation.
+- Produce a durable task-local design brief, a reusable [Stitch prompt](./Design/STITCH-PROMPT.md), and a generated [Stitch mockup](./Mockup/stitch_task_tab/screen.png) so the UI direction can be iterated visually before or during implementation.
 
 ## Non-Goals
 
@@ -300,7 +300,7 @@ Mechanism:
 - [ui.py](../../app/codex_dashboard/ui.py)
 - `app/codex_dashboard/tasks_tab.py`
 - `app/codex_dashboard/tasks_backend.py`
-- the task-local design brief and `Stitch` prompt
+- the task-local design brief, [Stitch prompt](./Design/STITCH-PROMPT.md), and generated [Stitch mockup](./Mockup/stitch_task_tab/screen.png)
 
 ## Not Solved Here
 
@@ -418,7 +418,7 @@ The task-local design brief belongs under `Tracking/Task-0009/` because the desi
 
 ## Proof Plan
 
-- review the implemented screen against the task-local design brief and `Stitch` prompt
+- review the implemented screen against the task-local design brief, [Stitch prompt](./Design/STITCH-PROMPT.md), and generated [Stitch mockup](./Mockup/stitch_task_tab/screen.png)
 - add unit coverage for any new task-state mapping or grouping logic
 - capture real UI proof for:
   - empty or loading state
@@ -444,6 +444,9 @@ The task-local design brief belongs under `Tracking/Task-0009/` because the desi
 - [Task-0010](../Task-0010/TASK.md)
 - [Task-0011](../Task-0011/TASK.md)
 - [Design/GENERAL-DESIGN.md](../../Design/GENERAL-DESIGN.md)
+- [Design/STITCH-PROMPT.md](./Design/STITCH-PROMPT.md)
+- [Mockup/stitch_task_tab/screen.png](./Mockup/stitch_task_tab/screen.png)
+- [Mockup/stitch_task_tab/code.html](./Mockup/stitch_task_tab/code.html)
 - [GENERAL-DESIGNER.md](../../../../Users/gregs/.codex/Orchestration/Prompts/GENERAL-DESIGNER.md)
 - [INTERFACE-DESIGNER.md](../../../../Users/gregs/.codex/Orchestration/Prompts/INTERFACE-DESIGNER.md)
 - [backend/orchestration/README.md](../../backend/orchestration/README.md)
