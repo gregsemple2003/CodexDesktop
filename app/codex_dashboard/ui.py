@@ -38,6 +38,8 @@ from .jobs_backend import (
 from .paths import default_config_path, default_investigations_path
 from .scanner import ingest_once
 from .storage import connect, initialize_db, load_events_since, load_session_context_markers
+from .tasks_backend import configured_tasks_backend_url, fetch_tasks_snapshot, tasks_backend_error_snapshot
+from .tasks_tab import TASK_SUMMARY_CARDS, first_task_id, group_tasks_for_stream, task_detail_sections, task_state_color
 
 
 INTERVAL_TITLES = {
@@ -75,6 +77,7 @@ JOBS_STATUS_COLORS = {
     "blocked": "#ff5a52",
     "unknown": "#8fa8bb",
 }
+TASK_DETAIL_TEXT_BACKGROUND = "#10141a"
 TAB_ACTIVE_FOREGROUND = "#c3f5ff"
 TAB_INACTIVE_FOREGROUND = "#9fbdcc"
 TAB_ACTIVE_UNDERLINE = "#00e5ff"
@@ -228,6 +231,13 @@ def format_jobs_timestamp(raw_value: str | None) -> str:
     return parsed.astimezone().strftime("%I:%M %p").lstrip("0")
 
 
+def format_tasks_timestamp(raw_value: str | None) -> str:
+    if not raw_value:
+        return "Not refreshed"
+    parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+    return parsed.astimezone().strftime("%b %d, %I:%M %p").replace(" 0", " ")
+
+
 def write_overlay_capture(window: tk.Toplevel, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     x = window.winfo_rootx()
@@ -298,6 +308,16 @@ class DashboardApp:
         self.jobs_status_message = (
             "Refresh rereads backend state. Apply Desired State updates Temporal to match Git job specs."
         )
+        self.tasks_backend_url = configured_tasks_backend_url()
+        self.tasks_snapshot: dict[str, object] = {
+            "status": "loading",
+            "generated_at": None,
+            "summary": {},
+            "tasks": [],
+            "message": "Open Tasks to load committed-work state.",
+        }
+        self.tasks_detail_task_id: str | None = None
+        self.tasks_status_message = "Refresh rereads committed task state from the orchestration backend."
         self.debug_log_path = self.config_path.parent / "dashboard-debug.log"
         self._append_debug_log("dashboard_started")
 
@@ -510,7 +530,7 @@ class DashboardApp:
         self.tab_underlines: dict[str, tk.Frame] = {}
         nav_row = ttk.Frame(brand_row, style="Header.TFrame")
         nav_row.pack(side="left", padx=(24, 0))
-        for tab_id, label in (("usage", "Usage"), ("jobs", "Jobs")):
+        for tab_id, label in (("usage", "Usage"), ("jobs", "Jobs"), ("tasks", "Tasks")):
             tab_shell = tk.Frame(nav_row, bg=HEADER_BACKGROUND)
             tab_shell.pack(side="left", padx=(0, 20))
             tab_label = tk.Label(
@@ -739,6 +759,7 @@ class DashboardApp:
         self._refresh_chart_mode_buttons()
         self._refresh_metric_mode_buttons()
         self._build_jobs_lane()
+        self._build_tasks_lane()
         self._refresh_tab_buttons()
         self._render_active_tab()
 
@@ -860,6 +881,120 @@ class DashboardApp:
         self.jobs_rows_container.pack(fill="both", expand=True)
         self.jobs_rows_container.bind("<MouseWheel>", self._on_jobs_mousewheel)
 
+    def _build_tasks_lane(self) -> None:
+        self.tasks_body = ttk.Frame(self.content_stack, style="BodyPanel.TFrame", padding=(16, 14))
+
+        header = ttk.Frame(self.tasks_body, style="BodyPanel.TFrame")
+        header.pack(fill="x", pady=(0, 12))
+        header.columnconfigure(0, weight=1)
+        title_copy = ttk.Frame(header, style="BodyPanel.TFrame")
+        title_copy.grid(row=0, column=0, sticky="w")
+        ttk.Label(title_copy, text="Tasks", style="ChartTitle.TLabel").pack(anchor="w")
+        self.tasks_freshness_label = ttk.Label(
+            title_copy,
+            text="Committed work has not been refreshed yet.",
+            style="Status.TLabel",
+        )
+        self.tasks_freshness_label.pack(anchor="w", pady=(4, 0))
+        self.tasks_refresh_button = ttk.Button(
+            header,
+            text="REFRESH STATUS",
+            style="Quiet.TButton",
+            command=self.refresh_tasks_data,
+        )
+        self.tasks_refresh_button.grid(row=0, column=1, sticky="e")
+
+        summary_row = ttk.Frame(self.tasks_body, style="BodyPanel.TFrame")
+        summary_row.pack(fill="x", pady=(0, 12))
+        self.tasks_summary_values: dict[str, ttk.Label] = {}
+        for column, (key, title) in enumerate(TASK_SUMMARY_CARDS):
+            summary_row.columnconfigure(column, weight=1)
+            self.tasks_summary_values[key] = self._build_tasks_summary_card(summary_row, column, title, "0")
+
+        self.tasks_split = ttk.Frame(self.tasks_body, style="BodyPanel.TFrame")
+        self.tasks_split.pack(fill="both", expand=True)
+        self.tasks_split.columnconfigure(0, weight=3)
+        self.tasks_split.columnconfigure(1, weight=2)
+        self.tasks_split.rowconfigure(0, weight=1)
+
+        self.tasks_stream_shell = ttk.Frame(self.tasks_split, style="Shell.TFrame", padding=(10, 10))
+        self.tasks_stream_shell.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        self.tasks_scroll_canvas = tk.Canvas(
+            self.tasks_stream_shell,
+            bg="#1c2026",
+            highlightthickness=0,
+            borderwidth=0,
+        )
+        self.tasks_scroll_canvas.pack(side="left", fill="both", expand=True)
+        self.tasks_scrollbar = ttk.Scrollbar(
+            self.tasks_stream_shell,
+            orient="vertical",
+            command=self.tasks_scroll_canvas.yview,
+        )
+        self.tasks_scrollbar.pack(side="right", fill="y")
+        self.tasks_scroll_canvas.configure(yscrollcommand=self.tasks_scrollbar.set)
+        self.tasks_rows_content = ttk.Frame(self.tasks_scroll_canvas, style="Shell.TFrame")
+        self.tasks_scroll_window = self.tasks_scroll_canvas.create_window(
+            (0, 0),
+            window=self.tasks_rows_content,
+            anchor="nw",
+        )
+        self.tasks_rows_content.bind("<Configure>", self._refresh_tasks_scroll_region)
+        self.tasks_scroll_canvas.bind("<Configure>", self._resize_tasks_scroll_content)
+        self.tasks_scroll_canvas.bind("<MouseWheel>", self._on_tasks_mousewheel)
+        self.tasks_rows_content.bind("<MouseWheel>", self._on_tasks_mousewheel)
+
+        self.tasks_detail_shell = ttk.Frame(self.tasks_split, style="Shell.TFrame", padding=(14, 12))
+        self.tasks_detail_shell.grid(row=0, column=1, sticky="nsew")
+        self.tasks_detail_title = ttk.Label(self.tasks_detail_shell, text="Select a task", style="ChartTitle.TLabel")
+        self.tasks_detail_title.pack(anchor="w")
+        self.tasks_detail_meta = ttk.Label(
+            self.tasks_detail_shell,
+            text="Committed task details will appear here.",
+            style="Status.TLabel",
+            wraplength=330,
+            justify="left",
+        )
+        self.tasks_detail_meta.pack(anchor="w", pady=(4, 12))
+        self.tasks_detail_canvas = tk.Canvas(
+            self.tasks_detail_shell,
+            bg="#1c2026",
+            highlightthickness=0,
+            borderwidth=0,
+        )
+        self.tasks_detail_canvas.pack(side="left", fill="both", expand=True)
+        self.tasks_detail_scrollbar = ttk.Scrollbar(
+            self.tasks_detail_shell,
+            orient="vertical",
+            command=self.tasks_detail_canvas.yview,
+        )
+        self.tasks_detail_scrollbar.pack(side="right", fill="y")
+        self.tasks_detail_canvas.configure(yscrollcommand=self.tasks_detail_scrollbar.set)
+        self.tasks_detail_content = ttk.Frame(self.tasks_detail_canvas, style="Shell.TFrame")
+        self.tasks_detail_window = self.tasks_detail_canvas.create_window(
+            (0, 0),
+            window=self.tasks_detail_content,
+            anchor="nw",
+        )
+        self.tasks_detail_content.bind("<Configure>", self._refresh_tasks_detail_scroll_region)
+        self.tasks_detail_canvas.bind("<Configure>", self._resize_tasks_detail_content)
+        self.tasks_detail_canvas.bind("<MouseWheel>", self._on_tasks_mousewheel)
+        self.tasks_detail_content.bind("<MouseWheel>", self._on_tasks_mousewheel)
+
+    def _build_tasks_summary_card(
+        self,
+        parent: ttk.Frame,
+        column: int,
+        title: str,
+        value: str,
+    ) -> ttk.Label:
+        card = ttk.Frame(parent, style="Card.TFrame", padding=(12, 10))
+        card.grid(row=0, column=column, sticky="nsew", padx=(0, 10) if column < len(TASK_SUMMARY_CARDS) - 1 else (0, 0))
+        ttk.Label(card, text=title, style="MetricTitle.TLabel").pack(anchor="w")
+        value_label = ttk.Label(card, text=value, style="MetricValue.TLabel")
+        value_label.pack(anchor="w", pady=(8, 0))
+        return value_label
+
     def _build_jobs_summary_card(
         self,
         parent: ttk.Frame,
@@ -878,15 +1013,24 @@ class DashboardApp:
         self.active_tab = tab_id
         if tab_id == "jobs":
             self._prime_jobs_snapshot()
+        if tab_id == "tasks":
+            self._prime_tasks_snapshot()
         self._render_active_tab()
 
     def _render_active_tab(self) -> None:
         self._refresh_tab_buttons()
         if self.active_tab == "jobs":
             self.usage_body.pack_forget()
+            self.tasks_body.pack_forget()
             self.jobs_body.pack(fill="both", expand=True)
             return
+        if self.active_tab == "tasks":
+            self.usage_body.pack_forget()
+            self.jobs_body.pack_forget()
+            self.tasks_body.pack(fill="both", expand=True)
+            return
         self.jobs_body.pack_forget()
+        self.tasks_body.pack_forget()
         self.usage_body.pack(fill="both", expand=True)
 
     def _refresh_tab_buttons(self) -> None:
@@ -898,6 +1042,237 @@ class DashboardApp:
             self.tab_underlines[tab_id].configure(
                 bg=TAB_ACTIVE_UNDERLINE if is_active else HEADER_BACKGROUND,
             )
+
+    def refresh_tasks_data(self) -> None:
+        try:
+            self.tasks_snapshot = fetch_tasks_snapshot(self.tasks_backend_url)
+            self.tasks_status_message = "Tasks state refreshed from orchestration backend."
+            if self.active_tab == "tasks":
+                self.status_label.configure(text=self.tasks_status_message)
+        except Exception as exc:
+            self.tasks_snapshot = tasks_backend_error_snapshot(str(exc))
+            self.tasks_status_message = f"Tasks error: {exc}"
+            self.status_label.configure(text=self.tasks_status_message)
+        self._render_tasks_snapshot()
+
+    def _prime_tasks_snapshot(self) -> None:
+        existing_tasks = list(self.tasks_snapshot.get("tasks", []))
+        if existing_tasks:
+            return
+        try:
+            self.tasks_snapshot = fetch_tasks_snapshot(self.tasks_backend_url)
+            self.tasks_status_message = "Tasks state loaded from orchestration backend."
+        except Exception as exc:
+            self.tasks_snapshot = tasks_backend_error_snapshot(str(exc))
+            self.tasks_status_message = f"Tasks error: {exc}"
+        self._render_tasks_snapshot()
+
+    def _render_tasks_snapshot(self) -> None:
+        snapshot = self.tasks_snapshot
+        summary = dict(snapshot.get("summary", {}))
+        tasks = [task for task in list(snapshot.get("tasks", [])) if isinstance(task, dict)]
+        for key, _title in TASK_SUMMARY_CARDS:
+            self.tasks_summary_values[key].configure(text=f"{int(summary.get(key, 0)):02d}")
+        self.tasks_freshness_label.configure(
+            text=f"{snapshot.get('message', self.tasks_status_message)} Last refresh: {format_tasks_timestamp(snapshot.get('last_refreshed_at') or snapshot.get('generated_at'))}."
+        )
+
+        for child in self.tasks_rows_content.winfo_children():
+            child.destroy()
+
+        if not tasks:
+            ttk.Label(
+                self.tasks_rows_content,
+                text=self.tasks_status_message,
+                style="Status.TLabel",
+                wraplength=500,
+                justify="left",
+            ).pack(anchor="w", padx=12, pady=(12, 0))
+            self.tasks_detail_task_id = None
+            self._show_empty_task_details()
+            return
+
+        if self.tasks_detail_task_id not in {str(task.get("task_id")) for task in tasks}:
+            self.tasks_detail_task_id = first_task_id(tasks)
+
+        selected_task = None
+        for group, group_tasks in group_tasks_for_stream(tasks).items():
+            group_label = ttk.Label(self.tasks_rows_content, text=group.upper(), style="Tiny.TLabel")
+            group_label.pack(anchor="w", padx=4, pady=(4, 6))
+            group_label.bind("<MouseWheel>", self._on_tasks_mousewheel)
+            for task in group_tasks:
+                if str(task.get("task_id")) == self.tasks_detail_task_id:
+                    selected_task = task
+                self._build_task_row(task)
+
+        if selected_task is not None:
+            self._show_task_details(selected_task)
+        else:
+            self._show_empty_task_details()
+
+    def _build_task_row(self, task: dict[str, object]) -> None:
+        is_selected = str(task.get("task_id")) == self.tasks_detail_task_id
+        row_bg = "#202833" if is_selected else "#181c22"
+        row = tk.Frame(self.tasks_rows_content, bg=row_bg, padx=10, pady=9)
+        row.pack(fill="x", pady=(0, 8))
+        row.bind("<Button-1>", lambda _event, payload=task: self.select_task_detail(payload))
+        row.bind("<MouseWheel>", self._on_tasks_mousewheel)
+
+        accent = tk.Frame(row, bg=task_state_color(task), width=3)
+        accent.pack(side="left", fill="y", padx=(0, 10))
+        accent.bind("<Button-1>", lambda _event, payload=task: self.select_task_detail(payload))
+        accent.bind("<MouseWheel>", self._on_tasks_mousewheel)
+
+        content = tk.Frame(row, bg=row_bg)
+        content.pack(side="left", fill="both", expand=True)
+        title = tk.Label(
+            content,
+            text=str(task.get("title") or task.get("task_id")),
+            bg=row_bg,
+            fg="#dfe2eb",
+            font=("Space Grotesk", 11, "bold"),
+            anchor="w",
+            justify="left",
+            wraplength=300,
+        )
+        title.pack(anchor="w", fill="x")
+        chip = tk.Label(
+            content,
+            text=str(task.get("state_label", "Unknown")).upper(),
+            bg="#10141a",
+            fg=task_state_color(task),
+            padx=8,
+            pady=3,
+            font=("Space Grotesk", 8, "bold"),
+        )
+        chip.pack(anchor="w", pady=(5, 0))
+        summary = tk.Label(
+            content,
+            text=str(task.get("meaning_summary") or ""),
+            bg=row_bg,
+            fg="#9fbdcc",
+            font=("Inter", 9),
+            anchor="w",
+            justify="left",
+            wraplength=300,
+        )
+        summary.pack(anchor="w", pady=(4, 0), fill="x")
+        meta_text = f"{task.get('provenance_label', 'Authored')} | {task.get('freshness_label', 'Freshness unknown')} | {task.get('reason', '')}"
+        meta = tk.Label(
+            content,
+            text=meta_text,
+            bg=row_bg,
+            fg="#6e8798",
+            font=("Inter", 8),
+            anchor="w",
+            justify="left",
+            wraplength=300,
+        )
+        meta.pack(anchor="w", pady=(5, 0), fill="x")
+        for widget in (content, title, summary, meta, chip):
+            widget.bind("<Button-1>", lambda _event, payload=task: self.select_task_detail(payload))
+            widget.bind("<MouseWheel>", self._on_tasks_mousewheel)
+
+    def select_task_detail(self, task: dict[str, object]) -> None:
+        self.tasks_detail_task_id = str(task.get("task_id") or "")
+        self._render_tasks_snapshot()
+
+    def _show_empty_task_details(self) -> None:
+        self.tasks_detail_title.configure(text="No committed task selected")
+        self.tasks_detail_meta.configure(text="The Tasks tab will show committed task context when backend readback is available.")
+        for child in self.tasks_detail_content.winfo_children():
+            child.destroy()
+        ttk.Label(
+            self.tasks_detail_content,
+            text="Backend unavailable, stale, loading, and empty states keep the cockpit visible without pretending unknown state is healthy.",
+            style="Status.TLabel",
+            wraplength=330,
+            justify="left",
+        ).pack(anchor="w")
+
+    def _show_task_details(self, task: dict[str, object]) -> None:
+        self.tasks_detail_title.configure(text=str(task.get("title") or task.get("task_id")))
+        self.tasks_detail_meta.configure(
+            text=f"{task.get('task_id', '')} | {task.get('provenance_label', 'Authored')} | {task.get('state_label', 'Unknown')}"
+        )
+        for child in self.tasks_detail_content.winfo_children():
+            child.destroy()
+
+        for title, value in task_detail_sections(task):
+            section = ttk.Frame(self.tasks_detail_content, style="Shell.TFrame")
+            section.pack(fill="x", pady=(0, 10))
+            ttk.Label(section, text=title.upper(), style="Tiny.TLabel").pack(anchor="w")
+            ttk.Label(
+                section,
+                text=value,
+                style="Status.TLabel",
+                wraplength=330,
+                justify="left",
+            ).pack(anchor="w", pady=(3, 0))
+
+        artifacts = [artifact for artifact in list(task.get("artifacts", [])) if isinstance(artifact, dict)]
+        if artifacts:
+            artifact_section = ttk.Frame(self.tasks_detail_content, style="Shell.TFrame")
+            artifact_section.pack(fill="x", pady=(0, 10))
+            ttk.Label(artifact_section, text="ARTIFACTS", style="Tiny.TLabel").pack(anchor="w")
+            for artifact in artifacts[:5]:
+                ttk.Label(
+                    artifact_section,
+                    text=f"{artifact.get('label', 'Artifact')}: {artifact.get('uri', '')}",
+                    style="Status.TLabel",
+                    wraplength=330,
+                    justify="left",
+                ).pack(anchor="w", pady=(3, 0))
+
+        action_section = ttk.Frame(self.tasks_detail_content, style="Shell.TFrame")
+        action_section.pack(fill="x")
+        ttk.Label(action_section, text="ACTIONS", style="Tiny.TLabel").pack(anchor="w", pady=(0, 6))
+        for action in [item for item in list(task.get("actions", [])) if isinstance(item, dict)]:
+            button = ttk.Button(
+                action_section,
+                text=str(action.get("label", "Action")),
+                style="Quiet.TButton",
+                command=lambda payload=action: self.describe_task_action(payload),
+            )
+            if not bool(action.get("allowed")):
+                button.state(["disabled"])
+            button.pack(side="left", padx=(0, 6), pady=(0, 6))
+
+    def describe_task_action(self, action: dict[str, object]) -> None:
+        label = str(action.get("label") or "Action")
+        reason = str(action.get("reason") or "Action wiring lands in the control pass.")
+        self.tasks_status_message = f"{label}: {reason}"
+        self.status_label.configure(text=self.tasks_status_message)
+
+    def _refresh_tasks_scroll_region(self, _event=None) -> None:
+        self.tasks_scroll_canvas.configure(scrollregion=self.tasks_scroll_canvas.bbox("all"))
+
+    def _resize_tasks_scroll_content(self, event) -> None:
+        self.tasks_scroll_canvas.itemconfigure(self.tasks_scroll_window, width=event.width)
+
+    def _refresh_tasks_detail_scroll_region(self, _event=None) -> None:
+        self.tasks_detail_canvas.configure(scrollregion=self.tasks_detail_canvas.bbox("all"))
+
+    def _resize_tasks_detail_content(self, event) -> None:
+        self.tasks_detail_canvas.itemconfigure(self.tasks_detail_window, width=event.width)
+
+    def _on_tasks_mousewheel(self, event) -> str:
+        if self.active_tab != "tasks":
+            return "break"
+        delta = event.delta
+        if delta == 0:
+            return "break"
+        target = self.tasks_detail_canvas if self._event_from_widget(event.widget, self.tasks_detail_shell) else self.tasks_scroll_canvas
+        target.yview_scroll(int(-delta / 120), "units")
+        return "break"
+
+    def _event_from_widget(self, widget, ancestor) -> bool:
+        current = widget
+        while current is not None:
+            if current == ancestor:
+                return True
+            current = getattr(current, "master", None)
+        return False
 
     def refresh_jobs_data(self, apply_changes: bool = False) -> None:
         try:
@@ -1751,7 +2126,7 @@ class DashboardApp:
         if artifact_dir is None:
             return
         artifact_dir.mkdir(parents=True, exist_ok=True)
-        if self.smoke_tab in {"usage", "jobs"}:
+        if self.smoke_tab in {"usage", "jobs", "tasks"}:
             self.select_tab(self.smoke_tab)
         if self.smoke_tab == "jobs":
             self.jobs_sync_button.invoke()
@@ -1790,7 +2165,7 @@ class DashboardApp:
                     self.advisory_label.cget("text"),
                 ]
             )
-        else:
+        elif self.active_tab == "jobs":
             summary_lines.extend(
                 [
                     f"jobs_backend={self.jobs_backend_url}",
@@ -1798,6 +2173,18 @@ class DashboardApp:
                     f"jobs_in_sync={self.jobs_synced_value.cget('text')}",
                     f"jobs_needs_attention={self.jobs_attention_value.cget('text')}",
                     f"jobs_last_reconciled={self.jobs_last_reconciled_value.cget('text')}",
+                ]
+            )
+        else:
+            summary_lines.extend(
+                [
+                    f"tasks_backend={self.tasks_backend_url}",
+                    f"tasks_needs_you={self.tasks_summary_values['needs_you'].cget('text')}",
+                    f"tasks_sleeping={self.tasks_summary_values['sleeping'].cget('text')}",
+                    f"tasks_running={self.tasks_summary_values['running'].cget('text')}",
+                    f"tasks_blocked={self.tasks_summary_values['blocked'].cget('text')}",
+                    f"tasks_ready={self.tasks_summary_values['ready'].cget('text')}",
+                    f"tasks_selected={self.tasks_detail_task_id}",
                 ]
             )
         summary = "\n".join(summary_lines)

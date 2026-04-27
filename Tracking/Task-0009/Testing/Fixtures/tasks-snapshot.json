@@ -1,0 +1,133 @@
+{
+  "status": "ok",
+  "generated_at": "2026-04-26T21:30:00-04:00",
+  "last_refreshed_at": "2026-04-26T21:30:00-04:00",
+  "message": "Fixture state from the isolated Task-0009 validation lane.",
+  "tasks": [
+    {
+      "task_id": "Task-0009",
+      "title": "Build the committed-work Tasks tab",
+      "meaning_summary": "Make running and queued orchestration work visible without markdown hunting.",
+      "why": "The dashboard needs a humane committed-work cockpit for monitoring task state and opening the right live context.",
+      "promoted_from": "review",
+      "updated_at": "2026-04-26T21:28:00-04:00",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009",
+      "declared_worktree_root": "C:\\Agent\\CodexDashboard",
+      "state_envelope": {
+        "state": "waiting_for_human",
+        "reason_code": "human_plan_gate",
+        "state_summary": "The implementation plan was approved and the next step is frontend work.",
+        "next_owner": "task-leader",
+        "next_expected_event": "Implement the read-only Tasks tab surface.",
+        "evidence_refs": [
+          {
+            "type": "artifact",
+            "label": "Approved plan",
+            "uri": "Tracking/Task-0009/PLAN.md"
+          }
+        ]
+      },
+      "attention": {
+        "attention_level": "needs_attention",
+        "attention_reason": "The task is at a human-approved implementation transition."
+      },
+      "actions": {
+        "interrupt": {
+          "allowed": true
+        },
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "already_owned",
+              "summary": "The current single task leader already owns implementation."
+            }
+          ]
+        }
+      },
+      "deep_context": {
+        "preferred_launch_target": {
+          "kind": "live_thread",
+          "label": "Open Live Thread",
+          "uri": "codex://sessions/task-0009-live",
+          "preferred": true
+        },
+        "launch_targets": [
+          {
+            "kind": "working_context",
+            "label": "Open Working Context",
+            "uri": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0009"
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0008",
+      "title": "Backend durable execution state and run controls",
+      "meaning_summary": "Expose task/run readback, deep context, and bounded backend actions for orchestration.",
+      "why": "The frontend must consume backend truth for run state, Pause availability, and live-context targets.",
+      "source": "authored",
+      "updated_at": "2026-04-26T19:10:00-04:00",
+      "declared_task_root": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008",
+      "state_envelope": {
+        "state": "completed",
+        "state_summary": "Backend readback and control contracts are available.",
+        "next_expected_event": "Frontend Tasks tab consumes the backend contract."
+      },
+      "attention": {
+        "attention_level": "none"
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": false,
+          "block_reasons": [
+            {
+              "code": "complete",
+              "summary": "The backend task is already complete."
+            }
+          ]
+        }
+      },
+      "deep_context": {
+        "launch_targets": [
+          {
+            "kind": "task_folder",
+            "label": "Open Task",
+            "uri": "C:\\Agent\\CodexDashboard\\Tracking\\Task-0008"
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "Task-0010",
+      "title": "Promotion contract for reviewed work",
+      "meaning_summary": "Connect reviewed work to committed task provenance after promotion.",
+      "why": "Promoted work should appear in Tasks only after it is durable committed work.",
+      "promoted_from": "dream",
+      "updated_at": "2026-04-26T20:45:00-04:00",
+      "state_envelope": {
+        "state": "ready",
+        "state_summary": "Task is ready to dispatch after promotion.",
+        "next_expected_event": "Dispatch when the backend says a run can start."
+      },
+      "attention": {
+        "attention_level": "none"
+      },
+      "dispatch_readiness": {
+        "ready": true
+      },
+      "actions": {
+        "dispatch": {
+          "allowed": true
+        }
+      }
+    },
+    {
+      "task_id": "review-candidate-42",
+      "title": "Unpromoted idea that must stay off Tasks",
+      "kind": "candidate",
+      "status": "candidate",
+      "meaning_summary": "This fixture row proves candidate filtering."
+    }
+  ]
+}

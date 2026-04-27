@@ -21,6 +21,7 @@ from app.codex_dashboard.ui import (
     format_budget_billions,
     format_chart_title,
     format_jobs_timestamp,
+    format_tasks_timestamp,
     format_repo_tooltip,
     format_reset_remaining,
     format_tick_label,
@@ -190,10 +191,17 @@ class DesktopSupportTests(unittest.TestCase):
             "12:01 PM",
         )
 
+    def test_format_tasks_timestamp_uses_date_and_local_clock(self) -> None:
+        self.assertEqual(
+            format_tasks_timestamp("2026-04-26T21:30:00-04:00"),
+            "Apr 26, 9:30 PM",
+        )
+
     def test_select_tab_does_not_trigger_jobs_refresh(self) -> None:
         app = SimpleNamespace(
             active_tab="usage",
             _prime_jobs_snapshot=mock.Mock(),
+            _prime_tasks_snapshot=mock.Mock(),
             _render_active_tab=mock.Mock(),
             refresh_jobs_data=mock.Mock(),
         )
@@ -204,6 +212,41 @@ class DesktopSupportTests(unittest.TestCase):
         app._prime_jobs_snapshot.assert_called_once_with()
         app._render_active_tab.assert_called_once_with()
         app.refresh_jobs_data.assert_not_called()
+
+    def test_select_tab_primes_tasks_snapshot_without_control_actions(self) -> None:
+        app = SimpleNamespace(
+            active_tab="usage",
+            _prime_jobs_snapshot=mock.Mock(),
+            _prime_tasks_snapshot=mock.Mock(),
+            _render_active_tab=mock.Mock(),
+        )
+
+        DashboardApp.select_tab(app, "tasks")
+
+        self.assertEqual(app.active_tab, "tasks")
+        app._prime_tasks_snapshot.assert_called_once_with()
+        app._prime_jobs_snapshot.assert_not_called()
+        app._render_active_tab.assert_called_once_with()
+
+    def test_prime_tasks_snapshot_uses_backend_snapshot(self) -> None:
+        snapshot = {
+            "status": "ok",
+            "summary": {"needs_you": 1},
+            "tasks": [{"task_id": "Task-0009"}],
+        }
+        app = SimpleNamespace(
+            tasks_snapshot={"tasks": []},
+            tasks_status_message="",
+            tasks_backend_url="http://127.0.0.1:14318",
+            _render_tasks_snapshot=mock.Mock(),
+        )
+
+        with mock.patch("app.codex_dashboard.ui.fetch_tasks_snapshot", return_value=snapshot):
+            DashboardApp._prime_tasks_snapshot(app)
+
+        self.assertEqual(app.tasks_snapshot, snapshot)
+        self.assertEqual(app.tasks_status_message, "Tasks state loaded from orchestration backend.")
+        app._render_tasks_snapshot.assert_called_once_with()
 
     def test_prime_jobs_snapshot_uses_backend_snapshot(self) -> None:
         snapshot = {

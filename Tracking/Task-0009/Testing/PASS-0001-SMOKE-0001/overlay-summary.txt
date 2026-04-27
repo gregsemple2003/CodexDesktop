@@ -1,0 +1,11 @@
+active_tab=tasks
+Last ingest 21:44:51 | files 0/0 | events +0
+hotkey_triggered=True
+overlay_fallback=False
+tasks_backend=http://127.0.0.1:14318
+tasks_needs_you=01
+tasks_sleeping=00
+tasks_running=00
+tasks_blocked=00
+tasks_ready=02
+tasks_selected=Task-0009

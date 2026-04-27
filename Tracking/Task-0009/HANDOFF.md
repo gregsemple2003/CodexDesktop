@@ -2,13 +2,13 @@
 
 ## Current Status
 
-`Task-0009` has explicit human approval to begin implementation.
+`Task-0009` is in implementation after completing the first product-code pass.
 
 Current lifecycle state:
 
 - phase: `implementation`
-- current pass: `PASS-0001`
-- last completed pass: `PASS-0000`
+- current pass: `PASS-0002`
+- last completed pass: `PASS-0001`
 - current gate: `implementation`
 
 This task owns the human-facing `Tasks` tab for committed work in CodexDashboard:
@@ -32,7 +32,7 @@ If the `Tasks` tab later shows work that was promoted out of `Review`, it should
 
 ## Current Objective
 
-Execute `PASS-0001`, building the first read-only `Tasks` tab surface from the locked product contract.
+Execute `PASS-0002`, wiring bounded dispatch and recovery actions on top of the read-only surface delivered in `PASS-0001`.
 
 The design work for that lives in:
 
@@ -86,6 +86,34 @@ Result:
 - action copy and instruction flow are frozen for implementation
 - validation and regression lane isolation is explicit
 
+### PASS-0001 Build The Read-Only Task Surface
+
+Completed in this checkpoint.
+
+Primary outputs:
+
+- [app/codex_dashboard/tasks_backend.py](../../app/codex_dashboard/tasks_backend.py)
+- [app/codex_dashboard/tasks_tab.py](../../app/codex_dashboard/tasks_tab.py)
+- `Tasks` tab integration in [app/codex_dashboard/ui.py](../../app/codex_dashboard/ui.py)
+- `--smoke-tab tasks` support in [app/codex_dashboard/__main__.py](../../app/codex_dashboard/__main__.py)
+- task-owned fixture data at [Testing/Fixtures/tasks-snapshot.json](./Testing/Fixtures/tasks-snapshot.json)
+
+Audit and proof:
+
+- [Testing/PASS-0001-AUDIT.md](./Testing/PASS-0001-AUDIT.md)
+- [Testing/PASS-0001-SMOKE-0001/overlay.png](./Testing/PASS-0001-SMOKE-0001/overlay.png)
+- [Testing/PASS-0001-SMOKE-0001/overlay-summary.txt](./Testing/PASS-0001-SMOKE-0001/overlay-summary.txt)
+
+Result:
+
+- the dashboard has a real `Tasks` tab in top navigation
+- the tab renders committed-task summary counts, grouped rows, and a persistent detail pane
+- unpromoted candidates are filtered out
+- promoted committed work uses promoted provenance rather than candidate labels
+- backend `interrupt` availability is rendered as visible `Pause`
+- no AI-run progress bars are used
+- the desktop smoke used isolated Task-0009 config, SQLite, fixture data, and validation-lane backend URLs
+
 ## Current Baseline
 
 The repo currently has:
@@ -94,19 +122,22 @@ The repo currently has:
 - the backend-backed `Jobs` tab
 - task-owned markdown artifacts under `Tracking/`
 
-What it does not yet have is one humane surface that ties together:
+The first read-only humane surface now exists. It does not yet complete:
 
-- real tasks
 - dispatch state
-- sleeping runs
-- waiting-for-human committed work
-- promoted-task provenance
-
-That missing surface is why this task exists.
+- state-changing run controls
+- deep-context launching
+- backend-backed Pause/Poke/Resume/Continue calls
 
 ## Next Recommended Step
 
-Start `PASS-0001` by implementing the read-only `Tasks` tab shell, grouped stream, selected detail pane, state/provenance rendering, and loading/empty/stale/backend-unavailable states against isolated validation data.
+Start `PASS-0002` by wiring bounded backend-backed actions:
+
+- `Dispatch`
+- `Poke`
+- visible `Pause` backed by the backend `interrupt` contract
+- `Open Live Thread` / `Open Thread` / `Open Working Context`
+- `Resume` or `Continue` only when backend readback says the existing run can continue
 
 ## Watchouts
 
