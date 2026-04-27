@@ -33,6 +33,24 @@ Test the actual dashboard app surface semantically. Do not treat a launched app,
 successful API response, or screenshot as sufficient. The question is whether
 the visible dashboard claims are true against durable task and backend state.
 
+## Coverage Review Duty
+
+Before deciding the regression is adequate for this task or any future rerun,
+review the product intent and testing coverage together:
+
+- `Tracking/Task-0009/TASK.md`
+- `Tracking/Task-0009/PLAN.md`
+- task-local `Design/` docs
+- repo-root `Design/GENERAL-DESIGN.md`
+- Stitch/mockup artifacts and prompt deltas used as visual/product references
+- repo-root `REGRESSION.md` and repo-local `TESTING.md`
+
+If those docs imply dashboard states, actions, empty/error cases, lane rules, or
+visual/semantic claims that are not covered by `REG-004` or another named
+regression case, update the regression artifact with the gap and open or update
+a task-owned `BUG-<NNNN>.md` or explicit `NOT RUN`/`BLOCKED` note. Do not call
+coverage adequate merely because the current visible slice passed.
+
 ## Required Reconciliation Matrix
 
 Create or update a task-owned regression artifact under:

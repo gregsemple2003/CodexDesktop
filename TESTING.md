@@ -178,3 +178,10 @@ a visible-claim reconciliation matrix, not just a screenshot. Each checked UI
 claim must cite the durable source that makes it true or false. Divergences must
 open or update a task-owned `BUG-<NNNN>.md` before the run is considered
 complete.
+
+For new CodexDashboard feature work, tester coverage review must include the
+owning task docs, task-local design docs, repo-root
+`Design/GENERAL-DESIGN.md`, interface mockups or screenshots, and any prompt
+deltas used as product references. If that review finds behavior or states not
+named in repo-root `REGRESSION.md`, update the matrix or record the gap before
+calling the feature adequately tested.
